@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Curveball Launcher</string>
+    <string name="action_settings">Settings</string>
+    <string name="hideApps">Manage hidden apps</string>
+    <string name="settingsName">Settings</string>
+    <string name="helpName">Help</string>
+    <string name="delete">Delete</string>
+    <string name="change_icon">Change Icon</string>
+    <string name="add_widget">Add widget</string>
+    <string name="widget_sample_name">Widget Name</string>
+    <string name="sample">Sample Text</string>
+    <string name="change_wallpaper">Change wallpaper</string>
+    <string name="add_to_dock">To Dock</string>
+    <string name="uninstall">Uninstall</string>
+    <string name="new_row">New Row</string>
+    <string name="search_hint">Find apps</string>
+    <string name="remove_row">Remove Row</string>
+    <string name="resize_widget">Resize Widget</string>
+    <string name="remove_widget">Remove Widget</string>
+    <string name="default_widget_name">Widget Name</string>
+    <string name="title_activity_icon_chooser">Choose An Icon</string>
+    <string name="drop_icon_hint">Drop here!</string>
+    <string name="edit_widget">Edit Widget</string>
+    <string name="app_defaults">Default apps</string>
+    <string name="default_clock_app">Clock shortcut</string>
+    <string name="default_clock_summary">App to launch when clicking the clock.</string>
+    <string name="default_calendar_app">Calendar shortcut</string>
+    <string name="default_calendar_summary">App to launch when clicking the calendar.</string>
+    <string name="default_search_app">Search shortcut</string>
+    <string name="default_search_summary">App to launch when swiping right on the homescreen…</string>
+    <string name="widgets">Widgets</string>
+    <string name="resize_all_widgets">Resize All Widgets</string>
+    <string name="resize_all_widgets_summary">Resize any widget if desired, regardless of widget\'s capability to support resizing. May produced undesirable effects on certain widgets.</string>
+    <string name="widget_no_longer_installed">Widget is no longer installed.</string>
+    <string name="edit_rows">Edit Rows</string>
+    <string name="cancel">Cancel</string>
+    <string name="no_rows">No rows to be edited. Add one by long-pressing an icon in the app drawer.</string>
+    <string name="cant_remove_last">Can\'t remove last item in the list.</string>
+    <string name="remove_dock_item">Remove dock item</string>
+    <string name="remove_dock_item_message">Would you like to remove %s from the dock?</string>
+    <string name="yes">Yes</string>
+    <string name="app_info">App info</string>
+    <string name="name_your_folder">Name your folder</string>
+    <string name="reorder_rows">Reorder rows</string>
+    <string name="sample_text">Some sample text</string>
+    <string name="no_snacklets_found">No snacklets found.</string>
+    <string name="advanced">Advanced</string>
+    <string name="debug_modules">Debug Snacklets</string>
+    <string name="debug_modules_summary">Debug snacklets by viewing on-screen errors when invalid module data is sent.</string>
+    <string name="module_error">Error in module</string>
+    <string name="invalid_launch_specified">Invalid data specified to launch.</string>
+    <string name="open_snacklet">Open Snacklet</string>
+    <string name="replace_widget_with_clock">Replace time and date with a widget</string>
+    <string name="replace_widget_with_clock_summary">Replace the clock on the home screen with a widget.</string>
+    <string name="home_widget_change">Choose the desired widget from the menu next to the search bar.</string>
+    <string name="clear_all">Clear all</string>
+    <string name="set_home_widget">Set Homescreen Widget</string>
+    <string name="no_row_specified">No apps specified to launch.</string>
+    <string name="failed_to_open_database">Failed to open database!</string>
+    <string name="unable_to_start_app">Unable to start an app. It may be uninstalled/upgrading.</string>
+    <string name="clear_snacklets">Clear Snacklets</string>
+    <string name="enable_usage_viewing">Show suggestions</string>
+    <string name="enable_usage_viewing_message">Let us show your commonly used apps in the bottom bar by enabling Usage Access for Curveball. The launcher will work without this, but it won\'t deliver many (if any) suggestions.</string>
+    <string name="enable">Enable</string>
+    <string name="cant_start">Couldn\'t start this app!</string>
+    <string name="batch_open">Batch Open</string>
+    <string name="default_charging_app">Charging shortcut</string>
+    <string name="default_charging_app_summary">App to show in suggestions bar when charging.</string>
+    <string name="default_low_power_app">Low power app</string>
+    <string name="default_low_power_app_summary">App to show in suggestions bar when running low on power.</string>
+    <string name="default_phone_app">Phone shortcut</string>
+    <string name="default_phone_app_summary">App to show in suggestions bar when on a phone call.</string>
+    <string name="welcome_title">Welcome</string>
+    <string name="welcome_message"><![CDATA[Thanks for downloading our beta! We\'re still in the early stages, but we think you\'ll love what we\'ve built. It\'s completely different from any launcher you\'ve probably used before, so you should probably watch the tutorial (see below; it\'s short, don\'t worry). Feel free to email us with bugs, feature requests, feedback, and support questions at support@justpage.me. Thanks!]]></string>
+    <string name="lets_go">Lets go!</string>
+    <string name="tutorial_please">Tutorial please.</string>
+    <string name="bah_humbug">Bah humbug.</string>
+    <string name="cheer_up">Cheer up! We have swipe-y gestures and pretty colors.</string>
+    <string name="done">Done</string>
+    <string name="no_batch_rows">No rows to batch open. Add one by long pressing on an icon in the app drawer.</string>
+    <string name="i_am_a_phone">This device is a phone</string>
+    <string name="phone_pref_summary">Check this bock if your device is accidentally recognized as tablet, but it\'s really a phone (rare; mostly affects devices with build.prop modifications).</string>
+    <string name="recent_apps_desc">Apps you\'ve used recently.</string>
+    <string name="calendar_desc">A suggested app because you\'re in a calendar event.</string>
+    <string name="call_desc">A suggested app because you\'re in a call.</string>
+    <string name="battery_desc">A suggested app because of your battery\'s status.</string>
+    <string name="next_alarm_at">Next alarm at %s</string>
+    <string name="aggresive_icon_caching">Aggressive icon caching</string>
+    <string name="aggresive_icon_caching_summary">Fetch launcher icons when we start. Provides a better experience, but may harm startup performance on low-end devices.</string>
+    <string name="element_size">Max amount needed to move between each element of swipe view.</string>
+    <string name="element_size_descriptions">Affects the main gesture view.</string>
+    <string name="gesture_swipe">Gesture Swiping</string>
+    <string name="element_size_title">Distance between elements</string>
+    <string name="icon_size_small">Small icon size</string>
+    <string name="icon_size_pref">Big icon size</string>
+    <string name="preferences_name">Preferences</string>
+    <string name="attributions">Attributions</string>
+    <string name="tap_to_view_software_used">Tap to view software used in creating this product.</string>
+    <string name="close">Close</string>
+    <string name="attributions_message">
+        We are grateful to be able to use the following libraries in this product:\n\n
+        Android Support Library, Palette, and RecyclerView, © 2015 Android Open Source Project under the Apache license.\n
+        Gson © 2015 Google Inc. under the Apache license.\n
+        DragSortListView © 2012 Carl Bauer under the Apache license.\n
+        Apache Collections Commons © 2016 under the Apache license.\n
+        ButterKnife © 2013 Jake Wharton under the Apache License.\n
+        ProcessPhoenix © 2015 Jake Wharton under the Apache License.\n
+        Otto © 2013 Square, Inc under the Apache License.\n
+        Weather data from MET Norway under the CC BY 3.0.\n\n
+        Climaicons by Adam Whitcroft.\n
+
+        Apache License:\n
+        Licensed under the Apache License, Version 2.0 (the "License");
+        you may not use this file except in compliance with the License.
+        You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+        Unless required by applicable law or agreed to in writing, software
+        distributed under the License is distributed on an "AS IS" BASIS,
+        WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+        See the License for the specific language governing permissions and
+        limitations under the License.\n\n
+
+        MIT License:\n
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+    </string>
+    <string name="permissions_needed_for_smartbar">Permissions Needed</string>
+    <string name="smartbar_needs_permissions">To suggest apps in the bottom bar when you\'re on phone calls, in calendar events, or running low on battery, we\'d lke permission to view your phone and calendar state. We\'d also like permission to get your location to show your local weather.</string>
+    <string name="okay_we_wont_ask">Okay, we won\'t ask again.</string>
+    <string name="got_it">Got it</string>
+    <string name="suggestions">Suggestions</string>
+    <string name="no_suggestions_right_now">No suggestions right now.</string>
+    <string name="edit_folder">Edit folder</string>
+    <string name="open_all_in_folder">Open All</string>
+    <string name="save">Save</string>
+    <string name="edit_items">Edit Items</string>
+    <string name="help">Help</string>
+    <string name="edit_items_help">Drag a shorcut by the handle to reorder it, and swipe it away (like a notification) to remove it.</string>
+    <string name="swap_widget">Swap Widget</string>
+    <string name="error">Error!</string>
+    <string name="store_not_installed">Store app not installed on this phone.</string>
+    <string name="loading_suggestions">Loading suggestions…</string>
+    <string name="widget_no_longer_valid">That widget is no longer valid.</string>
+    <string name="suppress_suggestion_title">Remove suggestion</string>
+    <string name="suppress_suggestion_message">Would you like to remove %s and prevent it from showing up again?</string>
+    <string name="manage_suggestions">Manage suggestions</string>
+    <string name="debug">Debug</string>
+    <string name="show_debug_log">Show debug log</string>
+    <string name="show_debug_log_summary">Show the debugging log.</string>
+    <string name="clear_debug_log">Clear debug log</string>
+    <string name="clear_debug_log_summary">Reset the debug log.</string>
+    <string name="export_log">Export log</string>
+    <string name="search_store">Search the store</string>
+    <string name="loading">Loading…</string>
+    <string name="no_apps_matching_installed">No apps matching \'%s\' installed.</string>
+    <string name="use_celcius">Use celcius</string>
+    <string name="use_celcius_summary">Use celcius instead of farenheight for the weather temperature.</string>
+    <string name="default_weather_app">Weather shortcut</string>
+    <string name="default_weather_app_summary">App to launch when clicking on the current weather conditions.</string>
+    <string name="title_activity_onboarding">Welcome</string>
+    <string name="section_format">Hello World from section: %1$d</string>
+    <string name="manually_refreshing_weather">Refreshing weather forecast</string>
+    <string name="debug_restart">Debug Restart</string>
+    <string name="title_activity_debug">Debug Activity</string>
+    <string name="title_activity_legacy">Curveball Launcher</string>
+    <string name="dont_click_this">Don\'t click this</string>
+    <string name="location_permission_needed">Location permission needed</string>
+    <string name="error_getting_weather">Error getting weather — is location on and are you connected?</string>
+    <string name="favorite">Favorite</string>
+    <string name="hide">Hide</string>
+    <string name="app_hidden">App hidden.</string>
+    <string name="app_no_info">This app does not have info.</string>
+    <string name="cannot_uninstall">Cannot uninstall this app.</string>
+    <string name="bobby_table">Little Bobby TABLEs</string>
+    <string name="wallpaper">Wallpaper</string>
+    <string name="set_wallpaper">Set Wallpaper</string>
+    <string name="settings">Settings</string>
+    <string name="more_settings">More settings</string>
+    <string name="unhide">Unhide</string>
+    <string name="start_new_folder">Start New</string>
+    <string name="search_with_app">App opens suggestions</string>
+    <string name="resize">Resize</string>
+    <string name="rename_folder">Rename Folder</string>
+    <string name="folder_title">Folder title</string>
+    <string name="choose_right_app">Choose an app to show %s</string>
+    <string name="choose_app_to_launch">Choose an application to launch when you perform this action.</string>
+    <string name="add_to_existing_folder">Add %1$s to %2$s</string>
+    <string name="cant_add_to_folder">%1$s is already full</string>
+    <string name="button_to_hide_item">Button to hide item</string>
+    <string name="widget_preview">Widget preview image</string>
+    <string name="installed_widget_app_missing">Installed app missing</string>
+    <string name="back_button">Go back</string>
+    <string name="ipsum">Lorem ipsum et al ipsum circa est lorem</string>
+    <string name="ipsum_short">1</string>
+    <string name="hidden_apps_setting_title">Manage hidden apps</string>
+    <string name="wallpaper_settings_title">Change wallpaper</string>
+    <string name="database_management">Database Management</string>
+    <string name="reset_database">Reset database</string>
+    <string name="reset_database_description">Drop all database data and restart the app.</string>
+    <string name="move_database_to_b_slot">Move database to backup slot</string>
+    <string name="move_database_to_b_slot_description">Copy the database into the backup slot in app data.</string>
+    <string name="overwrite_from_b_slot">Overwrite active database from the backup slot</string>
+    <string name="overwrite_from_b_slot_description">Take the database saved in the backup slot, and overwrite the active database.</string>
+    <string name="import_database_from_storage">Import database from storage</string>
+    <string name="import_database_from_storage_description">Perform a database import from storage.</string>
+    <string name="export_database_to_storage">Export database to storage</string>
+    <string name="export_database_to_storage_description">Export database to phone storage.</string>
+    <string name="folder_icon_content_description">Icon for the currently edited folder</string>
+    <string name="new_folder_bottom_sheet_title">Create new folder</string>
+    <string name="add_to_new_folder">Create new folder</string>
+    <string name="edit_folder_bottom_sheet_title">Edit folder</string>
+    <string name="hide_app">Hide app</string>
+    <string name="remove_shortcut">Remove shortcut</string>
+    <string name="search_for_icons">Search for icons</string>
+    <string name="included_icons">Included icons</string>
+    <string name="failed_to_fetch_icons">Couldn\'t get icons for package %s.</string>
+    <string name="pick_an_icon">Pick an icon</string>
+    <string name="default_folder_title">Folder</string>
+    <string name="hidden_apps_bottom_sheet_title">Hidden apps</string>
+    <string name="dock_show_in_call">in an ongoing call</string>
+    <string name="dock_show_in_low_power">while low on battery</string>
+    <string name="dock_show_in_charging">while charging</string>
+    <string name="dock_item_alarm_upcoming">Alarm coming up soon</string>
+    <string name="dock_icon_launch_desc">Launch item</string>
+    <string name="dismiss_action_content_desc">Dismiss bubble</string>
+    <string name="dock_icon_calendar_all_day">All day</string>
+    <string name="dock_icon_calendar_time">%s to %s</string>
+    <string name="launch_event">Launch event</string>
+    <string name="open_location_event">Open event location</string>
+    <string name="dock_icon_power">%1$d%%</string>
+    <string name="pocket">Pocket</string>
+    <string name="all_day">All day</string>
+    <string name="reorder_pocket_items">Reorder pocket rows</string>
+    <string name="choose_calendars_to_hide">Choose calendars to hide</string>
+    <string name="dock_items">Dock items</string>
+    <string name="manage_hidden_calendars">Manage hidden calendars</string>
+    <string name="manage_hidden_calendars_description">Choose the calendars that won\'t show up in dock suggestions.</string>
+</resources>
+

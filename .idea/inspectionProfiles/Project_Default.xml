@@ -1,0 +1,33 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="AndroidLintClickableViewAccessibility" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="AndroidLintExpiredTargetSdkVersion" enabled="false" level="ERROR" enabled_by_default="false" />
+    <inspection_tool class="AndroidLintExpiringTargetSdkVersion" enabled="false" level="ERROR" enabled_by_default="false" />
+    <inspection_tool class="AndroidLintKeyboardInaccessibleWidget" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="AndroidLintNonConstantResourceId" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="AndroidLintOutdatedLibrary" enabled="false" level="ERROR" enabled_by_default="false" />
+    <inspection_tool class="AndroidLintPermissionImpliesUnsupportedHardware" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="AndroidLintRiskyLibrary" enabled="false" level="ERROR" enabled_by_default="false" />
+    <inspection_tool class="AndroidLintUseOfBundledGooglePlayServices" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="AndroidLintWearableBindListener" enabled="false" level="ERROR" enabled_by_default="false" />
+    <inspection_tool class="AndroidNonConstantResIdsInSwitch" enabled="false" level="ERROR" enabled_by_default="false" />
+    <inspection_tool class="ConstantConditions" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="SUGGEST_NULLABLE_ANNOTATIONS" value="false" />
+      <option name="DONT_REPORT_TRUE_ASSERT_STATEMENTS" value="false" />
+    </inspection_tool>
+    <inspection_tool class="FieldCanBeLocal" enabled="false" level="WARNING" enabled_by_default="false">
+      <option name="EXCLUDE_ANNOS">
+        <value>
+          <list size="1">
+            <item index="0" class="java.lang.String" itemvalue="com.inipage.homelylauncher.utils.SizeValAttribute" />
+          </list>
+        </value>
+      </option>
+      <option name="IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS" value="true" />
+    </inspection_tool>
+    <inspection_tool class="SwitchStatementWithTooFewBranches" enabled="false" level="WARNING" enabled_by_default="false">
+      <option name="m_limit" value="2" />
+    </inspection_tool>
+  </profile>
+</component>

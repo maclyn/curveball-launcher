@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.inipage.homelylauncher.views.BottomSheetContainer
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:background="@color/content_background"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <ImageView
+        android:id="@+id/bottom_sheet_handle"
+        android:layout_gravity="center_horizontal"
+        android:layout_width="32dp"
+        android:layout_height="4dp"
+        android:layout_marginTop="8dp"
+        android:src="@drawable/bottom_sheet_handle" />
+
+    <TextView
+        android:id="@+id/bottom_sheet_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/bottom_sheet_container_margin"
+        android:layout_marginTop="@dimen/bottom_sheet_container_top_margin"
+        android:layout_marginBottom="@dimen/bottom_sheet_inner_margin"
+        android:layout_marginStart="8dp"
+        android:gravity="center"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="@string/ipsum"
+        android:textColor="@color/title_text_color"
+        android:textSize="18sp" />
+
+    <LinearLayout
+        android:id="@+id/bottom_sheet_container"
+        android:orientation="vertical"
+        android:layout_weight="1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <LinearLayout
+        android:id="@+id/bottom_sheet_action_container"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0">
+
+        <!-- Something like [             [Save] -->
+    </LinearLayout>
+
+    <View
+        android:id="@+id/bottom_sheet_bottom_scrim"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_alignParentBottom="true" />
+</com.inipage.homelylauncher.views.BottomSheetContainer>

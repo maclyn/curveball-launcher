@@ -1,0 +1,97 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="ttp://schemas.android.com/tools"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    android:id="@+id/rootView"
+    tools:context=".HomeActivity">
+
+    <View
+        android:alpha="0"
+        android:id="@+id/background_tint"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/system_ux_background" />
+
+    <View
+        android:id="@+id/top_scrim"
+        android:layout_alignParentTop="true"
+        android:layout_width="match_parent"
+        android:layout_height="20dp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="20dp"
+        android:id="@+id/bottom_scrim"
+        android:background="@color/transparent"
+        android:layout_alignParentBottom="true" />
+
+    <View
+        android:background="@drawable/top_scrim_background_gradient"
+        android:layout_width="match_parent"
+        android:layout_height="240dp"
+        android:clickable="true" />
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/pager_view"
+        android:nestedScrollingEnabled="true"
+        android:layout_below="@+id/top_scrim"
+        android:layout_above="@+id/bottom_scrim"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <com.inipage.homelylauncher.dock.ForwardingContainer
+        android:id="@+id/pocket_view_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:alpha="0"
+        android:focusableInTouchMode="false"
+        android:visibility="gone" />
+
+    <com.inipage.homelylauncher.dock.ForwardingContainer
+        android:id="@+id/forwarding_container"
+        android:layout_above="@+id/bottom_scrim"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/total_dock_height">
+
+        <HorizontalScrollView
+            android:id="@+id/dock_container_scrollview"
+            android:scrollbars="none"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/contextual_dock_height"
+            android:layout_alignParentBottom="true">
+
+            <LinearLayout
+                android:id="@+id/dock_container"
+                android:orientation="horizontal"
+                android:layout_height="@dimen/contextual_dock_height"
+                android:layout_width="wrap_content"
+                android:gravity="center_vertical" />
+        </HorizontalScrollView>
+
+        <com.inipage.homelylauncher.pocket.PocketControllerDropView
+            android:id="@+id/pocket_drop_view"
+            android:orientation="horizontal"
+            android:visibility="gone"
+            android:layout_height="@dimen/contextual_dock_height"
+            android:layout_width="match_parent"
+            android:layout_alignParentBottom="true"
+            android:layout_marginHorizontal="@dimen/home_activity_margin" />
+
+        <com.inipage.homelylauncher.pocket.PocketControllerIdleView
+            android:id="@+id/bottom_indicator"
+            android:layout_above="@+id/dock_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/home_activity_margin" />
+    </com.inipage.homelylauncher.dock.ForwardingContainer>
+
+    <com.inipage.homelylauncher.pager.PagerIndicatorView
+        android:id="@+id/pager_indicator_view"
+        android:alpha="0"
+        android:focusableInTouchMode="false"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/top_scrim"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="8dp"/>
+</RelativeLayout>

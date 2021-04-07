@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
+    android:gravity="center"
+    android:layout_width="wrap_content"
+    android:layout_height="@dimen/bar_root_action_height">
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <ImageView
+        android:id="@+id/hide_app_button"
+        android:layout_width="@dimen/bar_root_action_height"
+        android:layout_height="@dimen/bar_root_action_height"
+        android:src="@drawable/ic_visibility_off_white_48dp"
+        android:contentDescription="@string/hide"
+        android:stateListAnimator="@xml/touch_animate_scale"
+        android:padding="@dimen/bar_root_action_padding"
+        android:layout_weight="1"
+        app:tint="@color/bar_root_action_tint_color" />
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <ImageView
+        android:id="@+id/remove_app_button"
+        android:layout_width="@dimen/bar_root_action_height"
+        android:layout_height="@dimen/bar_root_action_height"
+        android:src="@drawable/ic_clear_white_48dp"
+        android:contentDescription="@string/remove_dock_item"
+        android:stateListAnimator="@xml/touch_animate_scale"
+        android:padding="@dimen/bar_root_action_padding"
+        android:layout_weight="1"
+        app:tint="@color/bar_root_action_tint_color" />
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <ImageView
+        android:id="@+id/uninstall_app_button"
+        android:layout_width="@dimen/bar_root_action_height"
+        android:layout_height="@dimen/bar_root_action_height"
+        android:src="@drawable/ic_delete_white_48dp"
+        android:contentDescription="@string/uninstall"
+        android:stateListAnimator="@xml/touch_animate_scale"
+        android:padding="@dimen/bar_root_action_padding"
+        android:layout_weight="1"
+        app:tint="@color/bar_root_action_tint_color" />
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <ImageView
+        android:id="@+id/info_app_button"
+        android:layout_width="@dimen/bar_root_action_height"
+        android:layout_height="@dimen/bar_root_action_height"
+        android:src="@drawable/ic_info_white_48dp"
+        android:contentDescription="@string/app_info"
+        android:stateListAnimator="@xml/touch_animate_scale"
+        android:padding="@dimen/bar_root_action_padding"
+        android:layout_weight="1"
+        app:tint="@color/bar_root_action_tint_color" />
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+</LinearLayout>

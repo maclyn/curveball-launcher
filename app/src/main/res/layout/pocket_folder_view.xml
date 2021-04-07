@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <ImageView
+        android:id="@+id/pocket_folder_icon_view"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginEnd="4dp" />
+
+    <TextView
+        android:id="@+id/pocket_folder_text_view"
+        android:textColor="@color/primary_text_color"
+        android:textSize="14sp"
+        android:text="@string/ipsum"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical" />
+</LinearLayout>

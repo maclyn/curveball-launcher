@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/all_apps_root_view"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/all_apps_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/app_drawer_action_bar"
+        android:scrollbars="none" />
+
+    <Button
+        android:id="@+id/store_search_button"
+        style="?attr/borderlessButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/app_drawer_action_bar"
+        android:layout_centerHorizontal="true"
+        android:layout_gravity="center_horizontal"
+        android:drawableStart="@drawable/ic_shop_white_18dp"
+        android:drawablePadding="8dp"
+        android:gravity="center"
+        android:text="@string/search_store"
+        android:textColor="@color/white" />
+
+    <LinearLayout
+        android:id="@+id/app_drawer_action_bar"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:layout_alignParentBottom="true"
+        android:background="@color/transparent"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="12dp">
+
+        <com.inipage.homelylauncher.drawer.FastScroller
+            android:id="@+id/fast_scroller"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_marginHorizontal="8dp"
+            android:layout_weight="1" />
+
+        <EditText
+            android:id="@+id/search_box"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="8dp"
+            android:autofillHints=""
+            android:ellipsize="start"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:gravity="center_vertical"
+            android:hint="@string/search_hint"
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:singleLine="true"
+            android:textColor="#ffffff"
+            android:textColorHint="#90ffffff"
+            android:textSize="18sp"
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/search_box_button"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="6dp"
+            android:src="@drawable/ic_search_white_48dp"
+            app:tint="@color/primary_text_color" />
+
+        <ImageView
+            android:id="@+id/bottom_sheet_settings_button"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="6dp"
+            android:src="@drawable/ic_more_vert_white_48dp"
+            app:tint="@color/primary_text_color" />
+    </LinearLayout>
+</RelativeLayout>

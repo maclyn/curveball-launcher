@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="@dimen/app_popup_menu_width"
+    android:layout_height="wrap_content"
+    android:alpha="0"
+    android:animateLayoutChanges="true"
+    android:elevation="@dimen/popup_menu_elevation"
+    android:orientation="vertical">
+
+    <!-- Top bar -->
+    <LinearLayout
+        android:id="@+id/app_popup_top_bar_container"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/bar_height"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/top_bar_left"
+            android:layout_width="@dimen/bar_height"
+            android:layout_height="match_parent"
+            android:background="@drawable/rounded_corner_top_left" />
+
+        <FrameLayout
+            android:id="@+id/top_bar_item_container"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@color/bar_root_color"
+            android:gravity="center" />
+
+        <ImageView
+            android:id="@+id/top_bar_right"
+            android:layout_width="@dimen/bar_height"
+            android:layout_height="match_parent"
+            android:background="@drawable/rounded_corner_top_right" />
+    </LinearLayout>
+
+    <!-- Items container -->
+    <LinearLayout
+        android:id="@+id/app_popup_item_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/bar_root_color"
+        android:orientation="vertical" />
+
+    <!-- Bottom bar -->
+    <LinearLayout
+        android:id="@+id/app_popup_bottom_bar_container"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/bar_height"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/bottom_bar_left"
+            android:layout_width="@dimen/bar_height"
+            android:layout_height="match_parent"
+            android:background="@drawable/rounded_corner_bottom_left" />
+
+        <FrameLayout
+            android:id="@+id/bottom_bar_item_container"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@color/bar_root_color"
+            android:gravity="center" />
+
+        <ImageView
+            android:id="@+id/bottom_bar_right"
+            android:layout_width="@dimen/bar_height"
+            android:layout_height="match_parent"
+            android:background="@drawable/rounded_corner_bottom_right" />
+    </LinearLayout>
+</LinearLayout>

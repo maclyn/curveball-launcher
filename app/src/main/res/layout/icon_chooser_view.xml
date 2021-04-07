@@ -1,0 +1,34 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_marginHorizontal="@dimen/icon_chooser_margin"
+    android:paddingTop="@dimen/icon_chooser_vertical_margin"
+    android:paddingBottom="@dimen/icon_chooser_vertical_margin">
+
+    <Spinner
+        android:id="@+id/icon_source_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/icon_search_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/icon_source_spinner"
+        android:layout_alignParentStart="true"
+        android:layout_marginBottom="8dp"
+        android:hint="@string/search_for_icons"
+        android:textColor="@color/primary_text_color"
+        android:textColorHint="@color/secondary_text_color" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/icon_preview_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/icon_search_bar"
+        android:scrollbars="vertical" />
+</RelativeLayout>

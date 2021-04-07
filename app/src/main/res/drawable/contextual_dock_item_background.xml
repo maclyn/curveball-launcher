@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#30000000" />
+            <corners android:radius="@dimen/contextual_dock_corner_rounding" />
+        </shape>
+    </item>
+
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#40000000" />
+            <corners android:radius="@dimen/contextual_dock_corner_rounding" />
+        </shape>
+    </item>
+</selector>

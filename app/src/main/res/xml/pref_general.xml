@@ -1,0 +1,71 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:title="@string/dock_items"
+        android:key="dock_items">
+
+        <Preference
+            android:title="@string/manage_hidden_calendars"
+            android:summary="@string/manage_hidden_calendars_description"
+            android:key="manage_cals"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/advanced"
+        android:key="pref_advanced">
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:title="@string/use_celcius"
+            android:summary="@string/use_celcius_summary"
+            android:key="celcius_pref" />
+
+        <Preference
+            android:title="@string/show_debug_log"
+            android:summary="@string/show_debug_log_summary"
+            android:key="log_show"/>
+
+        <Preference
+            android:title="@string/clear_debug_log"
+            android:summary="@string/clear_debug_log_summary"
+            android:key="log_clear"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/database_management">
+
+        <Preference
+            android:title="@string/reset_database"
+            android:summary="@string/reset_database_description"
+            android:key="reset_database" />
+
+        <Preference
+            android:title="@string/move_database_to_b_slot"
+            android:summary="@string/move_database_to_b_slot_description"
+            android:key="move_database_to_b" />
+
+        <Preference
+            android:title="@string/overwrite_from_b_slot"
+            android:summary="@string/overwrite_from_b_slot_description"
+            android:key="overwrite_from_b" />
+
+        <Preference
+            android:title="@string/import_database_from_storage"
+            android:summary="@string/import_database_from_storage_description"
+            android:key="import_database" />
+
+        <Preference
+            android:title="@string/export_database_to_storage"
+            android:summary="@string/export_database_to_storage_description"
+            android:key="export_database" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/attributions"
+        android:key="pref_help">
+        <Preference
+            android:title="@string/attributions"
+            android:summary="@string/tap_to_view_software_used"
+            android:key="attrs" />
+    </PreferenceCategory>
+</PreferenceScreen>

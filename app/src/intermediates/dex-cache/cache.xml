@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.android\build-cache\a6797a0af3eb782fce84e82fa8a2469f93f3c5a6\output\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="efb8cb62d47d157c29d1521daac7eefd4cb881ee">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\classes_9cfb9f097c9e5ab85f928a7647fbcb8e6500bf49.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\exploded-aar\com.vanniktech\vntnumberpickerpreference\1.0.1-SNAPSHOT\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="33d39036a947e30e03f0b79048325bcd6f94c784">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\com.vanniktech-vntnumberpickerpreference-1.0.1-SNAPSHOT_a0294a180f5c4dc72c473d66186bed4edd1ad0b5.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.android\build-cache\085cd791028a864de1540f1d9ee2a72a2b0cbd7d\output\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="ad5bb101ced4d3939225c9b57e5a3d81547c1fbb">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\classes_3a52a95e0c389c80d16d66942d460a3823094dd8.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.android\build-cache\88cd6be1889ccb1f66b35d318f060050cf6a3210\output\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="a318b9031a1d83f568495b239504a808d56bdbc1">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\classes_cc9fbd7180609a9809e09baf046941904b20d5c7.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.android\build-cache\97efdb0402667ee7ff6627d70c232e91ed22be4a\output\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="914f5d3e3ace66080e59613708f06d129a222e25">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\classes_db4d6234a38831d42434440ba541e2df69895a82.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.gradle\caches\modules-2\files-2.1\org.simpleframework\simple-xml\2.7.1\dd91fb744c2ff921407475cb29a1e3fee397d411\simple-xml-2.7.1.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="dd91fb744c2ff921407475cb29a1e3fee397d411">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\simple-xml-2.7.1_0cd7a4292af3db82cd6857c68e2e739479be1731.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.android\build-cache\2a4b46b2abd60663eccf5a5764e9b8a7bfad8d71\output\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="47635644d0d5c103c1dd8360549eb9ba3225c7d3">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\classes_e72565495ba1cdb5078ec9e4e34426d0ab9cf3a5.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.android\build-cache\08364803017885c00b40f2c5263dd8249c3350cb\output\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="da27a32db6af8954ee8061537c7d476fcb1df46f">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\classes_db4ec16f1c9f965c6f673d152b71fb470e6eb4d4.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.android\build-cache\843f9632f0ad7edab61b4ec603b055f1cd47d2ef\output\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="6ef31f1555bb4cc513ec8d52711365a8b89f3600">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\classes_b46e81c0512f085f05f95cb30dc71842f03a9587.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.android\build-cache\2f42d37d34f2cb7ead39f6e0170491992f8b7695\output\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="d4cf6227dd6a2ceff0f7dcf0c324380b7abf2c28">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\classes_884e2875bab6948bf2ec5cab77334ed9f31f6874.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.android\build-cache\174f6b28c6f768fcf013908615ad3fa6ae79ff9f\output\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="2fc97f9f17a0a0c5372fbfd2eab091601db69249">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\classes_0b01d76994cc1618f6ac759cd94ca1ea3d0c253c.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.gradle\caches\modules-2\files-2.1\org.apache.commons\commons-collections4\4.0\da217367fd25e88df52ba79e47658d4cf928b0d1\commons-collections4-4.0.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="da217367fd25e88df52ba79e47658d4cf928b0d1">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\commons-collections4-4.0_50e0f028608cbc8b7fad2e61462d4c04098f1d82.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\AppData\Local\Android\sdk\extras\android\m2repository\com\android\support\support-annotations\25.3.1\support-annotations-25.3.1.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="bf8841d29fa39e077730e7a91222c2ce269fa7c9">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\support-annotations-25.3.1_3679d8935152a121fd78211e04e70603b68b287e.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.android\build-cache\1bad19c113170d9c2847166ed0711b8c71f00821\output\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="1478a113f04bf0b679037b4f6bd88bd1837b96a3">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\classes_3fb3f8e875c3cce56c7c8a89815aeb4b5b50d7ca.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.android\build-cache\6d10174591ee09c0720b4c2b09104a43f9ec845e\output\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="052f5f840f21174a3ecf6544130194e2652cbb73">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\classes_50ece4e170e33a88c49570f07bcbc5a5fbc37fbe.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.android\build-cache\7dc84988914b1a1a41bbd00bf8bf0931e138045f\output\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="150252b33b00274cc868578ade018fda0d43a3eb">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\classes_19cadb8c5deba8a5633b286c4aaa1554bd65e17c.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.android\build-cache\87bace3b16665a1a28b22075b6cd2f0625f9e06e\output\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="95519720620b553f63afc789beba9ad582807f7c">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\classes_91b6bd673de530209db1062456f199b92495631c.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.android\build-cache\80efd02fd4c7e1b8b6e806476f55f74dd49ae95a\output\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="d7c42c80f6509b9ea4db28ca7859ffae08ec5741">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\classes_c6506cd16e01043160ffc5b742aa0a063d32038b.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.android\build-cache\10b332647ae7e7b7c1a2e1575eca6f2a68c483f5\output\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="e9a4d49b97190d4490310827938d428c6fc996f4">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\classes_f679d36bd5afb4868e726efe511e05533cf56b73.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.android\build-cache\660406dec22b883a3b4f9527f593fcc63ae7ec90\output\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="92137af0a8a8623fa451a25beaffc4a9f22a8bb9">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\classes_2973f0939b5825b47f367ae882289e9d202c5dea.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.android\build-cache\e24f3e6fd4cba042aa0cbe5ffdc6d9cb76030c10\output\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="52b8cd0d00fe37e94344e1f5de0449475f306a69">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\classes_af15d7562f900ff6eca1aa7c942c85b61bb6e50a.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.android\build-cache\297184ed99dc61c80dbdadaa0269e8b7a461c045\output\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="44ee06abb66da30f5855e6bf54574e64cdcd982a">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\classes_42df8bf659f164a1a79046bc5ab45aa003f63148.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.gradle\caches\modules-2\files-2.1\com.squareup\otto\1.3.8\cf615176cd1177edf71d3c9605f8dc148fede6be\otto-1.3.8.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="cf615176cd1177edf71d3c9605f8dc148fede6be">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\otto-1.3.8_83d663977b9e81935c0cdd45376fc006130608e3.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\AppData\Local\Android\sdk\extras\m2repository\com\android\support\constraint\constraint-layout-solver\1.0.2\constraint-layout-solver-1.0.2.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="b9cd8fc6bd15cb915735d34535db30ece0c44603">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\constraint-layout-solver-1.0.2_2c0d08966089a3dc655875810215d0306e251a89.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.android\build-cache\680fb0c4859a3dd7a6ff63d0d1478bb2d0560691\output\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="38789e20ace9ab7dbd00554bd2673ab424478d3b">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\classes_910a03f9beee3e73001f5a185e1136b3fdbd63f5.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.android\build-cache\f88a7895a6459098b5006ce7b5445b8a6bf8b2d5\output\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="45f697922e6f072daa12f8a2995dc77ab03c11da">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\classes_dae5eedca7ec96c473c09f3ce52bd06892e2e3e7.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.gradle\caches\modules-2\files-2.1\com.google.code.gson\gson\2.4\695b63d702f505b9b916e02272e3b6381bade7f\gson-2.4.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="0695b63d702f505b9b916e02272e3b6381bade7f">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\gson-2.4_fcf3433c4c06e6441288bf99fd637bbe24982b56.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.gradle\caches\modules-2\files-2.1\com.squareup.retrofit2\converter-simplexml\2.3.0\978a360e2e1b85b3c3d30fb4230be6eddd8397e4\converter-simplexml-2.3.0.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="978a360e2e1b85b3c3d30fb4230be6eddd8397e4">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\converter-simplexml-2.3.0_645d08e72cea4a96e4ee671d2abadbef923067b2.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.android\build-cache\20e318cd85b03d5b6d9e59d7f5c5555ba0547446\output\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="bd3cd78ad87a2d4239e86d2be17d1229d3cc61c2">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\classes_b4c17bde59804e39ccc67c508da03ab74ba36437.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.android\build-cache\652ecc9c603c34ec0a1a012dac983d16bf8bcc29\output\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="a8fad819414b57d881e5748f4157051ba0481a77">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\classes_c61e68af84b8a152fe8ca0bb9eec5e0f671e03ea.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.gradle\caches\modules-2\files-2.1\com.jakewharton\butterknife\7.0.1\d5d13ea991eab0252e3710e5df3d6a9d4b21d461\butterknife-7.0.1.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="d5d13ea991eab0252e3710e5df3d6a9d4b21d461">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\butterknife-7.0.1_23c1bbdf67944f0df135919834947c4df6b6305c.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.gradle\caches\modules-2\files-2.1\com.squareup.okio\okio\1.13.0\a9283170b7305c8d92d25aff02a6ab7e45d06cbe\okio-1.13.0.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="a9283170b7305c8d92d25aff02a6ab7e45d06cbe">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\okio-1.13.0_58147d2182e33678f78429bf42efe4c6e19091e7.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.android\build-cache\fe1fe813d4c7d5a84f3b3dec58be9e72ac508522\output\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="f0f5d962142c0c1c3296cbe178ee6438ebfbeedb">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\classes_b8ba5c00ec333c536a734bcac9717d285d279750.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.gradle\caches\modules-2\files-2.1\com.squareup.okhttp3\okhttp\3.8.0\5a11f020cce2d11eb71ba916700600e18c4547e7\okhttp-3.8.0.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="5a11f020cce2d11eb71ba916700600e18c4547e7">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\okhttp-3.8.0_01a3e72add321010c2bc579df2b35431114ba1f6.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.gradle\caches\modules-2\files-2.1\com.squareup.retrofit2\retrofit\2.3.0\bcacde6a8ccedcc56c127403d26b76072fe6214d\retrofit-2.3.0.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="bcacde6a8ccedcc56c127403d26b76072fe6214d">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\retrofit-2.3.0_e6b908019f03670437e963772987e1bb4d027988.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.android\build-cache\d65e2480d88b8d711662e321497a6ded5bdc58f1\output\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="4a26a1154d053ab11aaf4c3967c42a4d66390991">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\classes_a772885fcc8f772f61f9865d651dd99e71fdd3d4.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.android\build-cache\ac738f8820e2926cb77953cb49636c5225084963\output\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="379a48c2da13ffb7ec7134f2c715663834357670">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\classes_5b6310d76e1ec949bd61c10b00cf6952b52085f4.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="C:\Users\macly\.android\build-cache\c0858eb3760efdd40f313bc437e0bc465018b27c\output\jars\classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="25.0.2"
+        sha1="b5dd5ce94ed1c747c43710b9f13266f7b0631356">
+        <dex dex="C:\Users\macly\Documents\Git\homely-launcher\app\build\intermediates\pre-dexed\debug\classes_f1b2c5fc38b5fbc2df5510823782e7bc006da4bf.jar" />
+    </item>
+
+</items>

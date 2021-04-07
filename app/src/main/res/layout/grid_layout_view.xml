@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/grid_root_layout"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent">
+
+    <FrameLayout
+        android:layout_above="@id/grid_container_dock_height_offset"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="@dimen/grid_horizontal_margin">
+
+        <com.inipage.homelylauncher.pager.GesturePageLayout
+            android:id="@+id/grid_container"
+            android:layout_gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <!-- Don't place anything in here. These are dynamically sized and added in
+                 GridPageController. -->
+        </com.inipage.homelylauncher.pager.GesturePageLayout>
+    </FrameLayout>
+
+    <View
+        android:id="@+id/grid_container_dock_height_offset"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/total_dock_height"
+        android:layout_alignParentBottom="true" />
+</RelativeLayout>

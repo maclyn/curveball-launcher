@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Assorted values -->
+    <dimen name="icon_chooser_vertical_margin">8dp</dimen>
+    <dimen name="icon_chooser_margin">16dp</dimen>
+    <dimen name="reorder_item_view_width">96dp</dimen>
+    <dimen name="indicator_height">16dp</dimen>
+    <dimen name="home_activity_margin">16dp</dimen>
+    <dimen name="grid_horizontal_margin">8dp</dimen>
+    <dimen name="byline_text_size">18sp</dimen>
+    <dimen name="log_text_size">4sp</dimen>
+    <dimen name="scale_button_size">36dp</dimen>
+
+    <!-- Dock values -->
+    <dimen name="total_dock_height">72dp</dimen>
+    <dimen name="contextual_dock_height">48dp</dimen>
+    <dimen name="pocket_indicator_height">16dp</dimen>
+    <dimen name="contextual_dock_internal_padding">4dp</dimen>
+    <dimen name="contextual_dock_external_padding">4dp</dimen>
+    <!-- (contextual_dock_height - (external_padding * 2)) / 2 -->
+    <dimen name="contextual_dock_corner_rounding">20dp</dimen>
+    <dimen name="contextual_dock_internal_padding_horizontal">12dp</dimen>
+    <!-- (contextual_dock_height - (external padding * 2) - (internal padding * 2) -->
+    <dimen name="contextual_dock_icon_size">32dp</dimen>
+
+    <!-- App popup menu -->
+    <dimen name="bar_height">32dp</dimen>
+    <dimen name="bar_height_half">16dp</dimen>
+    <dimen name="bar_shortcut_row_height">48dp</dimen>
+    <dimen name="bar_root_action_height">32dp</dimen>
+    <dimen name="bar_root_shortcut_height">48dp</dimen>
+    <dimen name="bar_root_action_padding">4dp</dimen>
+    <dimen name="app_popup_menu_width">200dp</dimen>
+    <dimen name="popup_menu_elevation">4dp</dimen>
+    <dimen name="rounded_corner_radius">16dp</dimen>
+    <dimen name="rounded_corner_radius_half">8dp</dimen>
+
+    <!-- Bottom sheet values -->
+    <dimen name="bottom_sheet_container_top_margin">8dp</dimen>
+    <dimen name="bottom_sheet_container_margin">16dp</dimen>
+    <dimen name="bottom_sheet_action_margin">16dp</dimen>
+    <dimen name="bottom_sheet_inner_margin">8dp</dimen>
+    <dimen name="bottom_sheet_corner_round_radius">16dp</dimen>
+    <dimen name="min_start_velocity_dp_s">280dp</dimen>
+
+    <!-- Dot values -->
+    <dimen name="pocket_dot_view_height">24dp</dimen>
+    <dimen name="pocket_dot_dots_height">8dp</dimen>
+    <dimen name="pocket_dot_arrow_height">8dp</dimen>
+    <dimen name="pocket_dot_view_dot_radius">1.5dp</dimen>
+    <dimen name="pocket_dot_view_dot_section_width">16dp</dimen>
+    <dimen name="pocket_drop_view_internal_padding">4dp</dimen>
+    <dimen name="min_dot_start_velocity_dp_s">140dp</dimen>
+    <dimen name="actuation_distance">120dp</dimen>
+</resources>

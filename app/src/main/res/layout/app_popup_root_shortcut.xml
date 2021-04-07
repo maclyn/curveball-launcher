@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:background="?attr/selectableItemBackground"
+    android:layout_width="match_parent"
+    android:gravity="center_vertical"
+    android:paddingHorizontal="4dp"
+    android:layout_height="@dimen/bar_root_shortcut_height">
+
+    <ImageView
+        android:id="@+id/app_popup_root_shortcut_icon"
+        android:layout_width="@dimen/bar_height"
+        android:layout_height="@dimen/bar_height"
+        android:layout_margin="@dimen/bar_root_action_padding" />
+
+    <TextView
+        android:id="@+id/app_popup_root_shortcut_label"
+        android:layout_marginHorizontal="4dp"
+        android:layout_weight="1"
+        android:layout_width="0dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:text="@string/ipsum"
+        android:textColor="@color/bar_root_action_tint_color" />
+</LinearLayout>

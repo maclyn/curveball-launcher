@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_item_root"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <!-- Add real grid views here -->
+
+    <com.inipage.homelylauncher.grid.GridItemHandleView
+        android:id="@+id/right_handle"
+        android:layout_gravity="right|center_vertical"
+        android:layout_width="@dimen/scale_button_size"
+        android:layout_height="@dimen/scale_button_size"
+        android:orientation="horizontal" />
+
+    <com.inipage.homelylauncher.grid.GridItemHandleView
+        android:id="@+id/left_handle"
+        android:layout_gravity="left|center_vertical"
+        android:layout_width="@dimen/scale_button_size"
+        android:layout_height="@dimen/scale_button_size"
+        android:orientation="horizontal" />
+
+    <com.inipage.homelylauncher.grid.GridItemHandleView
+        android:id="@+id/up_handle"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_width="@dimen/scale_button_size"
+        android:layout_height="@dimen/scale_button_size"
+        android:orientation="vertical" />
+
+    <com.inipage.homelylauncher.grid.GridItemHandleView
+        android:id="@+id/down_handle"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_width="@dimen/scale_button_size"
+        android:layout_height="@dimen/scale_button_size"
+        android:orientation="vertical" />
+
+    <ImageView
+        android:id="@+id/widget_remove_button"
+        android:layout_gravity="end|top"
+        android:src="@drawable/ic_clear_white_48dp"
+        android:stateListAnimator="@xml/touch_animate_scale"
+        android:padding="4dp"
+        android:background="@drawable/widget_button_close_bg"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:contentDescription="@string/button_to_hide_item" />
+
+</FrameLayout>

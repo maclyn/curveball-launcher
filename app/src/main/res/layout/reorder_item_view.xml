@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="4dp"
+    android:layout_width="@dimen/reorder_item_view_width"
+    android:layout_height="wrap_content">
+
+    <ImageView
+        android:id="@+id/reorder_item_remove"
+        android:layout_gravity="center_horizontal"
+        android:src="@drawable/ic_clear_white_48dp"
+        android:stateListAnimator="@xml/touch_animate_scale"
+        android:padding="4dp"
+        android:background="@drawable/widget_button_close_bg"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:contentDescription="@string/button_to_hide_item" />
+
+    <ImageView
+        android:id="@+id/reorder_item_icon"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="4dp"
+        android:src="@drawable/ic_info_white_48dp"/>
+
+    <TextView
+        android:id="@+id/reorder_item_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:maxLines="2"
+        android:text="@string/ipsum"
+        android:textColor="@color/primary_text_color"
+        android:gravity="center"
+        android:layout_marginTop="4dp"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/reorder_item_index"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:maxLines="1"
+        android:text="@string/ipsum_short"
+        android:textColor="@color/secondary_text_color"
+        android:gravity="center"
+        android:layout_marginTop="4dp"
+        android:ellipsize="end" />
+
+    <com.inipage.homelylauncher.grid.GridItemHandleView
+        android:id="@+id/reorder_item_handle"
+        android:layout_marginTop="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_width="@dimen/scale_button_size"
+        android:layout_height="@dimen/scale_button_size"
+        android:orientation="horizontal" />
+
+
+
+</LinearLayout>
