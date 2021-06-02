@@ -23,6 +23,7 @@ import com.inipage.homelylauncher.views.AppPopupMenu;
 import com.inipage.homelylauncher.views.DecorViewDragger;
 import com.inipage.homelylauncher.views.DecorViewManager;
 
+import org.greenrobot.eventbus.EventBus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -85,12 +86,11 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<ApplicationIcon
                     new AppPopupMenu.Listener() {
                         @Override
                         public void onRemove() {
-                            // TODO: Trigger hide action
+                            EventBus.getDefault().post(new HideAppEvent(ai));
                         }
 
                         @Override
-                        public void onDismiss() {
-                        }
+                        public void onDismiss() {}
                     });
             }
 
@@ -157,6 +157,14 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<ApplicationIcon
                 mApps.add(insertionIdx, activity);
             }
             notifyItemInserted(insertionIdx);
+        }
+    }
+
+    public void hideApp(ApplicationIcon ai) {
+        final int index = mApps.indexOf(new ApplicationIconHideable(mContext, ai.getPackageName(), ai.getActivityName(), false));
+        if (index != -1) {
+            mApps.remove(index);
+            notifyItemRemoved(index);
         }
     }
 

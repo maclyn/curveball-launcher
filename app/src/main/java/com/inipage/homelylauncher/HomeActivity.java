@@ -509,9 +509,9 @@ public class HomeActivity extends AppCompatActivity implements
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onHideAppEvent(HideAppEvent hideAppEvent) {
-        ApplicationIcon ai = hideAppEvent.app();
+        final ApplicationIcon ai = hideAppEvent.app();
         DatabaseEditor.get().markAppHidden(ai.getActivityName(), ai.getPackageName());
-        mPager.getAppDrawerController().reloadAppList();
+        mPager.getAppDrawerController().hideApp(ai);
     }
 
     @Override

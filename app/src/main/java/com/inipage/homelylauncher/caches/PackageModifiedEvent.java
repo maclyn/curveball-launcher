@@ -1,7 +1,8 @@
 package com.inipage.homelylauncher.caches;
 
 /**
- * These modifications are *persistent* changes.
+ * These modifications are *persistent* changes. Transient changes -- an add and remove _during_
+ * an upgrade -- aren't sent.
  */
 public class PackageModifiedEvent {
 

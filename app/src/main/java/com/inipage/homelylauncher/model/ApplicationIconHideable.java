@@ -3,6 +3,8 @@ package com.inipage.homelylauncher.model;
 import android.content.Context;
 import android.content.pm.LauncherActivityInfo;
 
+import androidx.annotation.Nullable;
+
 public class ApplicationIconHideable extends ApplicationIcon {
 
     private boolean mIsHidden;
@@ -30,5 +32,18 @@ public class ApplicationIconHideable extends ApplicationIcon {
 
     public void setHidden(boolean isHidden) {
         this.mIsHidden = isHidden;
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode() * (mIsHidden ? 1 : -1);
+    }
+
+    @Override
+    public boolean equals(@Nullable Object obj) {
+        if (!(obj instanceof ApplicationIconHideable)) {
+            return false;
+        }
+        return obj.hashCode() == this.hashCode();
     }
 }

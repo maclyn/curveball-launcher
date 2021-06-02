@@ -330,6 +330,10 @@ public abstract class GridViewHolder {
         mQueuedColumn = mQueuedRow = -1;
     }
 
+    public boolean hasQueuedTranslation() {
+        return mQueuedRow == -1;
+    }
+
     public Point getQueuedTranslation() {
         return new Point(mQueuedColumn, mQueuedRow);
     }

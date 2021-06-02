@@ -418,6 +418,10 @@ public class AppDrawerController implements BasePageController {
         return rootView;
     }
 
+    public void hideApp(ApplicationIcon ai) {
+        mAdapter.hideApp(ai);
+    }
+
     public interface Host {
 
         void editFolderOrder();
