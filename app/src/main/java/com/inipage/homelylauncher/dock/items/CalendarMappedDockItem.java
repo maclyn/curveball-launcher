@@ -8,6 +8,8 @@ import androidx.annotation.Nullable;
 import com.inipage.homelylauncher.R;
 import com.inipage.homelylauncher.dock.DockControllerItem;
 import com.inipage.homelylauncher.dock.DockItemPriorities;
+import com.inipage.homelylauncher.persistence.DatabaseEditor;
+import com.inipage.homelylauncher.persistence.PrefsHelper;
 import com.inipage.homelylauncher.utils.CalendarUtils;
 
 import java.text.SimpleDateFormat;
@@ -72,8 +74,12 @@ public class CalendarMappedDockItem implements DockControllerItem {
 
     @Nullable
     @Override
-    public Runnable getSecondaryAction(View view, Context context) {
-        return () -> HiddenCalendarsPickerBottomSheet.show(context);
+    public Runnable getSecondaryAction(View view, Context context, ControllerHandle controllerHandle) {
+        return () -> HiddenCalendarsPickerBottomSheet.show(context, () -> {
+            if (mEvent != null && PrefsHelper.getDisabledCalendars(context).containsKey(mEvent.getCalendarId())) {
+                controllerHandle.hideMe();
+            }
+        });
     }
 
     @Override

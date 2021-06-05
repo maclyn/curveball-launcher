@@ -198,7 +198,7 @@ public class DatabaseEditor {
 
     // Dock data
 
-    public List<DockItem> getDockItems() {
+    public List<DockItem> getDockPreferences() {
         final List<DockItem> dockItems = new ArrayList<>();
         final Cursor loadItems = mDB.query(
             TABLE_DOCK,
@@ -235,7 +235,8 @@ public class DatabaseEditor {
         return dockItems;
     }
 
-    public void addDockItem(DockItem item) {
+    public void addDockPreference(DockItem item) {
+        // If we're remapping app launch backed items, delete the old entries
         if (item.getWhenToShow() != DockItem.DOCK_SHOW_NEVER) {
             mDB.delete(
                 TABLE_DOCK,

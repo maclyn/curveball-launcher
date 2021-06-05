@@ -145,7 +145,7 @@ public class SettingsActivity extends AppCompatActivity {
             addPreferencesFromResource(R.xml.pref_general);
 
             // Dock
-            bindPreference("manage_cals", HiddenCalendarsPickerBottomSheet::show);
+            bindPreference("manage_cals", ctx -> HiddenCalendarsPickerBottomSheet.show(ctx, null));
 
             // Logging
             bindPreference("log_show", this::showLogs);

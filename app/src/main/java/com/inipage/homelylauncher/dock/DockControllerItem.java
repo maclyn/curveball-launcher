@@ -10,6 +10,11 @@ import androidx.annotation.Nullable;
 
 public interface DockControllerItem {
 
+    interface ControllerHandle {
+
+        void hideMe();
+    }
+
     boolean isActive(Context context);
 
     default int getIcon() {
@@ -39,7 +44,7 @@ public interface DockControllerItem {
     Runnable getAction(View view, Context context);
 
     default @Nullable
-    Runnable getSecondaryAction(View view, Context context) {
+    Runnable getSecondaryAction(View view, Context context, ControllerHandle handle) {
         return null;
     }
 

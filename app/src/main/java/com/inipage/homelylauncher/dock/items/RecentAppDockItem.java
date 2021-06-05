@@ -11,6 +11,8 @@ import com.inipage.homelylauncher.caches.IconColorCache;
 import com.inipage.homelylauncher.dock.DockControllerItem;
 import com.inipage.homelylauncher.dock.DockItemPriorities;
 import com.inipage.homelylauncher.model.ApplicationIcon;
+import com.inipage.homelylauncher.model.DockItem;
+import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.utils.InstalledAppUtils;
 import com.inipage.homelylauncher.views.AppPopupMenu;
 
@@ -58,7 +60,7 @@ public class RecentAppDockItem implements DockControllerItem {
 
     @Nullable
     @Override
-    public Runnable getSecondaryAction(View view, Context context) {
+    public Runnable getSecondaryAction(View view, Context context, ControllerHandle controllerHandle) {
         return () -> {
             ApplicationIcon applicationIcon = new ApplicationIcon(
                 mSuggestionApp.getPackageName(), mSuggestionApp.getActivityName(), context);
@@ -75,12 +77,14 @@ public class RecentAppDockItem implements DockControllerItem {
                 new AppPopupMenu.Listener() {
                     @Override
                     public void onRemove() {
-                        // TODO: Hide the icon; callback to reload
+                        DatabaseEditor.get().addDockPreference(
+                            DockItem.createHiddenItem(
+                                applicationIcon.getPackageName(), applicationIcon.getActivityName()));
+                        controllerHandle.hideMe();
                     }
 
                     @Override
-                    public void onDismiss() {
-                    }
+                    public void onDismiss() {}
                 });
         };
     }

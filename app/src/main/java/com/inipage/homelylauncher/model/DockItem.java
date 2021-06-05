@@ -21,6 +21,10 @@ public class DockItem {
         this.mWhenToShow = whenToShow;
     }
 
+    public static DockItem createHiddenItem(String packageName, String activityName) {
+        return new DockItem(packageName, activityName, DOCK_SHOW_NEVER);
+    }
+
     public static DockItem createUnsetContextualItem(int whenToShow) {
         return new DockItem(
             UNSET_STRING_FIELD, UNSET_STRING_FIELD, whenToShow);
@@ -53,9 +57,5 @@ public class DockItem {
 
     public int getWhenToShow() {
         return mWhenToShow;
-    }
-
-    public String lookupKey() {
-        return mPackageName + "|" + mActivityName;
     }
 }

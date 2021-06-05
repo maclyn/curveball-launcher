@@ -33,21 +33,20 @@ public class ContextualAppFetcher {
     }
 
     public void reloadPrefs() {
-        final List<DockItem> dockItems = DatabaseEditor.get().getDockItems();
+        final List<DockItem> dockItems = DatabaseEditor.get().getDockPreferences();
 
-        // TODO: These aren't actually set anywhere
         Stream<String> hiddenBySuggestion =
             dockItems.stream()
                 .filter(DockItem::isHidden)
-                .map(DockItem::lookupKey);
+                .map(item -> lookupKey(item.getPackageName(), item.getActivityName()));
 
         // This mostly works
         Stream<String> hiddenByDrawer =
             DatabaseEditor.get().getHiddenAppsAsMap().keySet()
                 .stream()
-                .map(key -> key.first + "|" + key.second);
+                .map(key -> lookupKey(key.first, key.second));
 
-        // One quick trick to get performance profilers to hate you!
+        // Yeesh.
         Stream<String> hiddenFromPages = DatabaseEditor.get()
             .getGridPages()
             .parallelStream()
@@ -56,13 +55,17 @@ public class ContextualAppFetcher {
                     gridPage.getItems().parallelStream())
             .filter(gridItem -> gridItem.getType() ==
                 GridItem.GRID_TYPE_APP)
-            .map(gridItem -> gridItem.getPackageName() +
-                "|" + gridItem.getActivityName());
+            .map(gridItem -> lookupKey(gridItem.getPackageName(), gridItem.getActivityName()));
 
         mHiddenApps =
-            Stream.concat(
-                Stream.concat(hiddenBySuggestion, hiddenByDrawer), hiddenFromPages)
-                .collect(Collectors.toMap(item -> item, item -> true));
+            Stream.concat(Stream.concat(
+                hiddenBySuggestion, hiddenByDrawer), hiddenFromPages)
+                    .collect(
+                        Collectors.toMap(
+                            item -> item,
+                            item -> true,
+                            (keyA, keyB) -> keyA // Same item can be hidden in multiple places
+                    ));
     }
 
     public List<DockControllerItem> getRecentApps(Context context) {
@@ -161,15 +164,10 @@ public class ContextualAppFetcher {
                     entry.getValue()));
         }
         recentApps.sort((lhs, rhs) -> (int) (rhs.getDurationUsed() - lhs.getDurationUsed()));
-        int idx = 0;
-        while (idx < recentApps.size()) {
-            final SuggestionApp recentApp = recentApps.get(idx);
-            updateWorkingSet(
-                suggestions,
-                packagesSeen,
-                recentApp);
-            idx++;
-        }
+        recentApps.forEach(suggestionApp -> updateWorkingSet(
+            suggestions,
+            packagesSeen,
+            suggestionApp));
         return suggestions;
     }
 
@@ -188,6 +186,10 @@ public class ContextualAppFetcher {
         }
         packagesSeen.put(lookupKey, true);
         suggestions.add(new RecentAppDockItem(recentApp));
+    }
+
+    private String lookupKey(String packageName, String activityName) {
+        return packageName + "|" + activityName;
     }
 
     static class SuggestionApp {

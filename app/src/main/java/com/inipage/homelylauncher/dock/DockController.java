@@ -50,7 +50,7 @@ public class DockController {
     public void reloadDock() {
         mAppFetcher.reloadPrefs();
         mAppBackedItemsCache.clear();
-        mAppBackedItemsCache = DatabaseEditor.get().getDockItems()
+        mAppBackedItemsCache = DatabaseEditor.get().getDockPreferences()
             .parallelStream()
             .filter(dockItem -> dockItem.getWhenToShow() !=
                 DockItem.DOCK_SHOW_NEVER)
@@ -114,7 +114,8 @@ public class DockController {
             // Map actions
             view.setOnClickListener(v -> item.getAction(v, context).run());
             view.setOnLongClickListener(v -> {
-                @Nullable final Runnable action = item.getSecondaryAction(v, context);
+                @Nullable final Runnable action = item.getSecondaryAction(
+                    v, context, () -> view.setVisibility(GONE));
                 if (action != null) {
                     action.run();
                 }

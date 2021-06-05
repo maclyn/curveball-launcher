@@ -12,17 +12,29 @@ import com.inipage.homelylauncher.views.BottomSheetHelper;
 
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 /**
  * Picker for choosing calendars to show in the dock. Backed with a SharedPreference.
  */
 public class HiddenCalendarsPickerBottomSheet {
 
-    public static void show(Context context) {
+    interface Callback {
+
+        void onCalendarsUpdated();
+    }
+
+    public static void show(Context context, @Nullable final Callback callback) {
         List<CalendarUtils.Calendar> systemCalendars = CalendarUtils.getCalendars(context);
         final HiddenCalendarsAdapter adapter =
             new HiddenCalendarsAdapter(
                 systemCalendars,
-                modifiedList -> PrefsHelper.saveDisabledCalendars(context, modifiedList));
+                modifiedList -> {
+                    PrefsHelper.saveDisabledCalendars(context, modifiedList);
+                    if (callback != null) {
+                        callback.onCalendarsUpdated();
+                    }
+                });
         final RecyclerView recyclerView = new RecyclerView(context);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(context));

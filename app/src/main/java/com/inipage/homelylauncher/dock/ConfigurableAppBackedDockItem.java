@@ -41,13 +41,13 @@ public abstract class ConfigurableAppBackedDockItem implements DockControllerIte
                     return;
                 }
                 mBackingItem.unsetComponent();
-                DatabaseEditor.get().addDockItem(mBackingItem);
+                DatabaseEditor.get().addDockPreference(mBackingItem);
             }
             new ActivityPickerBottomSheet(
                 context,
                 (packageName, activityName) -> {
                     mBackingItem.setComponent(packageName, activityName);
-                    DatabaseEditor.get().addDockItem(mBackingItem);
+                    DatabaseEditor.get().addDockPreference(mBackingItem);
                 },
                 context.getString(getBottomSheetMessage()));
         };

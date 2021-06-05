@@ -91,20 +91,20 @@ public class CalendarUtils {
             final long startTime = cursor.getLong(startCol);
             final long endTime = cursor.getLong(endCol);
             if (allDay && fallbackEvent == null) {
-                fallbackEvent = new Event(startTime, endTime, allDay, id, title, location);
+                fallbackEvent = new Event(startTime, endTime, allDay, id, calendarId, title, location);
                 cursor.moveToNext();
                 continue;
             }
             // Ongoing events: best case
             if (startTime < now && endTime > now) {
                 cursor.close();
-                return new Event(startTime, endTime, allDay, id, title, location);
+                return new Event(startTime, endTime, allDay, id, calendarId, title, location);
             }
             // Otherwise, future events, second best case, we'll hit after ongoing events due to
             // sorting
             if (startTime > now) {
                 cursor.close();
-                return new Event(startTime, endTime, allDay, id, title, location);
+                return new Event(startTime, endTime, allDay, id, calendarId, title, location);
             }
 
             // Otherwise, ignore and move one
@@ -174,6 +174,7 @@ public class CalendarUtils {
         private final long mEnd;
         private final boolean mAllDay;
         private final int mId;
+        private final int mCalendarId;
         private final String mTitle;
         @Nullable
         private final String mLocation;
@@ -183,12 +184,14 @@ public class CalendarUtils {
             long end,
             boolean allDay,
             int id,
+            int calendarId,
             String title,
             @Nullable String location) {
             this.mStart = start;
             this.mEnd = end;
             this.mAllDay = allDay;
             this.mId = id;
+            this.mCalendarId = calendarId;
             this.mTitle = title;
             this.mLocation = location;
         }
@@ -211,6 +214,10 @@ public class CalendarUtils {
 
         public int getID() {
             return mId;
+        }
+
+        public int getCalendarId() {
+            return mCalendarId;
         }
 
         public String getLongDescription(Context context) {
