@@ -130,10 +130,13 @@ public class DecorViewManager {
         @Nullable FrameLayout decorView = getDecorView();
         @Nullable View attachedView = mViewKeyToView.get(key);
         @Nullable View backgroundView = mViewKeyToBackground.get(key);
-        Callback callback = Objects.requireNonNull(mViewKeyToCallback.get(key));
-        callback.onDismissedByBackgroundTap(attachedView);
+        @Nullable Callback callback = mViewKeyToCallback.get(key);
+        if (callback != null) {
+            callback.onDismissedByBackgroundTap(attachedView);
+        }
         if (decorView != null && attachedView != null) {
-            @Nullable final Animator exitAnimator = callback.provideExitAnimation(attachedView);
+            @Nullable final Animator exitAnimator =
+                callback == null ? null : callback.provideExitAnimation(attachedView);
             if (exitAnimator != null) {
                 exitAnimator.addListener(new Animator.AnimatorListener() {
                     @Override

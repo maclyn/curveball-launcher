@@ -9,6 +9,7 @@ import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewPropertyAnimator;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.view.animation.OvershootInterpolator;
@@ -16,11 +17,14 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
+import com.google.common.base.Preconditions;
 import com.inipage.homelylauncher.R;
 import com.inipage.homelylauncher.model.GridItem;
 import com.inipage.homelylauncher.state.LayoutEditingSingleton;
 
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -34,7 +38,41 @@ import static com.inipage.homelylauncher.grid.GridViewHolder.ResizeDirection.RIG
 import static com.inipage.homelylauncher.grid.GridViewHolder.ResizeDirection.UP;
 import static com.inipage.homelylauncher.grid.GridViewHolder.ResizeDirection.UP_IN;
 
+/** Base class for anything represented in the grid. */
 public abstract class GridViewHolder {
+
+    public interface Host {
+        String getItemDescription(GridViewHolder viewHolder);
+
+        GridMetrics getGridMetrics();
+
+        RelativeLayout getGridContainer();
+
+        boolean canResizeGridViewHolderInDirection(
+            GridViewHolder gridViewHolder, ResizeDirection direction);
+
+        void onRemove(GridViewHolder viewHolder);
+
+        void onResize(GridViewHolder viewHolder);
+    }
+
+    public enum ResizeDirection {
+        UP, DOWN, LEFT, RIGHT, UP_IN, DOWN_IN, LEFT_IN, RIGHT_IN;
+
+        public boolean isHorizontal() {
+            return !isVertical();
+        }
+
+        public boolean isVertical() {
+            return this.equals(UP) || this.equals(DOWN) || this.equals(UP_IN) ||
+                this.equals(DOWN_IN);
+        }
+
+        public boolean isShrink() {
+            return this.equals(UP_IN) || this.equals(DOWN_IN) || this.equals(LEFT_IN) ||
+                this.equals(RIGHT_IN);
+        }
+    }
 
     private static final float SCALE_AMOUNT = 0.925F;
     private static final long MOVE_HINT_ANIMATION_DURATION = 100L;
@@ -42,12 +80,19 @@ public abstract class GridViewHolder {
     private static final int MOVE_HINT_TRANSLATION_FACTOR = 5;
     private static final Interpolator OVERSHOOT_INTERPOLATOR = new OvershootInterpolator();
     private static final Interpolator ACC_DEC_INTERPOLATOR = new AccelerateDecelerateInterpolator();
+
+    // Subclasses need access to these fields to fill and populate their content
     protected final GridItem mItem;
     protected final FrameLayout mRootView;
+
+    // These are purely imp. details; listener results are sent down to the subclasses
     private final ImageView mRemovalView;
     private final GridItemHandleView mLeftHandle, mRightHandle, mUpHandle, mDownHandle;
+    // Animations that need to be cancelled if we leave edit mode
+    private final Set<ViewPropertyAnimator> mTransientEditAnimations = new HashSet<>();
+
     @Nullable
-    protected Host mHost;
+    private Host mHost;
     private int mQueuedColumn = -1, mQueuedRow = -1;
 
     @SuppressLint("InflateParams")
@@ -104,12 +149,6 @@ public abstract class GridViewHolder {
         mRightHandle.setArrowsEnabled(rightIn, right);
         mUpHandle.setArrowsEnabled(up, upIn);
         mDownHandle.setArrowsEnabled(downIn, down);
-    }
-
-    private void hideViews(View... views) {
-        for (View v : views) {
-            v.setAlpha(0F);
-        }
     }
 
     public GridItem getItem() {
@@ -183,29 +222,9 @@ public abstract class GridViewHolder {
         mHost = null;
     }
 
-    protected void onResized() {
-        mRootView.requestDisallowInterceptTouchEvent(true);
-        mRootView.post(() -> {
-            mRootView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
-            RelativeLayout.LayoutParams rootViewParams =
-                (RelativeLayout.LayoutParams) mRootView.getLayoutParams();
-            final GridMetrics metrics = Objects.requireNonNull(mHost).getGridMetrics();
-            rootViewParams.height = metrics.getHeightOfRowSpanPx(mItem.getHeight());
-            rootViewParams.width = metrics.getWidthOfColumnSpanPx(mItem.getWidth());
-            mRootView.setLayoutParams(rootViewParams);
-
-            mRootView.setTranslationX(metrics.getWidthOfColumnSpanPx(mItem.getX()));
-            mRootView.setTranslationY(metrics.getHeightOfRowSpanPx(mItem.getY()));
-            mHost.onResize(this);
-            invalidateEditControls();
-        });
-    }
-
     public FrameLayout getRootContainer() {
         return mRootView;
     }
-
-    protected abstract View getDragView();
 
     public void enterEditMode() {
         invalidateEditControls();
@@ -218,12 +237,6 @@ public abstract class GridViewHolder {
             mRemovalView, mUpHandle, mDownHandle, mLeftHandle, mRightHandle);
     }
 
-    private void animateAlphaIn(View... views) {
-        for (View v : views) {
-            v.animate().alpha(1).setInterpolator(ACC_DEC_INTERPOLATOR).start();
-        }
-    }
-
     public void exitEditMode() {
         invalidateEditControls();
         mRootView.animate()
@@ -231,14 +244,12 @@ public abstract class GridViewHolder {
             .scaleY(1F)
             .setInterpolator(OVERSHOOT_INTERPOLATOR)
             .start();
+        for (ViewPropertyAnimator animator : mTransientEditAnimations) {
+            animator.cancel();
+        }
+        mTransientEditAnimations.clear();
         animateAlphaOut(
             mRemovalView, mUpHandle, mDownHandle, mLeftHandle, mRightHandle);
-    }
-
-    private void animateAlphaOut(View... views) {
-        for (View v : views) {
-            v.animate().alpha(0).setInterpolator(ACC_DEC_INTERPOLATOR).start();
-        }
     }
 
     public void queueTranslation(int column, int row) {
@@ -248,64 +259,14 @@ public abstract class GridViewHolder {
         final int startY = mHost.getGridMetrics().getHeightOfRowSpanPx(mItem.getY());
         final int targetX = mHost.getGridMetrics().getWidthOfColumnSpanPx(column);
         final int targetY = mHost.getGridMetrics().getHeightOfRowSpanPx(row);
-        animateToXWithCommit(
-            startX + ((targetX - startX) / MOVE_HINT_TRANSLATION_FACTOR),
-            MOVE_HINT_ANIMATION_DURATION);
-        animateToYWithCommit(
-            startY + ((targetY - startY) / MOVE_HINT_TRANSLATION_FACTOR),
-            MOVE_HINT_ANIMATION_DURATION);
-    }
-
-    private void animateToXWithCommit(int where, long howLong) {
-        mRootView.animate()
-            .translationX(where)
-            .setDuration(howLong)
-            .setListener(new Animator.AnimatorListener() {
-                @Override
-                public void onAnimationStart(Animator animation) {
-                }
-
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    mRootView.setTranslationX(where);
-                }
-
-                @Override
-                public void onAnimationCancel(Animator animation) {
-                    onAnimationEnd(animation);
-                }
-
-                @Override
-                public void onAnimationRepeat(Animator animation) {
-                }
-            })
-            .start();
-    }
-
-    private void animateToYWithCommit(int where, long howLong) {
-        mRootView.animate()
-            .translationY(where)
-            .setDuration(howLong)
-            .setListener(new Animator.AnimatorListener() {
-                @Override
-                public void onAnimationStart(Animator animation) {
-                }
-
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    mRootView.setTranslationY(where);
-                }
-
-                @Override
-                public void onAnimationCancel(Animator animation) {
-                    onAnimationEnd(animation);
-                }
-
-                @Override
-                public void onAnimationRepeat(Animator animation) {
-                }
-            })
-            .start();
+        mTransientEditAnimations.add(
+            animateToXWithCommit(
+                startX + ((targetX - startX) / MOVE_HINT_TRANSLATION_FACTOR),
+                MOVE_HINT_ANIMATION_DURATION));
+        mTransientEditAnimations.add(
+            animateToYWithCommit(
+                startY + ((targetY - startY) / MOVE_HINT_TRANSLATION_FACTOR),
+                MOVE_HINT_ANIMATION_DURATION));
     }
 
     public void commitTranslationChange() {
@@ -330,44 +291,104 @@ public abstract class GridViewHolder {
         mQueuedColumn = mQueuedRow = -1;
     }
 
-    public boolean hasQueuedTranslation() {
-        return mQueuedRow == -1;
-    }
-
     public Point getQueuedTranslation() {
         return new Point(mQueuedColumn, mQueuedRow);
     }
 
-    public enum ResizeDirection {
-        UP, DOWN, LEFT, RIGHT, UP_IN, DOWN_IN, LEFT_IN, RIGHT_IN;
+    protected GridMetrics getGridMetrics() {
+        return Preconditions.checkNotNull(mHost).getGridMetrics();
+    }
 
-        public boolean isHorizontal() {
-            return !isVertical();
-        }
+    protected void onResized() {
+        mRootView.requestDisallowInterceptTouchEvent(true);
+        mRootView.post(() -> {
+            mRootView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+            RelativeLayout.LayoutParams rootViewParams =
+                (RelativeLayout.LayoutParams) mRootView.getLayoutParams();
+            final GridMetrics metrics = Objects.requireNonNull(mHost).getGridMetrics();
+            rootViewParams.height = metrics.getHeightOfRowSpanPx(mItem.getHeight());
+            rootViewParams.width = metrics.getWidthOfColumnSpanPx(mItem.getWidth());
+            mRootView.setLayoutParams(rootViewParams);
 
-        public boolean isVertical() {
-            return this.equals(UP) || this.equals(DOWN) || this.equals(UP_IN) ||
-                this.equals(DOWN_IN);
-        }
+            mRootView.setTranslationX(metrics.getWidthOfColumnSpanPx(mItem.getX()));
+            mRootView.setTranslationY(metrics.getHeightOfRowSpanPx(mItem.getY()));
+            mHost.onResize(this);
+            invalidateEditControls();
+        });
+    }
 
-        public boolean isShrink() {
-            return this.equals(UP_IN) || this.equals(DOWN_IN) || this.equals(LEFT_IN) ||
-                this.equals(RIGHT_IN);
+    protected abstract View getDragView();
+
+    private void hideViews(View... views) {
+        for (View v : views) {
+            v.setAlpha(0F);
         }
     }
 
-    public interface Host {
-        String getItemDescription(GridViewHolder viewHolder);
+    private void animateAlphaOut(View... views) {
+        for (View v : views) {
+            v.animate().alpha(0).setInterpolator(ACC_DEC_INTERPOLATOR).start();
+        }
+    }
 
-        GridMetrics getGridMetrics();
+    private void animateAlphaIn(View... views) {
+        for (View v : views) {
+            v.animate().alpha(1).setInterpolator(ACC_DEC_INTERPOLATOR).start();
+        }
+    }
 
-        RelativeLayout getGridContainer();
+    private ViewPropertyAnimator animateToXWithCommit(int where, long howLong) {
+        final ViewPropertyAnimator animator = mRootView.animate();
+        animator
+            .translationX(where)
+            .setDuration(howLong)
+            .setListener(new Animator.AnimatorListener() {
+                @Override
+                public void onAnimationStart(Animator animation) {}
 
-        boolean canResizeGridViewHolderInDirection(
-            GridViewHolder gridViewHolder, ResizeDirection direction);
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    mRootView.setTranslationX(where);
+                }
 
-        void onRemove(GridViewHolder viewHolder);
+                @Override
+                public void onAnimationCancel(Animator animation) {
+                    mTransientEditAnimations.remove(animator);
+                }
 
-        void onResize(GridViewHolder viewHolder);
+                @Override
+                public void onAnimationRepeat(Animator animation) {
+                }
+            });
+        animator.start();
+        return animator;
+    }
+
+    private ViewPropertyAnimator animateToYWithCommit(int where, long howLong) {
+        final ViewPropertyAnimator animator = mRootView.animate();
+        animator
+            .translationY(where)
+            .setDuration(howLong)
+            .setListener(new Animator.AnimatorListener() {
+                @Override
+                public void onAnimationStart(Animator animation) {
+                }
+
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    mRootView.setTranslationY(where);
+                }
+
+                @Override
+                public void onAnimationCancel(Animator animation) {
+                    mTransientEditAnimations.remove(animator);
+                }
+
+                @Override
+                public void onAnimationRepeat(Animator animation) {
+                }
+            });
+        animator.start();
+        return animator;
     }
 }

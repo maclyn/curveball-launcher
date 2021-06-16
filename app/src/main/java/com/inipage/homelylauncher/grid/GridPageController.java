@@ -218,7 +218,7 @@ public class GridPageController implements BasePageController {
         final int spanHeightPx = mMetrics.getHeightOfRowSpanPx(gridItem.getHeight());
         @Nullable GridViewHolder gridViewHolder;
         if (awpi != null) {
-            // getApplicationContext is important -- we want a Context that is unthemed
+            // getApplicationContext is important -- we want a Context that is not themed
             // otherwise the hosted widgets will look really bad...
             final AppWidgetHostView hostView =
                 AppInfoCache.get()
@@ -917,8 +917,7 @@ public class GridPageController implements BasePageController {
                 return;
             }
 
-            if (mShowingMenu &&
-                ViewUtils.exceedsSlop(event, mStartX, mStartY, mContainer.getContext(), 1F)) {
+            if (ViewUtils.exceedsSlop(event, mStartX, mStartY, mContainer.getContext(), 1F)) {
                 DecorViewManager.get(mRootContainer.getContext()).detachAllViews();
                 LayoutEditingSingleton.getInstance().setEditing(true);
                 beginDragOnHolder(Objects.requireNonNull(mHolder), mStartX, mStartY);

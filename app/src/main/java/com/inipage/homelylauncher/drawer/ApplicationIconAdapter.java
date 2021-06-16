@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.inipage.homelylauncher.R;
@@ -31,14 +32,24 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class ApplicationIconAdapter extends RecyclerView.Adapter<ApplicationIconAdapter.AppIconHolder> {
+public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+
+    private static final int ITEM_VIEW_TYPE_APP = 1;
+    private static final int ITEM_VIEW_TYPE_HEADER = 2;
+
+    private static final int HEADER_ITEM_ID = 0;
 
     private final List<ApplicationIconHideable> mApps;
     private final Activity mContext;
+    private final boolean mRenderHeader;
 
-    public ApplicationIconAdapter(List<ApplicationIconHideable> apps, Activity activity) {
+    public ApplicationIconAdapter(
+            List<ApplicationIconHideable> apps,
+            Activity activity,
+            boolean renderHeader) {
         this.mApps = apps;
         this.mContext = activity;
+        this.mRenderHeader = renderHeader;
     }
 
     public List<ApplicationIconHideable> getApps() {
@@ -47,18 +58,36 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<ApplicationIcon
 
     @NotNull
     @Override
-    public AppIconHolder onCreateViewHolder(ViewGroup viewGroup, int index) {
-        final ApplicationIconLayout rootView =
-            (ApplicationIconLayout)
-                LayoutInflater.from(viewGroup.getContext())
-                    .inflate(R.layout.application_icon, viewGroup, false);
-        return new AppIconHolder(rootView);
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup viewGroup, int type) {
+        switch (type) {
+            case ITEM_VIEW_TYPE_APP: {
+                final ApplicationIconLayout rootView =
+                    (ApplicationIconLayout)
+                        LayoutInflater.from(viewGroup.getContext())
+                            .inflate(R.layout.application_icon, viewGroup, false);
+                return new AppIconHolder(rootView);
+            }
+            case ITEM_VIEW_TYPE_HEADER:
+            default: {
+                final View rootView =
+                        LayoutInflater.from(viewGroup.getContext())
+                            .inflate(R.layout.application_header_row, viewGroup, false);
+                return new HeaderHolder(rootView);
+            }
+        }
     }
 
     // Set up specific customIcon with data
     @Override
-    public void onBindViewHolder(final AppIconHolder viewHolder, int i) {
-        final ApplicationIcon ai = mApps.get(i);
+    public void onBindViewHolder(final RecyclerView.ViewHolder holder, int i) {
+        if (getItemViewType(i) == ITEM_VIEW_TYPE_HEADER) {
+            final HeaderHolder headerHolder = (HeaderHolder) holder;
+            headerHolder.installCount.setText(String.valueOf(mApps.size()));
+            return;
+        }
+
+        final AppIconHolder viewHolder = (AppIconHolder) holder;
+        final ApplicationIcon ai = mApps.get(i - (mRenderHeader ? 1 : 0));
         final View mainView = viewHolder.mainView;
         viewHolder.title.setText(ai.getName());
         viewHolder.icon.setBitmap(
@@ -120,12 +149,19 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<ApplicationIcon
 
     @Override
     public long getItemId(int position) {
-        return mApps.get(position).hashCode();
+        return position == 0 && mRenderHeader ?
+               HEADER_ITEM_ID :
+               mApps.get(position - (mRenderHeader ? 1 : 0)).hashCode();
     }
 
     @Override
     public int getItemCount() {
-        return mApps.size();
+        return mApps.size() + (mRenderHeader ? 1 : 0);
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        return position == 0 && mRenderHeader ? ITEM_VIEW_TYPE_HEADER : ITEM_VIEW_TYPE_APP;
     }
 
     public void spliceInPackageChanges(
@@ -142,11 +178,12 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<ApplicationIcon
         for (Integer idx : toRemove) {
             final int realIdx = idx - removedCount;
             mApps.remove(realIdx);
-            notifyItemRemoved(realIdx);
+            notifyItemRemoved(realIdx + (mRenderHeader ? 1 : 0));
             removedCount++;
         }
 
         // Splice in the new activities in-place
+        int addedCount = 0;
         for (ApplicationIconHideable activity : activities) {
             final int insertionIdx =
                 Math.abs(Collections.binarySearch(
@@ -156,7 +193,11 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<ApplicationIcon
             } else {
                 mApps.add(insertionIdx, activity);
             }
-            notifyItemInserted(insertionIdx);
+            notifyItemInserted(insertionIdx + (mRenderHeader ? 1 : 0));
+            addedCount++;
+        }
+        if (removedCount != addedCount && mRenderHeader) {
+            notifyItemChanged(0);
         }
     }
 
@@ -164,7 +205,19 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<ApplicationIcon
         final int index = mApps.indexOf(new ApplicationIconHideable(mContext, ai.getPackageName(), ai.getActivityName(), false));
         if (index != -1) {
             mApps.remove(index);
-            notifyItemRemoved(index);
+            notifyItemRemoved(index + (mRenderHeader ? 1 : 0));
+        }
+        if (mRenderHeader) {
+            notifyItemChanged(0);
+        }
+    }
+
+    public static class HeaderHolder extends RecyclerView.ViewHolder {
+        TextView installCount;
+
+        public HeaderHolder(View view) {
+            super(view);
+            this.installCount = ViewCompat.requireViewById(view, R.id.installed_apps_count);
         }
     }
 

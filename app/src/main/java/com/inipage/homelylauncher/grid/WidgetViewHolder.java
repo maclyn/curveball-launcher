@@ -31,8 +31,8 @@ public class WidgetViewHolder extends GridViewHolder {
     @Override
     public void onResized() {
         super.onResized();
-        final int width = mHost.getGridMetrics().getWidthOfColumnSpanPx(mItem.getWidth());
-        final int height = mHost.getGridMetrics().getHeightOfRowSpanPx(mItem.getHeight());
+        final int width = getGridMetrics().getWidthOfColumnSpanPx(mItem.getWidth());
+        final int height = getGridMetrics().getHeightOfRowSpanPx(mItem.getHeight());
         mWidgetHostView.updateAppWidgetSize(null, width, height, width, height);
     }
 

@@ -211,7 +211,7 @@ public class AppDrawerController implements BasePageController {
     }
 
     private void updateDrawerAdapter(List<ApplicationIconHideable> appList) {
-        mAdapter = new ApplicationIconAdapter(appList, ViewUtils.activityOf(mContext));
+        mAdapter = new ApplicationIconAdapter(appList, ViewUtils.activityOf(mContext), !mIsSearching);
         mAdapter.setHasStableIds(true);
         mLayoutManager.setReverseLayout(mIsSearching);
         appRecyclerView.setAdapter(mAdapter);

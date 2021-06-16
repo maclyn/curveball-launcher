@@ -195,6 +195,9 @@ public class AppInfoCache {
         final AppWidgetManager appWidgetManager = getAppWidgetManager();
         mInstalledApps = getInstalledAppsImpl(null);
         mPackageToClassToAppWidgetProvider = new HashMap<>();
+        if (appWidgetManager == null) {
+            return;
+        }
         for (AppWidgetProviderInfo awpi : appWidgetManager.getInstalledProviders()) {
             insertWidgetProviderInfo(awpi);
         }
