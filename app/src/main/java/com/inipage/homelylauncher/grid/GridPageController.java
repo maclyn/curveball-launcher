@@ -695,12 +695,16 @@ public class GridPageController implements BasePageController {
                         columnCell, rowCell, gridItem.getWidth(), gridItem.getHeight());
                     if (areaOccupied) {
                         final Point targetCell = new Point(columnCell, rowCell);
-                        Set<GridViewHolder> naiveSolution =
-                            mHolderMap.solveForTranslationsToFitMovement(
+                        @Nullable Set<GridViewHolder> naiveSolution = null;
+                        try {
+                            naiveSolution = mHolderMap.solveForTranslationsToFitMovement(
                                 targetCell,
                                 mLastCommittedCell,
                                 mLastCell,
                                 gridItem);
+                        } catch (Exception solvedFailure) {
+                            log(TAG_DRAG_OFFSET, "Failed to solve for movement: " + solvedFailure.toString());
+                        }
                         if (naiveSolution != null) {
                             mDragDelayHandler.queueSolveCommit(naiveSolution, () -> {
                                 mLastCommittedCell = targetCell;

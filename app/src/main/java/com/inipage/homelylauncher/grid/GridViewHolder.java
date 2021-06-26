@@ -252,6 +252,7 @@ public abstract class GridViewHolder {
             mRemovalView, mUpHandle, mDownHandle, mLeftHandle, mRightHandle);
     }
 
+    // TODO: Do the thing here
     public void queueTranslation(int column, int row) {
         mQueuedColumn = column;
         mQueuedRow = row;
@@ -259,6 +260,7 @@ public abstract class GridViewHolder {
         final int startY = mHost.getGridMetrics().getHeightOfRowSpanPx(mItem.getY());
         final int targetX = mHost.getGridMetrics().getWidthOfColumnSpanPx(column);
         final int targetY = mHost.getGridMetrics().getHeightOfRowSpanPx(row);
+        /*
         mTransientEditAnimations.add(
             animateToXWithCommit(
                 startX + ((targetX - startX) / MOVE_HINT_TRANSLATION_FACTOR),
@@ -267,8 +269,11 @@ public abstract class GridViewHolder {
             animateToYWithCommit(
                 startY + ((targetY - startY) / MOVE_HINT_TRANSLATION_FACTOR),
                 MOVE_HINT_ANIMATION_DURATION));
+                
+         */
     }
 
+    // TODO: Do another thing here
     public void commitTranslationChange() {
         mItem.update(mItem.getPageId(), mQueuedColumn, mQueuedRow);
         if (mHost == null) {
@@ -276,10 +281,13 @@ public abstract class GridViewHolder {
         }
         final int endX = mHost.getGridMetrics().getWidthOfColumnSpanPx(mQueuedColumn);
         final int endY = mHost.getGridMetrics().getHeightOfRowSpanPx(mQueuedRow);
-        animateToXWithCommit(endX, MOVE_COMMIT_ANIMATION_DURATION);
-        animateToYWithCommit(endY, MOVE_COMMIT_ANIMATION_DURATION);
+        mRootView.setTranslationX(endX);
+        mRootView.setTranslationY(endY);
+        //animateToXWithCommit(endX, MOVE_COMMIT_ANIMATION_DURATION);
+        //animateToYWithCommit(endY, MOVE_COMMIT_ANIMATION_DURATION);
     }
 
+    // TODO: Do a third thing here
     public void clearQueuedTranslation() {
         if (mQueuedRow == -1) {
             return;
@@ -348,7 +356,7 @@ public abstract class GridViewHolder {
 
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                    mRootView.setTranslationX(where);
+                    //mRootView.setTranslationX(where);
                 }
 
                 @Override
@@ -376,7 +384,7 @@ public abstract class GridViewHolder {
 
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                    mRootView.setTranslationY(where);
+                    // mRootView.setTranslationY(where);
                 }
 
                 @Override
