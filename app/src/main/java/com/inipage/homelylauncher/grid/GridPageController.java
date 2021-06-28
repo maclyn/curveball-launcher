@@ -82,7 +82,6 @@ import static com.inipage.homelylauncher.utils.DebugLogUtils.TAG_ICON_CASCADE;
  */
 public class GridPageController implements BasePageController {
 
-    public static final long TRANSLATION_ANIMATION_DELAY = 500L;
     private final Host mHost;
     private final GridPage mPage;
     private final GridViewHolderHost mGridItemHost;
@@ -102,7 +101,7 @@ public class GridPageController implements BasePageController {
     public GridPageController(Host host, GridPage page, boolean startInEditing) {
         mHost = host;
         mPage = page;
-        mDragListener = new DragListener();
+        mDragListener = new DragListener(host.getContext());
         mStartInEditing = startInEditing;
         mGridItemHost = new GridViewHolderHost();
         AttributeApplier.applyDensity(this, host.getContext());
@@ -439,13 +438,11 @@ public class GridPageController implements BasePageController {
 
     @Override
     public void onPause() {
-        clearDragTarget();
+        mDragListener.clearDragTarget();
     }
 
     public void clearDragTarget() {
-        if (mDragListener != null) {
-            mDragListener.clearDragTarget();
-        }
+        mDragListener.clearDragTarget();
     }
 
     private void showWidgetAdditionMenu(int row, int column) {
@@ -505,8 +502,6 @@ public class GridPageController implements BasePageController {
         commitPage();
     }
 
-    //region Widget-specific code
-
     private void log(String tag, String contents) {
         DebugLogUtils.needle(tag, "page=" + mPage.getIndex(), contents);
     }
@@ -565,88 +560,21 @@ public class GridPageController implements BasePageController {
         }
     }
 
-    private class DragDelayHandler implements Handler.Callback {
-
-        private static final int MSG_SOLVE_COMMIT = 1;
-
-        private final Handler mHandler;
-
-        @Nullable
-        private Set<GridViewHolder> mChangesToCommit;
-        @Nullable
-        private Runnable mChangesCommittedCallback;
-
-        DragDelayHandler() {
-            mHandler = new Handler(Looper.getMainLooper(), this);
-        }
-
-        public synchronized void queueSolveCommit(
-            Set<GridViewHolder> gridViewHolders,
-            Runnable changesCommittedCallback) {
-            mHandler.removeCallbacksAndMessages(null);
-            if (mChangesToCommit != null) {
-                for (GridViewHolder viewHolder : mChangesToCommit) {
-                    viewHolder.clearQueuedTranslation();
-                }
-            }
-
-            mChangesToCommit = gridViewHolders;
-            mChangesCommittedCallback = changesCommittedCallback;
-            mHandler.sendMessageDelayed(
-                Message.obtain(mHandler, MSG_SOLVE_COMMIT),
-                TRANSLATION_ANIMATION_DELAY);
-        }
-
-        public synchronized void clearMessages() {
-            wipeState();
-        }
-
-        private void wipeState() {
-            mChangesToCommit = null;
-            mChangesCommittedCallback = null;
-            mHandler.removeCallbacksAndMessages(null);
-            if (mHolderMap != null) {
-                for (GridViewHolder viewHolder : mHolderMap.getHolders()) {
-                    viewHolder.clearQueuedTranslation();
-                }
-            }
-        }
-
-        @Override
-        public synchronized boolean handleMessage(@NonNull Message msg) {
-            switch (msg.what) {
-                case MSG_SOLVE_COMMIT:
-                    if (mChangesToCommit == null) {
-                        return false;
-                    }
-                    for (GridViewHolder viewHolder : mChangesToCommit) {
-                        viewHolder.commitTranslationChange();
-                        mHolderMap.invalidate();
-                    }
-                    commitPage();
-                    onGridMakeupChanged();
-                    if (mChangesCommittedCallback != null) {
-                        mChangesCommittedCallback.run();
-                    }
-                    wipeState();
-                    return true;
-            }
-            return false;
-        }
-    }
-    //endregion
-
     private class DragListener implements DecorViewDragger.DragAwareComponent {
 
-        private final DragDelayHandler mDragDelayHandler;
+        private final GridChoreographer mChoreographer;
         @Nullable
         private Point mLastCommittedCell;
         @Nullable
         private Point mLastCell;
 
-        public DragListener() {
-            mDragDelayHandler = new DragDelayHandler();
+        public DragListener(Context context) {
             mLastCell = mLastCommittedCell = null;
+            mChoreographer = new GridChoreographer(context, () -> {
+                mLastCommittedCell = mLastCell;
+                commitPage();
+                onGridMakeupChanged();
+            });
         }
 
         @Override
@@ -690,7 +618,6 @@ public class GridPageController implements BasePageController {
                     }
 
                     log(TAG_ICON_CASCADE, "New position data found: " + columnCell + "x" + rowCell);
-                    mDragDelayHandler.clearMessages();
                     final boolean areaOccupied = mHolderMap.isAreaOccupied(
                         columnCell, rowCell, gridItem.getWidth(), gridItem.getHeight());
                     if (areaOccupied) {
@@ -706,11 +633,10 @@ public class GridPageController implements BasePageController {
                             log(TAG_DRAG_OFFSET, "Failed to solve for movement: " + solvedFailure.toString());
                         }
                         if (naiveSolution != null) {
-                            mDragDelayHandler.queueSolveCommit(naiveSolution, () -> {
-                                mLastCommittedCell = targetCell;
-                            });
+                            mChoreographer.queueSolve(naiveSolution);
                         }
                     } else {
+                        mChoreographer.queueSolve(new HashSet<>());
                         mLastCommittedCell = new Point(columnCell, rowCell);
                     }
                     mLastCell = new Point(columnCell, rowCell);
@@ -719,7 +645,7 @@ public class GridPageController implements BasePageController {
                     final Point dropDragPoint = findPointFromDragEvent(event);
                     log(TAG_ICON_CASCADE, "Drag drop point=" + dropDragPoint);
                     maybeCommitDragChanges(dropDragPoint.x, dropDragPoint.y, gridItem);
-                    mDragDelayHandler.clearMessages();
+                    mChoreographer.queueSolve(new HashSet<>());
                     mAnimatedBackgroundGrid.quitDragMode();
                     mLastCell = null;
                     break;
@@ -732,7 +658,7 @@ public class GridPageController implements BasePageController {
                 case ACTION_DRAG_ENDED:
                     // We ALWAYS get this, even if we're not privy to the DROP event, so this is
                     // a safe place to do cleanup
-                    mDragDelayHandler.clearMessages();
+                    mChoreographer.queueSolve(new HashSet<>());
                     if (mLastCell != null) {
                         // Try and commit it at the last cell position rather than drop
                         // the dragged item entirely
@@ -811,8 +737,8 @@ public class GridPageController implements BasePageController {
 
         public void clearDragTarget() {
             log(TAG_ICON_CASCADE, "clearDragTarget");
-            mLastCell = null;
-            mDragDelayHandler.clearMessages();
+            mLastCell = mLastCommittedCell = null;
+            mChoreographer.halt();
         }
     }
 

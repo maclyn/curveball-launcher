@@ -75,9 +75,6 @@ public abstract class GridViewHolder {
     }
 
     private static final float SCALE_AMOUNT = 0.925F;
-    private static final long MOVE_HINT_ANIMATION_DURATION = 100L;
-    private static final long MOVE_COMMIT_ANIMATION_DURATION = 200L;
-    private static final int MOVE_HINT_TRANSLATION_FACTOR = 5;
     private static final Interpolator OVERSHOOT_INTERPOLATOR = new OvershootInterpolator();
     private static final Interpolator ACC_DEC_INTERPOLATOR = new AccelerateDecelerateInterpolator();
 
@@ -88,12 +85,10 @@ public abstract class GridViewHolder {
     // These are purely imp. details; listener results are sent down to the subclasses
     private final ImageView mRemovalView;
     private final GridItemHandleView mLeftHandle, mRightHandle, mUpHandle, mDownHandle;
-    // Animations that need to be cancelled if we leave edit mode
-    private final Set<ViewPropertyAnimator> mTransientEditAnimations = new HashSet<>();
 
     @Nullable
     private Host mHost;
-    private int mQueuedColumn = -1, mQueuedRow = -1;
+    private Point mQueuedPoint, mQueuedPointPx;
 
     @SuppressLint("InflateParams")
     public GridViewHolder(Context context, GridItem item) {
@@ -209,9 +204,15 @@ public abstract class GridViewHolder {
                 spanWidthPx,
                 spanHeightPx,
                 Gravity.CENTER);
-        mRootView.setTranslationX(host.getGridMetrics().getWidthOfColumnSpanPx(mItem.getX()));
-        mRootView.setTranslationY(host.getGridMetrics().getHeightOfRowSpanPx(mItem.getY()));
+        resetTranslation();
         host.getGridContainer().addView(mRootView, params);
+    }
+
+    public void resetTranslation() {
+        mRootView.setTranslationX(
+            Preconditions.checkNotNull(mHost).getGridMetrics().getWidthOfColumnSpanPx(mItem.getX()));
+        mRootView.setTranslationY(
+            Preconditions.checkNotNull(mHost).getGridMetrics().getHeightOfRowSpanPx(mItem.getY()));
     }
 
     public void detachHost() {
@@ -244,63 +245,32 @@ public abstract class GridViewHolder {
             .scaleY(1F)
             .setInterpolator(OVERSHOOT_INTERPOLATOR)
             .start();
-        for (ViewPropertyAnimator animator : mTransientEditAnimations) {
-            animator.cancel();
-        }
-        mTransientEditAnimations.clear();
         animateAlphaOut(
             mRemovalView, mUpHandle, mDownHandle, mLeftHandle, mRightHandle);
     }
 
-    // TODO: Do the thing here
     public void queueTranslation(int column, int row) {
-        mQueuedColumn = column;
-        mQueuedRow = row;
-        final int startX = mHost.getGridMetrics().getWidthOfColumnSpanPx(mItem.getX());
-        final int startY = mHost.getGridMetrics().getHeightOfRowSpanPx(mItem.getY());
-        final int targetX = mHost.getGridMetrics().getWidthOfColumnSpanPx(column);
-        final int targetY = mHost.getGridMetrics().getHeightOfRowSpanPx(row);
-        /*
-        mTransientEditAnimations.add(
-            animateToXWithCommit(
-                startX + ((targetX - startX) / MOVE_HINT_TRANSLATION_FACTOR),
-                MOVE_HINT_ANIMATION_DURATION));
-        mTransientEditAnimations.add(
-            animateToYWithCommit(
-                startY + ((targetY - startY) / MOVE_HINT_TRANSLATION_FACTOR),
-                MOVE_HINT_ANIMATION_DURATION));
-                
-         */
+        mQueuedPoint = new Point(column, row);
+        final GridMetrics metrics = Objects.requireNonNull(mHost).getGridMetrics();
+        mQueuedPointPx =
+            new Point(metrics.getWidthOfColumnSpanPx(column), metrics.getHeightOfRowSpanPx(row));
     }
 
-    // TODO: Do another thing here
     public void commitTranslationChange() {
-        mItem.update(mItem.getPageId(), mQueuedColumn, mQueuedRow);
-        if (mHost == null) {
-            return;
-        }
-        final int endX = mHost.getGridMetrics().getWidthOfColumnSpanPx(mQueuedColumn);
-        final int endY = mHost.getGridMetrics().getHeightOfRowSpanPx(mQueuedRow);
-        mRootView.setTranslationX(endX);
-        mRootView.setTranslationY(endY);
-        //animateToXWithCommit(endX, MOVE_COMMIT_ANIMATION_DURATION);
-        //animateToYWithCommit(endY, MOVE_COMMIT_ANIMATION_DURATION);
+        mItem.update(mItem.getPageId(), mQueuedPoint.x, mQueuedPoint.y);
+        clearQueuedTranslation();
     }
 
-    // TODO: Do a third thing here
     public void clearQueuedTranslation() {
-        if (mQueuedRow == -1) {
-            return;
-        }
-        final int targetX = mHost.getGridMetrics().getWidthOfColumnSpanPx(mItem.getX());
-        final int targetY = mHost.getGridMetrics().getHeightOfRowSpanPx(mItem.getY());
-        mRootView.setTranslationX(targetX);
-        mRootView.setTranslationY(targetY);
-        mQueuedColumn = mQueuedRow = -1;
+        mQueuedPoint = mQueuedPointPx = null;
     }
 
     public Point getQueuedTranslation() {
-        return new Point(mQueuedColumn, mQueuedRow);
+        return mQueuedPoint;
+    }
+
+    public Point getQueuedTranslationPx() {
+        return mQueuedPointPx;
     }
 
     protected GridMetrics getGridMetrics() {
@@ -343,60 +313,5 @@ public abstract class GridViewHolder {
         for (View v : views) {
             v.animate().alpha(1).setInterpolator(ACC_DEC_INTERPOLATOR).start();
         }
-    }
-
-    private ViewPropertyAnimator animateToXWithCommit(int where, long howLong) {
-        final ViewPropertyAnimator animator = mRootView.animate();
-        animator
-            .translationX(where)
-            .setDuration(howLong)
-            .setListener(new Animator.AnimatorListener() {
-                @Override
-                public void onAnimationStart(Animator animation) {}
-
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    //mRootView.setTranslationX(where);
-                }
-
-                @Override
-                public void onAnimationCancel(Animator animation) {
-                    mTransientEditAnimations.remove(animator);
-                }
-
-                @Override
-                public void onAnimationRepeat(Animator animation) {
-                }
-            });
-        animator.start();
-        return animator;
-    }
-
-    private ViewPropertyAnimator animateToYWithCommit(int where, long howLong) {
-        final ViewPropertyAnimator animator = mRootView.animate();
-        animator
-            .translationY(where)
-            .setDuration(howLong)
-            .setListener(new Animator.AnimatorListener() {
-                @Override
-                public void onAnimationStart(Animator animation) {
-                }
-
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    // mRootView.setTranslationY(where);
-                }
-
-                @Override
-                public void onAnimationCancel(Animator animation) {
-                    mTransientEditAnimations.remove(animator);
-                }
-
-                @Override
-                public void onAnimationRepeat(Animator animation) {
-                }
-            });
-        animator.start();
-        return animator;
     }
 }
