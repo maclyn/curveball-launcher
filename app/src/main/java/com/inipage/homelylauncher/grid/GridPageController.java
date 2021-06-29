@@ -8,9 +8,6 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
 import android.graphics.Point;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
 import android.util.Pair;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
@@ -22,7 +19,6 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.inipage.homelylauncher.R;
@@ -564,15 +560,16 @@ public class GridPageController implements BasePageController {
 
         private final GridChoreographer mChoreographer;
         @Nullable
-        private Point mLastCommittedCell;
+        private Point mLastCellCommitted;
         @Nullable
-        private Point mLastCell;
+        private Point mLastCellDraggedOver;
 
         public DragListener(Context context) {
-            mLastCell = mLastCommittedCell = null;
-            mChoreographer = new GridChoreographer(context, () -> {
-                mLastCommittedCell = mLastCell;
+            mLastCellDraggedOver = mLastCellCommitted = null;
+            mChoreographer = new GridChoreographer(context, cellCommitted -> {
+                mLastCellCommitted = cellCommitted;
                 commitPage();
+                mHolderMap.invalidate();
                 onGridMakeupChanged();
             });
         }
@@ -597,11 +594,11 @@ public class GridPageController implements BasePageController {
                 case ACTION_DRAG_ENTERED:
                 case ACTION_DRAG_LOCATION:
                     if (!viewHolder.getItem().isSizeUnset() &&
-                        mLastCell == null &&
-                        mLastCommittedCell == null) {
-                        mLastCell =
+                        mLastCellDraggedOver == null &&
+                        mLastCellCommitted == null) {
+                        mLastCellDraggedOver =
                             new Point(viewHolder.getItem().getX(), viewHolder.getItem().getY());
-                        mLastCommittedCell = new Point(mLastCell);
+                        mLastCellCommitted = new Point(mLastCellDraggedOver);
                     }
 
                     final Point locationPoint = findPointFromDragEvent(event);
@@ -610,9 +607,9 @@ public class GridPageController implements BasePageController {
                     mAnimatedBackgroundGrid.highlightDragPosition(
                         columnCell, rowCell, gridItem.getWidth(), gridItem.getHeight());
                     final boolean newPositionData =
-                        mLastCell == null ||
-                            columnCell != mLastCell.x ||
-                            rowCell != mLastCell.y;
+                        mLastCellDraggedOver == null ||
+                            columnCell != mLastCellDraggedOver.x ||
+                            rowCell != mLastCellDraggedOver.y;
                     if (!newPositionData) {
                         return;
                     }
@@ -626,28 +623,28 @@ public class GridPageController implements BasePageController {
                         try {
                             naiveSolution = mHolderMap.solveForTranslationsToFitMovement(
                                 targetCell,
-                                mLastCommittedCell,
-                                mLastCell,
+                                mLastCellCommitted,
+                                mLastCellDraggedOver,
                                 gridItem);
                         } catch (Exception solvedFailure) {
                             log(TAG_DRAG_OFFSET, "Failed to solve for movement: " + solvedFailure.toString());
                         }
                         if (naiveSolution != null) {
-                            mChoreographer.queueSolve(naiveSolution);
+                            mChoreographer.queueSolve(naiveSolution, targetCell);
                         }
                     } else {
-                        mChoreographer.queueSolve(new HashSet<>());
-                        mLastCommittedCell = new Point(columnCell, rowCell);
+                        mChoreographer.clear();
+                        mLastCellCommitted = new Point(columnCell, rowCell);
                     }
-                    mLastCell = new Point(columnCell, rowCell);
+                    mLastCellDraggedOver = new Point(columnCell, rowCell);
                     break;
                 case ACTION_DROP:
                     final Point dropDragPoint = findPointFromDragEvent(event);
                     log(TAG_ICON_CASCADE, "Drag drop point=" + dropDragPoint);
                     maybeCommitDragChanges(dropDragPoint.x, dropDragPoint.y, gridItem);
-                    mChoreographer.queueSolve(new HashSet<>());
+                    mChoreographer.queueSolve(new HashSet<>(), null);
                     mAnimatedBackgroundGrid.quitDragMode();
-                    mLastCell = null;
+                    mLastCellDraggedOver = mLastCellCommitted = null;
                     break;
                 case ACTION_DRAG_EXITED:
                     log(TAG_ICON_CASCADE, "Drag exited");
@@ -658,16 +655,19 @@ public class GridPageController implements BasePageController {
                 case ACTION_DRAG_ENDED:
                     // We ALWAYS get this, even if we're not privy to the DROP event, so this is
                     // a safe place to do cleanup
-                    mChoreographer.queueSolve(new HashSet<>());
-                    if (mLastCell != null) {
+                    mChoreographer.clear();
+                    if (mLastCellDraggedOver != null) {
                         // Try and commit it at the last cell position rather than drop
                         // the dragged item entirely
                         log(TAG_ICON_CASCADE, "Drag ended, but attempting add...");
-                        maybeCommitDragChanges(mLastCell.x, mLastCell.y, gridItem);
-                        mLastCell = null;
+                        maybeCommitDragChanges(
+                            mLastCellDraggedOver.x,
+                            mLastCellDraggedOver.y,
+                            gridItem);
+                        mLastCellDraggedOver = null;
                     }
                     mAnimatedBackgroundGrid.quitDragMode();
-                    mLastCell = null;
+                    mLastCellDraggedOver = mLastCellCommitted = null;
                     break;
             }
         }
@@ -737,7 +737,7 @@ public class GridPageController implements BasePageController {
 
         public void clearDragTarget() {
             log(TAG_ICON_CASCADE, "clearDragTarget");
-            mLastCell = mLastCommittedCell = null;
+            mLastCellDraggedOver = mLastCellCommitted = null;
             mChoreographer.halt();
         }
     }

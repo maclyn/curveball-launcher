@@ -1,6 +1,7 @@
 package com.inipage.homelylauncher.grid;
 
 import android.content.Context;
+import android.graphics.Point;
 import android.hardware.display.DisplayManager;
 import android.os.Handler;
 import android.os.Looper;
@@ -24,13 +25,13 @@ public class GridChoreographer {
 
     interface Callback {
 
-        void onChangesCommitted();
+        void onChangesCommitted(Point cellCommitted);
     }
 
     private static final AccelerateDecelerateInterpolator INTERPOLATOR = new AccelerateDecelerateInterpolator();
     private static final long HINT_DURATION = 100L;
     private static final long PAUSE_DURATION = 500L;
-    private static final long COMMIT_DURATION = 200L;
+    private static final long COMMIT_DURATION = 250L;
     private static final long REVERT_DURATION = 100L;
 
     private enum ChangeState {
@@ -51,53 +52,28 @@ public class GridChoreographer {
         private int mStartTranslationY;
         private int mEndTranslationX;
         private int mEndTranslationY;
-        private int mTranslationX;
-        private int mTranslationY;
 
         public ChangeElement(GridViewHolder holder) {
             mHolder = holder;
-            updatePosition();
-            rebase();
+            rebaseForCommitOrHint();
         }
 
         public GridViewHolder getHolder() {
             return mHolder;
         }
 
-        public int getStartTranslationX() {
-            return mStartTranslationX;
-        }
-
-        public int getStartTranslationY() {
-            return mStartTranslationY;
-        }
-
-        public int getEndTranslationX() {
-            return mEndTranslationX;
-        }
-
-        public int getEndTranslationY() {
-            return mEndTranslationY;
-        }
-
-        public int getTranslationX() {
-            return mTranslationX;
-        }
-
-        public int getTranslationY() {
-            return mTranslationY;
-        }
-
-        public void updatePosition() {
-            mTranslationX = (int) mHolder.mRootView.getTranslationX();
-            mTranslationY = (int) mHolder.mRootView.getTranslationX();
-        }
-
-        public void rebase() {
+        public void rebaseForCommitOrHint() {
             mStartTranslationX = (int) getHolder().mRootView.getTranslationX();
             mStartTranslationY = (int) getHolder().mRootView.getTranslationY();
             mEndTranslationX = getHolder().getQueuedTranslationPx().x;
             mEndTranslationY = getHolder().getQueuedTranslationPx().y;
+        }
+
+        public void rebaseForRevert() {
+            mStartTranslationX = (int) getHolder().mRootView.getTranslationX();
+            mStartTranslationY = (int) getHolder().mRootView.getTranslationY();
+            mEndTranslationX = getHolder().getPositionPx().x;
+            mEndTranslationY = getHolder().getPositionPx().y;
         }
 
         public void updateAnimatedPosition(float scale, float interpolatedPercent) {
@@ -118,12 +94,14 @@ public class GridChoreographer {
     private static class ChangeSet {
 
         private final Set<ChangeElement> mChangedElements;
+        private final Point mTargetCell;
         private long mStartTime;
         private long mAnimDuration;
         private ChangeState mState;
 
-        ChangeSet(Set<ChangeElement> changeElements) {
+        ChangeSet(Set<ChangeElement> changeElements, Point targetCell) {
             mChangedElements = changeElements;
+            mTargetCell = targetCell;
             mStartTime = System.currentTimeMillis();
             mAnimDuration = HINT_DURATION;
             mState = ChangeState.HINTING;
@@ -143,6 +121,10 @@ public class GridChoreographer {
 
         ChangeState getState() {
             return mState;
+        }
+
+        public Point getTargetCell() {
+            return mTargetCell;
         }
 
         void update(long startTime, long animDuration, ChangeState state) {
@@ -193,7 +175,11 @@ public class GridChoreographer {
         mActiveChangeSets = new LinkedHashSet<>();
     }
 
-    synchronized void queueSolve(Set<GridViewHolder> newChanges) {
+    synchronized void clear() {
+        queueSolve(new HashSet<>(), null);
+    }
+
+    synchronized void queueSolve(Set<GridViewHolder> newChanges, @Nullable Point cellDisplacingFor) {
         final long now = System.currentTimeMillis();
         final Set<ChangeElement> newElements = new HashSet<>();
         final Set<GridViewHolder> consideredHolders = new HashSet<>();
@@ -201,36 +187,32 @@ public class GridChoreographer {
         // Update the existing change sets
         for (ChangeSet changeSet : mActiveChangeSets) {
             // Move existing mActiveChangeSets to new modes
-            final long tDelta = now - changeSet.getStartTime();
-            switch (changeSet.getState()) {
+            final ChangeState originalState = changeSet.getState();
+            switch (originalState) {
                 case HINTING:
                 case PAUSING:
                     changeSet.update(now, REVERT_DURATION, ChangeState.REVERTING);
                     break;
                 case COMMITTING:
-                    changeSet.update(now, Math.max(COMMIT_DURATION - tDelta, 0), ChangeState.COMMITTING);
-                    break;
                 case REVERTING:
-                    changeSet.update(now, Math.max(COMMIT_DURATION - tDelta, 0), ChangeState.REVERTING);
+                    // These can continue as they were
                     break;
             }
+            final ChangeState newState = changeSet.getState();
 
-            Set<ChangeElement> toDrop = new HashSet<>();
+            Set<ChangeElement> elementsToDropForOriginalChangeSet = new HashSet<>();
             for (ChangeElement element : changeSet.getChangeElements()) {
-                if (!newChanges.contains(element.getHolder())) {
-                    continue;
+                if (newChanges.contains(element.getHolder())) {
+                    element.rebaseForCommitOrHint();
+                    newElements.add(element);
+                    consideredHolders.add(element.getHolder());
+                    elementsToDropForOriginalChangeSet.add(element);
+                } else if (originalState != newState){
+                    // We're going from HINTING/PAUSING -> REVERT
+                    element.rebaseForRevert();
                 }
-
-                // Mutate element to contain a new start translation and appropriate target
-                if (changeSet.getState() == ChangeState.REVERTING) {
-                    element.getHolder().clearQueuedTranslation();
-                }
-                element.rebase();
-                newElements.add(element);
-                consideredHolders.add(element.getHolder());
-                toDrop.add(element);
             }
-            changeSet.getChangeElements().removeAll(toDrop);
+            changeSet.getChangeElements().removeAll(elementsToDropForOriginalChangeSet);
         }
         mActiveChangeSets = mActiveChangeSets.parallelStream()
             .filter(changeSet -> !changeSet.getChangeElements().isEmpty())
@@ -243,7 +225,7 @@ public class GridChoreographer {
             newElements.add(new ChangeElement(newChange));
         }
         if (!newElements.isEmpty()) {
-            mActiveChangeSets.add(new ChangeSet(newElements));
+            mActiveChangeSets.add(new ChangeSet(newElements, cellDisplacingFor));
         }
         if (!mActiveChangeSets.isEmpty()) {
             tick();
@@ -282,23 +264,24 @@ public class GridChoreographer {
                     }
                     break;
                 case PAUSING:
-                    // Move to committing (commitTranslationChange), maybe
+                    // Move, or move to committing
                     if (isAnimationComplete) {
                         changeSet.update(now, COMMIT_DURATION, ChangeState.COMMITTING);
-                    } else {
                         for (ChangeElement element : changeSet.getChangeElements()) {
-                            element.updateAnimatedPosition(1F, interpolatedValue);
+                            element.rebaseForCommitOrHint();
+                            element.getHolder().commitTranslationChange();
                         }
+                        mCallback.onChangesCommitted(changeSet.getTargetCell());
                     }
                     break;
                 case COMMITTING:
                 case REVERTING:
                     // Move, or set final position + add toDrop
                     if (isAnimationComplete) {
-                        toDrop.add(changeSet);
-                        if (changeSet.getState() == ChangeState.COMMITTING) {
-                            mCallback.onChangesCommitted();
+                        for (ChangeElement element : changeSet.getChangeElements()) {
+                            element.getHolder().resetTranslation();
                         }
+                        toDrop.add(changeSet);
                     } else {
                         for (ChangeElement element : changeSet.getChangeElements()) {
                             element.updateAnimatedPosition(1F, interpolatedValue);

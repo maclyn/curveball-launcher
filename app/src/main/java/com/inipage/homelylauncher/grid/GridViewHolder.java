@@ -273,6 +273,12 @@ public abstract class GridViewHolder {
         return mQueuedPointPx;
     }
 
+    public Point getPositionPx() {
+        final GridMetrics metrics = Preconditions.checkNotNull(mHost).getGridMetrics();
+        return
+            new Point(metrics.getWidthOfColumnSpanPx(mItem.getX()), metrics.getHeightOfRowSpanPx(mItem.getY()));
+    }
+
     protected GridMetrics getGridMetrics() {
         return Preconditions.checkNotNull(mHost).getGridMetrics();
     }
