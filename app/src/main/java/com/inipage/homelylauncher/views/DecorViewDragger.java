@@ -121,6 +121,7 @@ public class DecorViewDragger {
 
         // (2) Create a BitmapView
         final BitmapView dragView = new BitmapView(view.getContext());
+        dragView.setAlpha(0.8F);
         dragView.setBitmap(newBitmap);
 
         // (3) Attach the view as a top-level view

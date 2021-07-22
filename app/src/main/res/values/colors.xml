@@ -10,7 +10,7 @@
     <color name="textPrimary">#101010</color>
     <color name="dividerColor">#E0E0E0</color>
     <color name="less_white">#CCFFFFFF</color>
-    <color name="system_ux_background">#60000000</color>
+    <color name="system_ux_background">#80000000</color>
     <color name="app_drawer_ux_background">#80000000</color>
 
     <color name="background_tint_color">#bf303030</color>

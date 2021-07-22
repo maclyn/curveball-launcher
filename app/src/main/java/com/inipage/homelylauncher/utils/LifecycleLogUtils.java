@@ -19,6 +19,8 @@ public class LifecycleLogUtils {
 
     private static final String TAG = "LifecycleLogUtils";
     private static final Charset CHARSET = StandardCharsets.UTF_8;
+    // 256KB
+    private static final long FILE_TOO_BIG_TO_DISPLAY_BYTES = (long) (0.25 * 1024 * 1024);
     @SuppressLint("ConstantLocale")
     private static final SimpleDateFormat DATE_FORMATTER =
         new SimpleDateFormat("hh:mm:ss:SS aa (EEE, d MMM yyyy)", Locale.getDefault());
@@ -28,11 +30,15 @@ public class LifecycleLogUtils {
     private static FileInputStream LOG_FILE_INPUT_STREAM;
     private static FileOutputStream LOG_FILE_OUTPUT_STREAM;
 
+    public static String getLogfilePath(Context context) {
+        final File filesDir = context.getFilesDir();
+        return filesDir + "/logfile.txt";
+    }
+
     public static void openLog(Context context) {
         try {
-            File filesDir = context.getFilesDir();
             SESSION_ID = UUID.randomUUID().toString();
-            LOG_FILE = new File(filesDir + "/logfile.txt");
+            LOG_FILE = new File(getLogfilePath(context));
             LOG_FILE_OUTPUT_STREAM = new FileOutputStream(LOG_FILE, true);
             LOG_FILE_INPUT_STREAM = new FileInputStream(LOG_FILE);
             logEvent(LogType.LOG, "Session started");
@@ -85,6 +91,13 @@ public class LifecycleLogUtils {
     }
 
     public static String dumpLog() {
+        try {
+            long size = LOG_FILE_OUTPUT_STREAM.getChannel().size();
+            if (size > FILE_TOO_BIG_TO_DISPLAY_BYTES) {
+                return "Long file. Try exporting to read.";
+            }
+        } catch (Exception ignored) {}
+
         StringBuilder result = new StringBuilder();
         byte[] buf = new byte[1024];
         int read = 0;

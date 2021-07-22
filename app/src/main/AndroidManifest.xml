@@ -37,8 +37,10 @@
             android:excludeFromRecents="true"
             android:screenOrientation="portrait"
             android:theme="@style/HomeTheme"
+            android:exported="true"
             android:windowSoftInputMode="stateHidden|adjustPan"
-            tools:targetApi="n">
+            tools:targetApi="n"
+            tools:ignore="LockedOrientationActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -47,11 +49,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity
-            android:name=".icons.IconChooserActivity"
-            android:label="@string/title_activity_icon_chooser"
-            android:theme="@style/AppThemeDarkNoActionBar" />
 
         <activity
             android:name=".SettingsActivity"

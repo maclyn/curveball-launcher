@@ -254,5 +254,6 @@
     <string name="manage_hidden_calendars">Manage hidden calendars</string>
     <string name="manage_hidden_calendars_description">Choose the calendars that won\'t show up in dock suggestions.</string>
     <string name="apps_installed">apps installed</string>
+    <string name="export_log_description">Export log to storage.</string>
 </resources>
 

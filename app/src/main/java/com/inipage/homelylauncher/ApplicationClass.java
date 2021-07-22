@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Application;
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -69,6 +70,7 @@ public class ApplicationClass extends Application {
             @Override
             public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
                 LifecycleLogUtils.logEvent(ERROR, "Uncaught exception: " + e);
+                LifecycleLogUtils.logEvent(ERROR, Log.getStackTraceString(e));
                 if (mDefaultHandler != null) {
                     LifecycleLogUtils.closeLog(); // We're about to crash, presumably...
                     mDefaultHandler.uncaughtException(t, e);

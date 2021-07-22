@@ -50,7 +50,7 @@ public class AlarmUtils {
         // and then choose a reasonable window during which we might expect to see an alarm, since
         // the "before bedtime reminder" is also an alarm...
         @Nullable final AlarmManager.AlarmClockInfo clockInfo = am.getNextAlarmClock();
-        if (clockInfo == null) {
+        if (clockInfo == null || clockInfo.getShowIntent() == null) {
             return false;
         }
         final String sender = clockInfo.getShowIntent().getIntentSender().getCreatorPackage();

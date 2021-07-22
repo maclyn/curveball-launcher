@@ -133,6 +133,7 @@ public class AppDrawerController implements BasePageController {
         final LayoutInflater inflater = LayoutInflater.from(mContext);
         final View appDrawerView = inflater.inflate(R.layout.app_drawer_view, rootView, false);
         ButterKnife.bind(this, appDrawerView);
+
         DrawableCompat.setTint(
             searchBox.getBackground(),
             ContextCompat.getColor(mContext, R.color.primary_text_color));
@@ -160,16 +161,16 @@ public class AppDrawerController implements BasePageController {
                 for (int idx = firstItem; idx <= lastItem; idx++) {
                     RecyclerView.ViewHolder holder =
                         appRecyclerView.findViewHolderForAdapterPosition(idx);
-                    if (!(holder instanceof ApplicationIconAdapter.AppIconHolder)) {
+                    if (!(holder instanceof ApplicationIconAdapter.AlphaAwareViewHolder)) {
                         continue;
                     }
-                    ApplicationIconAdapter.AppIconHolder iconHolder =
-                        (ApplicationIconAdapter.AppIconHolder) holder;
+                    ApplicationIconAdapter.AlphaAwareViewHolder iconHolder =
+                        (ApplicationIconAdapter.AlphaAwareViewHolder) holder;
                     if (idx == firstItem && firstItem != firstCompletelyVisibleItem ||
                         idx == lastItem && lastItem != lastCompletelyVisibleItem) {
                         iconHolder.applyAlpha(recyclerView);
                     } else {
-                        iconHolder.mainView.setAlpha(1F);
+                        iconHolder.view.setAlpha(1F);
                     }
                 }
             }

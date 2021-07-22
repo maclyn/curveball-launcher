@@ -21,6 +21,11 @@
             android:key="celcius_pref" />
 
         <Preference
+            android:title="@string/export_log"
+            android:summary="@string/export_log_description"
+            android:key="log_export" />
+
+        <Preference
             android:title="@string/show_debug_log"
             android:summary="@string/show_debug_log_summary"
             android:key="log_show"/>

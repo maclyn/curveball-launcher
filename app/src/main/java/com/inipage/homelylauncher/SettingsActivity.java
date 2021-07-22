@@ -39,6 +39,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     private static final int EXPORT_DATABASE_REQUEST_CODE = 1001;
     private static final int IMPORT_DATABASE_REQUEST_CODE = 1002;
+    private static final int EXPORT_LOG_REQUEST_CODE = 1003;
     private static final SimpleDateFormat DATABASE_TITLE_FORMAT =
         new SimpleDateFormat("hhmma_MM_dd_yyyy", Locale.US);
 
@@ -74,10 +75,14 @@ public class SettingsActivity extends AppCompatActivity {
         }
         switch (requestCode) {
             case EXPORT_DATABASE_REQUEST_CODE:
+            case EXPORT_LOG_REQUEST_CODE:
                 try {
                     final ParcelFileDescriptor fd =
                         getContentResolver().openFileDescriptor(data.getData(), "rw");
-                    final FileInputStream fis = new FileInputStream(DatabaseEditor.get().getPath());
+                    final FileInputStream fis = new FileInputStream(
+                        requestCode == EXPORT_DATABASE_REQUEST_CODE ?
+                        DatabaseEditor.get().getPath() :
+                        LifecycleLogUtils.getLogfilePath(this));
                     final FileOutputStream fos = new FileOutputStream(fd.getFileDescriptor());
                     final byte[] chunk = new byte[1024];
                     while (fis.read(chunk) != -1) {
@@ -86,11 +91,7 @@ public class SettingsActivity extends AppCompatActivity {
                     fis.close();
                     fos.close();
                     fd.close();
-                    Toast.makeText(
-                        this,
-                        "Database exported.",
-                        Toast.LENGTH_SHORT)
-                        .show();
+                    Toast.makeText(this, "File exported.", Toast.LENGTH_SHORT).show();
                 } catch (Exception ignored) {
                 }
                 break;
@@ -149,6 +150,7 @@ public class SettingsActivity extends AppCompatActivity {
 
             // Logging
             bindPreference("log_show", this::showLogs);
+            bindPreference("log_export", this::exportLogs);
             bindPreference("log_clear", __ -> LifecycleLogUtils.clearLog());
 
             // Database
@@ -228,6 +230,17 @@ public class SettingsActivity extends AppCompatActivity {
                         LifecycleLogUtils.dumpLog()));
                     Toast.makeText(getActivity(), "Copied to clipboard", Toast.LENGTH_SHORT).show();
                 }).show();
+        }
+
+        private void exportLogs(Context context) {
+            final Activity parent = ViewUtils.activityOf(context);
+            final Intent exportIntent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+            exportIntent.setType("*/*");
+            exportIntent.addCategory(Intent.CATEGORY_OPENABLE);
+            exportIntent.putExtra(
+                Intent.EXTRA_TITLE,
+                DATABASE_TITLE_FORMAT.format(new Date()) + "_logfile.txt");
+            parent.startActivityForResult(exportIntent, EXPORT_LOG_REQUEST_CODE);
         }
 
         private String getBPath(Context context) {
