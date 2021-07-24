@@ -5,6 +5,7 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
+import android.net.ParseException;
 import android.net.Uri;
 import android.view.DragEvent;
 import android.view.KeyEvent;
@@ -42,7 +43,6 @@ import com.inipage.homelylauncher.utils.ViewUtils;
 import com.inipage.homelylauncher.views.BottomSheetHelper;
 import com.inipage.homelylauncher.views.DecorViewDragger;
 
-import org.apache.commons.collections4.trie.PatriciaTrie;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
@@ -71,7 +71,6 @@ public class AppDrawerController implements BasePageController {
     private final Context mContext;
     private final Drawable mQuitDrawable;
     private final Drawable mSearchDrawable;
-    private final PatriciaTrie<ApplicationIconHideable> mAppsTree = new PatriciaTrie<>();
     private final LinearLayoutManager mLayoutManager;
     @BindView(R.id.all_apps_root_view)
     View rootView;
@@ -81,16 +80,14 @@ public class AppDrawerController implements BasePageController {
     Button storeSearchButton;
     @BindView(R.id.app_drawer_action_bar)
     View actionBar;
-    @BindView(R.id.fast_scroller)
-    FastScroller fastScroller;
     @BindView(R.id.search_box)
     EditText searchBox;
     @BindView(R.id.search_box_button)
     ImageView searchBoxButton;
     private ApplicationIconAdapter mAdapter;
-    private List<ApplicationIconHideable> mCachedApps = new ArrayList<>();
+    // This flag isn't necessarily synced with mMode == SEARCH_RESULTS in the adapter; this flag
+    // indicates a visible search box but not per se text entered and search results displayed
     private boolean mIsSearching = false;
-    private List<ApplicationIconHideable> mLastSearchResult = null;
     private boolean mInDrag = false;
     private final DecorViewDragger.DragAwareComponent mDragAwareComponent =
         new DecorViewDragger.DragAwareComponent() {
@@ -182,51 +179,24 @@ public class AppDrawerController implements BasePageController {
         if (mIsSearching) {
             quitSearch();
         }
-
-        mAppsTree.clear();
-        mCachedApps = AppInfoCache.get().getAppDrawerActivities();
-        searchBoxButton.setImageDrawable(mSearchDrawable);
-        for (ApplicationIconHideable icon : mCachedApps) {
-            mAppsTree.put(icon.getName().toLowerCase(Locale.getDefault()), icon);
-            Prewarmer.getInstance().prewarm(() ->
-                                                IconCacheSync.getInstance(mContext).getActivityIcon(
-                                                    icon.getPackageName(), icon.getActivityName()));
-        }
-        updateDrawerAdapter(mCachedApps);
+        mAdapter = new ApplicationIconAdapter(ViewUtils.activityOf(mContext));
+        mAdapter.setHasStableIds(true);
+        mLayoutManager.setReverseLayout(mIsSearching);
+        appRecyclerView.setAdapter(mAdapter);
     }
 
     public void quitSearch() {
         if (!mIsSearching || mInDrag) {
             return;
         }
-
         searchBox.setText("");
         searchBox.clearFocus();
         hideKeyboard();
         mIsSearching = false;
-        mLastSearchResult = null;
         searchBoxButton.setImageDrawable(mSearchDrawable);
-        fastScroller.setVisibility(VISIBLE);
         searchBox.setVisibility(GONE);
-        updateDrawerAdapter(mCachedApps);
-    }
-
-    private void updateDrawerAdapter(List<ApplicationIconHideable> appList) {
-        mAdapter = new ApplicationIconAdapter(appList, ViewUtils.activityOf(mContext), !mIsSearching);
-        mAdapter.setHasStableIds(true);
-        mLayoutManager.setReverseLayout(mIsSearching);
-        appRecyclerView.setAdapter(mAdapter);
-        if (mIsSearching) {
-            storeSearchButton.setVisibility(appList.isEmpty() ? VISIBLE : GONE);
-        } else {
-            fastScroller.setup(
-                appList
-                    .stream()
-                    .map(applicationHiderIcon -> (ApplicationIcon) applicationHiderIcon)
-                    .collect(Collectors.toList()),
-                appRecyclerView);
-            storeSearchButton.setVisibility(GONE);
-        }
+        storeSearchButton.setVisibility(GONE);
+        mAdapter.leaveSearch();
     }
 
     private void hideKeyboard() {
@@ -258,7 +228,6 @@ public class AppDrawerController implements BasePageController {
 
         mIsSearching = true;
         searchBoxButton.setImageDrawable(mQuitDrawable);
-        fastScroller.setVisibility(GONE);
         searchBox.setVisibility(VISIBLE);
         searchBox.requestFocus();
         showKeyboard();
@@ -323,24 +292,6 @@ public class AppDrawerController implements BasePageController {
         final List<ApplicationIconHideable> newApps =
             AppInfoCache.get().getActivitiesForPackage(changedPackage);
         mAdapter.spliceInPackageChanges(changedPackage, newApps);
-        mCachedApps = mAdapter.getApps();
-        fastScroller.setup(
-            mCachedApps
-                .stream()
-                .map(applicationHiderIcon -> (ApplicationIcon) applicationHiderIcon)
-                .collect(Collectors.toList()),
-            appRecyclerView);
-        mAppsTree.clear();
-        for (ApplicationIconHideable icon : mCachedApps) {
-            mAppsTree.put(icon.getName().toLowerCase(Locale.getDefault()), icon);
-        }
-        for (ApplicationIconHideable newApp : newApps) {
-            Prewarmer.getInstance().prewarm(() ->
-                                                IconCacheSync.getInstance(mContext).getActivityIcon(
-                                                    newApp.getPackageName(),
-                                                    newApp.getActivityName()));
-        }
-        storeSearchButton.setVisibility(GONE);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -350,34 +301,7 @@ public class AppDrawerController implements BasePageController {
 
     @OnTextChanged(value = R.id.search_box, callback = OnTextChanged.Callback.TEXT_CHANGED)
     public void onSearchChanged(CharSequence s, int start, int before, int count) {
-        searchApps(s.toString());
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    public void searchApps(final String query) {
-        if (query == null || query.isEmpty()) {
-            updateDrawerAdapter(mCachedApps);
-            return;
-        }
-
-        final String netQuery = query.toLowerCase(Locale.getDefault());
-        // 1 - Get the matching apps by first few characters
-        final SortedMap<String, ApplicationIconHideable> searchMap = mAppsTree.prefixMap(netQuery);
-        final List<ApplicationIconHideable> result = new ArrayList<>(searchMap.values());
-        // 2 - Search through everything else by checking contains()
-        for (ApplicationIconHideable icon : mCachedApps) {
-            if (icon.isHidden() || searchMap.containsValue(icon)) {
-                continue;
-            }
-            if (icon.getName().toLowerCase(Locale.getDefault()).contains(netQuery)) {
-                result.add(icon);
-            }
-        }
-        if (mLastSearchResult != null && mLastSearchResult.equals(result)) {
-            return;
-        }
-        mLastSearchResult = result;
-        updateDrawerAdapter(result);
+        storeSearchButton.setVisibility(mAdapter.performSearch(s.toString()) ? GONE : VISIBLE);
     }
 
     @OnEditorAction(R.id.search_box)
@@ -394,17 +318,16 @@ public class AppDrawerController implements BasePageController {
             return false;
         }
         View child = appRecyclerView.getChildAt(0);
-        ApplicationIcon app = mAdapter.getApps().get(0);
+        ApplicationIcon app = mAdapter.getFirstApp();
         InstalledAppUtils.launchApp(child, app.getPackageName(), app.getActivityName());
         return true;
     }
 
     @OnClick(R.id.store_search_button)
     public void searchMarketClicked() {
-        String text = searchBox.getText().toString();
-        String uri = "market://search?q=" + text;
-
-        Intent intent = new Intent(Intent.ACTION_VIEW);
+        final String text = searchBox.getText().toString();
+        final String uri = "market://search?q=" + Uri.encode(text);
+        final Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setData(Uri.parse(uri));
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         try {

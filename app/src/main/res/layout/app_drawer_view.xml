@@ -23,6 +23,7 @@
         android:drawableStart="@drawable/ic_shop_white_18dp"
         android:drawablePadding="8dp"
         android:gravity="center"
+        android:visibility="gone"
         android:text="@string/search_store"
         android:textColor="@color/white" />
 
@@ -35,13 +36,6 @@
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingHorizontal="12dp">
-
-        <com.inipage.homelylauncher.drawer.FastScroller
-            android:id="@+id/fast_scroller"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_marginHorizontal="8dp"
-            android:layout_weight="1" />
 
         <EditText
             android:id="@+id/search_box"
