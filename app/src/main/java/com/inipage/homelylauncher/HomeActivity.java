@@ -511,6 +511,7 @@ public class HomeActivity extends AppCompatActivity implements
     public void onHideAppEvent(HideAppEvent hideAppEvent) {
         final ApplicationIcon ai = hideAppEvent.app();
         DatabaseEditor.get().markAppHidden(ai.getActivityName(), ai.getPackageName());
+        AppInfoCache.get().reloadVisibleActivities();
         mPager.getAppDrawerController().hideApp(ai);
     }
 

@@ -34,4 +34,5 @@
     <color name="dock_item_alarm_color">#0277BD</color>
     <color name="dock_item_call_color">#2E7D32</color>
     <color name="primary_text_color_shadow">#66000000</color>
+    <color name="translucent_white">#80ffffff</color>
 </resources>

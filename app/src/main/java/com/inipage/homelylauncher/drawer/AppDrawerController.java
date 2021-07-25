@@ -69,8 +69,6 @@ public class AppDrawerController implements BasePageController {
 
     private final Host mHost;
     private final Context mContext;
-    private final Drawable mQuitDrawable;
-    private final Drawable mSearchDrawable;
     private final LinearLayoutManager mLayoutManager;
     @BindView(R.id.all_apps_root_view)
     View rootView;
@@ -82,8 +80,6 @@ public class AppDrawerController implements BasePageController {
     View actionBar;
     @BindView(R.id.search_box)
     EditText searchBox;
-    @BindView(R.id.search_box_button)
-    ImageView searchBoxButton;
     private ApplicationIconAdapter mAdapter;
     // This flag isn't necessarily synced with mMode == SEARCH_RESULTS in the adapter; this flag
     // indicates a visible search box but not per se text entered and search results displayed
@@ -122,6 +118,18 @@ public class AppDrawerController implements BasePageController {
             }
         };
 
+    private final ApplicationIconAdapter.Delegate mAdapterDelegate = new ApplicationIconAdapter.Delegate() {
+        @Override
+        public void enterSearchMode(View v) {
+            enterSearch();
+        }
+
+        @Override
+        public void showOptionsMenu(View v) {
+            showOptionsBottomSheet(v);
+        }
+    };
+
     @SuppressLint("ClickableViewAccessibility")
     public AppDrawerController(Host host, ViewGroup rootView) {
         mHost = host;
@@ -134,8 +142,6 @@ public class AppDrawerController implements BasePageController {
         DrawableCompat.setTint(
             searchBox.getBackground(),
             ContextCompat.getColor(mContext, R.color.primary_text_color));
-        mQuitDrawable = ContextCompat.getDrawable(mContext, R.drawable.ic_clear_white_48dp);
-        mSearchDrawable = ContextCompat.getDrawable(mContext, R.drawable.ic_search_white_48dp);
         mLayoutManager = new LinearLayoutManager(mContext, RecyclerView.VERTICAL, false);
         appRecyclerView.setLayoutManager(mLayoutManager);
         appRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -179,9 +185,8 @@ public class AppDrawerController implements BasePageController {
         if (mIsSearching) {
             quitSearch();
         }
-        mAdapter = new ApplicationIconAdapter(ViewUtils.activityOf(mContext));
+        mAdapter = new ApplicationIconAdapter(mAdapterDelegate, ViewUtils.activityOf(mContext));
         mAdapter.setHasStableIds(true);
-        mLayoutManager.setReverseLayout(mIsSearching);
         appRecyclerView.setAdapter(mAdapter);
     }
 
@@ -193,9 +198,9 @@ public class AppDrawerController implements BasePageController {
         searchBox.clearFocus();
         hideKeyboard();
         mIsSearching = false;
-        searchBoxButton.setImageDrawable(mSearchDrawable);
-        searchBox.setVisibility(GONE);
+        actionBar.setVisibility(GONE);
         storeSearchButton.setVisibility(GONE);
+        mLayoutManager.setReverseLayout(false);
         mAdapter.leaveSearch();
     }
 
@@ -212,13 +217,9 @@ public class AppDrawerController implements BasePageController {
         return mDragAwareComponent;
     }
 
-    @OnClick(R.id.search_box_button)
-    public void onSearchButtonClicked(View view) {
-        if (!mIsSearching) {
-            enterSearch();
-        } else {
-            quitSearch();
-        }
+    @OnClick(R.id.close_search_button)
+    public void onCloseSearchButtonClicked(View view) {
+        quitSearch();
     }
 
     private void enterSearch() {
@@ -227,10 +228,10 @@ public class AppDrawerController implements BasePageController {
         }
 
         mIsSearching = true;
-        searchBoxButton.setImageDrawable(mQuitDrawable);
-        searchBox.setVisibility(VISIBLE);
+        actionBar.setVisibility(VISIBLE);
         searchBox.requestFocus();
         showKeyboard();
+        onSearchChanged("", 0, 0, 0);
     }
 
     private void showKeyboard() {
@@ -241,8 +242,7 @@ public class AppDrawerController implements BasePageController {
         }
     }
 
-    @OnClick(R.id.bottom_sheet_settings_button)
-    public void onSettingsButtonClicked(View view) {
+    private void showOptionsBottomSheet(View view) {
         new BottomSheetHelper()
             .addItem(
                 R.drawable.ic_visibility_off_white_48dp,
@@ -273,6 +273,7 @@ public class AppDrawerController implements BasePageController {
     public void showHideAppsMenu() {
         HiddenAppsBottomSheet.show(mContext, apps -> {
             DatabaseEditor.get().saveHiddenAppsFromIcons(apps);
+            AppInfoCache.get().reloadVisibleActivities();
             reloadAppList();
         });
     }
@@ -302,6 +303,7 @@ public class AppDrawerController implements BasePageController {
     @OnTextChanged(value = R.id.search_box, callback = OnTextChanged.Callback.TEXT_CHANGED)
     public void onSearchChanged(CharSequence s, int start, int before, int count) {
         storeSearchButton.setVisibility(mAdapter.performSearch(s.toString()) ? GONE : VISIBLE);
+        mLayoutManager.setReverseLayout(true);
     }
 
     @OnEditorAction(R.id.search_box)

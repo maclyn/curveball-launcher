@@ -14,7 +14,7 @@
     <string name="add_to_dock">To Dock</string>
     <string name="uninstall">Uninstall</string>
     <string name="new_row">New Row</string>
-    <string name="search_hint">Find apps</string>
+    <string name="search_hint">Search apps</string>
     <string name="remove_row">Remove Row</string>
     <string name="resize_widget">Resize Widget</string>
     <string name="remove_widget">Remove Widget</string>
@@ -253,7 +253,7 @@
     <string name="dock_items">Dock items</string>
     <string name="manage_hidden_calendars">Manage hidden calendars</string>
     <string name="manage_hidden_calendars_description">Choose the calendars that won\'t show up in dock suggestions.</string>
-    <string name="apps_installed">apps installed</string>
+    <string name="apps_installed">apps</string>
     <string name="export_log_description">Export log to storage.</string>
 </resources>
 

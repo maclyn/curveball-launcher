@@ -1,6 +1,7 @@
 package com.inipage.homelylauncher.drawer;
 
 import android.app.Activity;
+import android.util.Pair;
 import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -8,7 +9,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -35,28 +35,36 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.stream.Collectors;
 
 /**
  * Renders application icons and performs searches for the app list.
  */
 public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
+    public interface Delegate {
+
+        void enterSearchMode(View v);
+
+        void showOptionsMenu(View v);
+    }
+
     private static class AdapterElement {
 
         @Nullable
         private final ApplicationIconHideable mUnderlyingApp;
-        private final char mUnderlyingIndex;
+        private final char mUnderlyingHeaderChar;
         private final int mElementType;
 
-        private AdapterElement(@Nullable ApplicationIconHideable icon, char underlyingIndex, int elementType) {
+        private AdapterElement(@Nullable ApplicationIconHideable icon, char underlyingHeaderChar, int elementType) {
             mUnderlyingApp = icon;
-            mUnderlyingIndex = underlyingIndex;
+            mUnderlyingHeaderChar = underlyingHeaderChar;
             mElementType = elementType;
         }
 
@@ -77,15 +85,31 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             return Preconditions.checkNotNull(mUnderlyingApp);
         }
 
-        public char getUnderlyingIndex() {
+        public char getUnderlyingHeaderChar() {
             Preconditions.checkState(mElementType == ITEM_VIEW_TYPE_LETTER_HEADER);
-            return mUnderlyingIndex;
+            return mUnderlyingHeaderChar;
         }
 
         public int getElementType() {
             return mElementType;
         }
     }
+
+    private static final Comparator<AdapterElement> ELEMENT_COMPARATOR = new Comparator<AdapterElement>() {
+        @Override
+        public int compare(AdapterElement o1, AdapterElement o2) {
+            if (o1.getElementType() == ITEM_VIEW_TYPE_TOP_HEADER && o2.getElementType() != ITEM_VIEW_TYPE_TOP_HEADER) {
+                return -1;
+            }
+            if (o1.getElementType() != ITEM_VIEW_TYPE_TOP_HEADER && o2.getElementType() == ITEM_VIEW_TYPE_TOP_HEADER) {
+                return 1;
+            }
+            // Since max(count(elements w/ TYPE_TOP)) == 1), we don't have to consider it from here
+            // on out; just focus on LETTER_HEADERS and APPS
+            // TODO
+            return 0;
+        }
+    };
 
     private enum Mode {
         SHOWING_ALL,
@@ -98,6 +122,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     private static final int HEADER_ITEM_ID = 0;
 
+    private final Delegate mDelegate;
     private final List<ApplicationIconHideable> mApps;
     private final PatriciaTrie<ApplicationIconHideable> mAppsTree = new PatriciaTrie<>();
     private final Activity mActivity;
@@ -107,7 +132,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     private List<ApplicationIconHideable> mLastSearchResult;
     private Mode mMode;
 
-    public ApplicationIconAdapter(Activity activity) {
+    public ApplicationIconAdapter(Delegate delegate, Activity activity) {
         this.mApps = AppInfoCache.get().getAppDrawerActivities();
         for (ApplicationIconHideable icon : mApps) {
             mAppsTree.put(icon.getName().toLowerCase(Locale.getDefault()), icon);
@@ -115,6 +140,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 IconCacheSync.getInstance(activity).getActivityIcon(
                     icon.getPackageName(), icon.getActivityName()));
         }
+        this.mDelegate = delegate;
         this.mActivity = activity;
         this.mMode = Mode.SHOWING_ALL;
         rebuild(null);
@@ -127,8 +153,9 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
      */
     public boolean performSearch(String query) {
         mMode = Mode.SEARCH_RESULTS;
-        rebuild(query);
-        notifyDataSetChanged();
+        if (rebuild(query)) {
+            notifyDataSetChanged();
+        }
         return !mElements.isEmpty();
     }
 
@@ -145,62 +172,134 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     public void spliceInPackageChanges(
         String changedPackage,
         List<ApplicationIconHideable> activities) {
-        // TODO: THIS IS ALL WRONG NOW
+        // This only functions when we're showing all apps
+        Preconditions.checkState(mMode == Mode.SHOWING_ALL);
 
         // This can't leverage rebuild() as we do for searching/init(), since we want the removed
         // elements to cleanly animate away
 
-        /*
-        // Kill the existing items with the package name
-        Set<Integer> toRemove = new HashSet<>();
+        // Kill the existing items in mApps and mElements with the package name
+        Set<Integer> toRemoveFromApps = new HashSet<>();
         for (int i = 0; i < mApps.size(); i++) {
             if (mApps.get(i).getPackageName().equals(changedPackage)) {
-                toRemove.add(i);
+                toRemoveFromApps.add(i);
+            }
+        }
+        Set<Integer> toRemoveFromElements = new HashSet<>();
+        for (int i = 0; i < mElements.size(); i++) {
+            final AdapterElement element = mElements.get(i);
+            if (element.getElementType() != ITEM_VIEW_TYPE_APP) {
+                continue;
+            }
+            if (element.getUnderlyingApp().getPackageName().equals(changedPackage)) {
+                toRemoveFromElements.add(i);
             }
         }
         int removedCount = 0;
-        for (Integer idx : toRemove) {
+        for (Integer idx : toRemoveFromApps) {
             final int realIdx = idx - removedCount;
+            mAppsTree.remove(mApps.get(realIdx).getName().toLowerCase(Locale.getDefault()));
             mApps.remove(realIdx);
-            notifyItemRemoved(realIdx + (mRenderHeaders ? 1 : 0));
             removedCount++;
         }
+        int removedElementCount = 0;
+        for (Integer idx : toRemoveFromElements) {
+            final int realIdx = idx - removedElementCount;
+            mElements.remove(realIdx);
+            notifyItemRemoved(realIdx);
+            removedElementCount++;
+        }
 
-        // Splice in the new activities in-place
-        int addedCount = 0;
+        // Splice in the new activities in-place to mApps and mElements
         for (ApplicationIconHideable activity : activities) {
-            final int insertionIdx =
+            final int appsInsertionIdx =
                 Math.abs(Collections.binarySearch(
                     mApps, activity, FastScrollable.getComparator()));
-            if (insertionIdx >= mApps.size()) {
+            if (appsInsertionIdx >= mApps.size()) {
                 mApps.add(activity);
             } else {
-                mApps.add(insertionIdx, activity);
+                mApps.add(appsInsertionIdx, activity);
             }
-            notifyItemInserted(insertionIdx + (mRenderHeaders ? 1 : 0));
-            addedCount++;
-        }
-        if (removedCount != addedCount && mRenderHeaders) {
-            notifyItemChanged(0);
+            mAppsTree.put(activity.getName().toLowerCase(Locale.getDefault()), activity);
+
+            final AdapterElement newAppElement = AdapterElement.createAppElement(activity);
+            final int elementsInsertionIdx = Math.abs(Collections.binarySearch(mElements, newAppElement, ELEMENT_COMPARATOR));
+            if (elementsInsertionIdx >= mElements.size()) {
+                mElements.add(newAppElement);
+                notifyItemInserted(mElements.size());
+            } else {
+                mElements.add(elementsInsertionIdx, newAppElement);
+                notifyItemInserted(elementsInsertionIdx);
+            }
         }
 
-         */
+        // Iterates through mElements, add any headers we need, and remove any we dont'
+        final Set<Pair<Integer, Character>> changeIndices = new HashSet<>();
+        // When iterating through changeIndices, hitting removeCharacter = remove this index
+        final char removeCharacter = '0';
+        char characterOfLastHeader = '0';
+        int netOffsetFromAddRemove = 0;
+        for (int i = 1; i < mElements.size(); i++) {
+            AdapterElement element = mElements.get(i);
+            if (element.getElementType() == ITEM_VIEW_TYPE_LETTER_HEADER) {
+                if (mElements.get(i - 1).getElementType() == ITEM_VIEW_TYPE_LETTER_HEADER) {
+                    // We've seen two headers in a row; trim the one right before
+                    changeIndices.add(new Pair<>(i - 1 + netOffsetFromAddRemove, removeCharacter));
+                    netOffsetFromAddRemove--;
+                }
+                characterOfLastHeader = element.getUnderlyingHeaderChar();
+            } else if (element.getElementType() == ITEM_VIEW_TYPE_APP) {
+                char appScrollable = element.getUnderlyingApp().getScrollableField();
+                if (appScrollable != characterOfLastHeader) {
+                    // Drop a new header here
+                    changeIndices.add(new Pair<>(i + netOffsetFromAddRemove, appScrollable));
+                    netOffsetFromAddRemove++;
+                }
+            }
+        }
+        for (Pair<Integer, Character> change : changeIndices) {
+            if (change.second == removeCharacter) {
+                mElements.remove((int) change.first);
+                notifyItemRemoved(change.second);
+            } else {
+                mElements.add(change.first, AdapterElement.createHeaderElement(change.second));
+                notifyItemInserted(change.first);
+            }
+        }
+
+        // Refresh the top-most header
+        notifyItemChanged(0);
     }
 
     public void hideApp(ApplicationIcon ai) {
-        // TODO: THIS IS ALL WRONG NOW
-
-        /*
-        final int index = mApps.indexOf(new ApplicationIconHideable(mActivity, ai.getPackageName(), ai.getActivityName(), false));
-        if (index != -1) {
-            mApps.remove(index);
-            notifyItemRemoved(index + (mRenderHeaders ? 1 : 0));
+        // We both remove the relevant app from mElements and mApps
+        int position = -1;
+        ApplicationIconHideable searchKey = new ApplicationIconHideable(mActivity, ai.getPackageName(), ai.getActivityName(), false);
+        for (int i = 0; i < mElements.size(); i++) {
+            if (mElements.get(i).getElementType() == ITEM_VIEW_TYPE_APP && mElements.get(i).getUnderlyingApp().equals(searchKey)) {
+                position = i;
+                break;
+            }
         }
-        if (mRenderHeaders) {
-            notifyItemChanged(0);
+        if (position == -1) {
+            return;
         }
-
-         */
+        final boolean hasHeaderAbove = mElements.get(position - 1).getElementType() == ITEM_VIEW_TYPE_LETTER_HEADER;
+        final boolean lastItemInSection = position == mElements.size() - 1 ?
+          hasHeaderAbove :
+          mElements.get(position + 1).getElementType() == ITEM_VIEW_TYPE_LETTER_HEADER;
+        mElements.remove(position);
+        mAppsTree.remove(searchKey.getName().toLowerCase(Locale.getDefault()));
+        notifyItemRemoved(position);
+        // Maybe remove the header too?
+        if (lastItemInSection) {
+            mElements.remove(position - 1);
+            notifyItemRemoved(position - 1);
+        }
+        final int appsIndex = mApps.indexOf(searchKey);
+        if (appsIndex != -1) {
+            mApps.remove(appsIndex);
+        }
     }
 
     public ApplicationIcon getFirstApp() {
@@ -242,11 +341,13 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         if (itemViewType == ITEM_VIEW_TYPE_TOP_HEADER) {
             final TopHeaderHolder headerHolder = (TopHeaderHolder) holder;
             headerHolder.installCount.setText(String.valueOf(mApps.size()));
+            headerHolder.enterSearchButton.setOnClickListener(mDelegate::enterSearchMode);
+            headerHolder.showOptionsMenu.setOnClickListener(mDelegate::showOptionsMenu);
             return;
         }
         if (itemViewType == ITEM_VIEW_TYPE_LETTER_HEADER) {
             final LetterHolder letterHolder = (LetterHolder) holder;
-            letterHolder.title.setText(String.valueOf(mElements.get(i).getUnderlyingIndex()));
+            letterHolder.title.setText(String.valueOf(mElements.get(i).getUnderlyingHeaderChar()));
             return;
         }
 
@@ -317,7 +418,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             case ITEM_VIEW_TYPE_TOP_HEADER:
                 return HEADER_ITEM_ID;
             case ITEM_VIEW_TYPE_LETTER_HEADER:
-                return mElements.get(position).getUnderlyingIndex();
+                return mElements.get(position).getUnderlyingHeaderChar();
             default:
             case ITEM_VIEW_TYPE_APP:
                 return mElements.get(position).getUnderlyingApp().hashCode();
@@ -336,11 +437,12 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     /**
      * Use mode and search query to rebuild the elements that'll be rendered.
+     * @return True if mElements has been updated.
      */
-    private void rebuild(@Nullable String searchQuery) {
-        mElements = new ArrayList<>();
-        if (searchQuery == null) {
+    private boolean rebuild(@Nullable String query) {
+        if (query == null) {
             mLastSearchResult = null;
+            mElements = new ArrayList<>();
             mElements.add(AdapterElement.createTopElement());
             char currentScrollableField = '@'; // never a scrollable field, i guess
             for (ApplicationIconHideable app : mApps) {
@@ -350,18 +452,15 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 }
                 mElements.add(AdapterElement.createAppElement(app));
             }
-            return;
+            return true;
         }
-
-        // TODO: Make searches work
-        /*
 
         final String netQuery = query.toLowerCase(Locale.getDefault());
         // 1 - Get the matching apps by first few characters
         final SortedMap<String, ApplicationIconHideable> searchMap = mAppsTree.prefixMap(netQuery);
         final List<ApplicationIconHideable> result = new ArrayList<>(searchMap.values());
         // 2 - Search through everything else by checking contains()
-        for (ApplicationIconHideable icon : mCachedApps) {
+        for (ApplicationIconHideable icon : mApps) {
             if (icon.isHidden() || searchMap.containsValue(icon)) {
                 continue;
             }
@@ -370,21 +469,27 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             }
         }
         if (mLastSearchResult != null && mLastSearchResult.equals(result)) {
-            return;
+            return false;
         }
         mLastSearchResult = result;
-        updateDrawerAdapter(result);
-        searchApps(s.toString());
-
-         */
+        // 3 - Map these all to elements
+        mElements = mLastSearchResult
+            .parallelStream()
+            .map(AdapterElement::createAppElement)
+            .collect(Collectors.toList());
+        return true;
     }
 
     public static class TopHeaderHolder extends AlphaAwareViewHolder {
         TextView installCount;
+        View enterSearchButton;
+        View showOptionsMenu;
 
         public TopHeaderHolder(View view) {
             super(view);
             this.installCount = ViewCompat.requireViewById(view, R.id.installed_apps_count);
+            this.enterSearchButton = ViewCompat.requireViewById(view, R.id.search_box_button);
+            this.showOptionsMenu = ViewCompat.requireViewById(view, R.id.bottom_sheet_settings_button);
         }
     }
 

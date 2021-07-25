@@ -9,13 +9,17 @@ import java.util.Locale;
 
 public abstract class FastScrollable {
 
-    private final static char NUMERIC = '#';
-    private final static char UNKNOWN = '?';
-    private static final Comparator<Character> mCharComparator = (o1c, o2c) -> o1c - o2c;
-    private static final Comparator<FastScrollable> mComparator = (o1, o2) -> {
+    public final static char NUMERIC = '#';
+    private static final Comparator<Character> CHAR_COMPARATOR = (o1c, o2c) -> o1c - o2c;
+    private static final Comparator<FastScrollable> COMPARATOR = (o1, o2) -> {
         final char o1c = o1.getScrollableField();
         final char o2c = o2.getScrollableField();
-        final int rVal = mCharComparator.compare(o1c, o2c);
+        if (o1c == NUMERIC && o2c != NUMERIC) {
+            return -1;
+        } else if (o1c != NUMERIC && o2c == NUMERIC) {
+            return 1;
+        }
+        final int rVal = CHAR_COMPARATOR.compare(o1c, o2c);
         if (rVal == 0) {
             return o1.getName().compareToIgnoreCase(o2.getName());
         }
@@ -24,11 +28,11 @@ public abstract class FastScrollable {
     private char mScrollableField = 0;
 
     public static Comparator<Character> getCharComparator() {
-        return mCharComparator;
+        return CHAR_COMPARATOR;
     }
 
     public static Comparator<FastScrollable> getComparator() {
-        return mComparator;
+        return COMPARATOR;
     }
 
     public char getScrollableField() {
@@ -38,16 +42,16 @@ public abstract class FastScrollable {
 
         @Nullable final String assignedName = getName();
         if (TextUtils.isEmpty(assignedName)) {
-            return (mScrollableField = UNKNOWN);
+            return (mScrollableField = NUMERIC);
         }
-        final char firstChar = assignedName.toUpperCase(Locale.getDefault()).charAt(0);
+        final char firstChar = assignedName.toUpperCase(Locale.US).charAt(0);
         if (Character.isDigit(firstChar)) {
             return (mScrollableField = NUMERIC);
         }
         if (Character.isAlphabetic(firstChar) || Character.isIdeographic(firstChar)) {
             return (mScrollableField = firstChar);
         }
-        return (mScrollableField = UNKNOWN); // Symbols, etc.
+        return (mScrollableField = NUMERIC); // Symbols, etc.
     }
 
     public abstract String getName();

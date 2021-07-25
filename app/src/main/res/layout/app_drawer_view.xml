@@ -35,6 +35,7 @@
         android:background="@color/transparent"
         android:gravity="center_vertical"
         android:orientation="horizontal"
+        android:visibility="gone"
         android:paddingHorizontal="12dp">
 
         <EditText
@@ -54,25 +55,15 @@
             android:singleLine="true"
             android:textColor="#ffffff"
             android:textColorHint="#90ffffff"
-            android:textSize="18sp"
-            android:visibility="gone" />
+            android:textSize="18sp" />
 
         <ImageView
-            android:id="@+id/search_box_button"
+            android:id="@+id/close_search_button"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="6dp"
-            android:src="@drawable/ic_search_white_48dp"
-            app:tint="@color/primary_text_color" />
-
-        <ImageView
-            android:id="@+id/bottom_sheet_settings_button"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="6dp"
-            android:src="@drawable/ic_more_vert_white_48dp"
+            android:src="@drawable/ic_clear_white_48dp"
             app:tint="@color/primary_text_color" />
     </LinearLayout>
 </RelativeLayout>

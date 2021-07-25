@@ -257,6 +257,13 @@ public class AppInfoCache {
         return mAppWidgetHost;
     }
 
+    /**
+     * Call when an app is hidden locally.
+     */
+    public void reloadVisibleActivities() {
+        mInstalledApps = getInstalledAppsImpl(null);
+    }
+
     public List<ApplicationIconHideable> getAllActivities() {
         return mInstalledApps;
     }

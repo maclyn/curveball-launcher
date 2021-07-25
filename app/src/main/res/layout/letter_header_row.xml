@@ -4,9 +4,9 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:gravity="center_vertical"
-    android:orientation="vertical"
-    android:paddingHorizontal="8dp"
-    android:paddingVertical="8dp">
+    android:orientation="horizontal"
+    android:paddingHorizontal="22dp"
+    android:paddingVertical="4dp">
 
     <!-- TODO: Make this a cooler custom View, ala WP -->
     <TextView
@@ -18,7 +18,11 @@
         android:maxLines="1"
         android:text="A"
         android:textColor="@color/primary_text_color"
-        android:paddingStart="8dp"
-        android:layout_marginTop="-8dp"
-        android:textSize="20sp" />
+        android:textSize="24sp" />
+
+    <View
+        android:background="@drawable/apps_letter_header_line"
+        android:layout_marginStart="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="1.5dp" />
 </LinearLayout>
