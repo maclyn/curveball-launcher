@@ -2,6 +2,8 @@ package com.inipage.homelylauncher.model;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
+
 import com.inipage.homelylauncher.caches.AppLabelCache;
 import com.inipage.homelylauncher.drawer.FastScrollable;
 
@@ -45,5 +47,11 @@ public class ApplicationIcon extends FastScrollable {
     @Override
     public int hashCode() {
         return hashCode;
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return label;
     }
 }

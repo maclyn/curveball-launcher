@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -23,6 +24,7 @@ import com.inipage.homelylauncher.model.GridItem;
 import com.inipage.homelylauncher.state.LayoutEditingSingleton;
 import com.inipage.homelylauncher.utils.DebugLogUtils;
 import com.inipage.homelylauncher.utils.InstalledAppUtils;
+import com.inipage.homelylauncher.utils.LifecycleLogUtils;
 import com.inipage.homelylauncher.utils.Prewarmer;
 import com.inipage.homelylauncher.views.AppPopupMenu;
 import com.inipage.homelylauncher.views.DecorViewDragger;
@@ -93,6 +95,16 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         public int getElementType() {
             return mElementType;
         }
+
+        @NonNull
+        @Override
+        public String toString() {
+            return mElementType == ITEM_VIEW_TYPE_TOP_HEADER ?
+                   "Topmost header" :
+                   (mElementType == ITEM_VIEW_TYPE_LETTER_HEADER ?
+                        "Letter header for " + getUnderlyingHeaderChar() :
+                            "App element for " + getUnderlyingApp().toString());
+        }
     }
 
     private static final Comparator<AdapterElement> ELEMENT_COMPARATOR = new Comparator<AdapterElement>() {
@@ -106,7 +118,42 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             }
             // Since max(count(elements w/ TYPE_TOP)) == 1), we don't have to consider it from here
             // on out; just focus on LETTER_HEADERS and APPS
-            // TODO
+
+            // Two apps -- easy, compare app names
+            if (o1.getElementType() == ITEM_VIEW_TYPE_APP && o2.getElementType() == ITEM_VIEW_TYPE_APP) {
+                return FastScrollable.getComparator().compare(o1.getUnderlyingApp(), o2.getUnderlyingApp());
+            }
+
+            // Two headers -- easy, compare character
+            if (o1.getElementType() == ITEM_VIEW_TYPE_LETTER_HEADER && o2.getElementType() == ITEM_VIEW_TYPE_LETTER_HEADER) {
+                return FastScrollable.getCharComparator().compare(o1.getUnderlyingHeaderChar(), o2.getUnderlyingHeaderChar());
+            }
+
+            // lhs = header, rhs = app
+            if (o1.getElementType() == ITEM_VIEW_TYPE_LETTER_HEADER && o2.getElementType() == ITEM_VIEW_TYPE_APP) {
+                char header = o1.getUnderlyingHeaderChar();
+                char appHeader = o2.getUnderlyingApp().getScrollableField();
+                if (header == FastScrollable.NUMERIC) {
+                    return -1; // header goes first -> top of list
+                }
+                if (header == appHeader) {
+                    return -1; // header goes first -> correct header for this particular app
+                }
+                return FastScrollable.getCharComparator().compare(header, appHeader);
+            }
+
+            // lhs = app, rhs = header
+            if (o1.getElementType() == ITEM_VIEW_TYPE_APP && o2.getElementType() == ITEM_VIEW_TYPE_LETTER_HEADER) {
+                char appHeader = o1.getUnderlyingApp().getScrollableField();
+                char header = o2.getUnderlyingHeaderChar();
+                if (header == FastScrollable.NUMERIC) {
+                    return 1;
+                }
+                if (header == appHeader) {
+                    return -1;
+                }
+                return FastScrollable.getCharComparator().compare(appHeader, header);
+            }
             return 0;
         }
     };
@@ -151,7 +198,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
      * @param query The search.
      * @return Whether the search returns results.
      */
-    public boolean performSearch(String query) {
+    public synchronized boolean performSearch(String query) {
         mMode = Mode.SEARCH_RESULTS;
         if (rebuild(query)) {
             notifyDataSetChanged();
@@ -159,7 +206,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         return !mElements.isEmpty();
     }
 
-    public void leaveSearch() {
+    public synchronized void leaveSearch() {
         if (mMode != Mode.SEARCH_RESULTS) {
             return;
         }
@@ -169,7 +216,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         notifyDataSetChanged();
     }
 
-    public void spliceInPackageChanges(
+    public synchronized void spliceInPackageChanges(
         String changedPackage,
         List<ApplicationIconHideable> activities) {
         // This only functions when we're showing all apps
@@ -205,7 +252,8 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         int removedElementCount = 0;
         for (Integer idx : toRemoveFromElements) {
             final int realIdx = idx - removedElementCount;
-            mElements.remove(realIdx);
+            AdapterElement removedElement = mElements.remove(realIdx);
+            LifecycleLogUtils.logEvent(LifecycleLogUtils.LogType.LOG, "Spliced out " + removedElement.toString() + " at " + realIdx);
             notifyItemRemoved(realIdx);
             removedElementCount++;
         }
@@ -214,7 +262,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         for (ApplicationIconHideable activity : activities) {
             final int appsInsertionIdx =
                 Math.abs(Collections.binarySearch(
-                    mApps, activity, FastScrollable.getComparator()));
+                    mApps, activity, FastScrollable.getComparator()) - 1);
             if (appsInsertionIdx >= mApps.size()) {
                 mApps.add(activity);
             } else {
@@ -223,7 +271,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             mAppsTree.put(activity.getName().toLowerCase(Locale.getDefault()), activity);
 
             final AdapterElement newAppElement = AdapterElement.createAppElement(activity);
-            final int elementsInsertionIdx = Math.abs(Collections.binarySearch(mElements, newAppElement, ELEMENT_COMPARATOR));
+            final int elementsInsertionIdx = Math.abs(Collections.binarySearch(mElements, newAppElement, ELEMENT_COMPARATOR) - 1);
             if (elementsInsertionIdx >= mElements.size()) {
                 mElements.add(newAppElement);
                 notifyItemInserted(mElements.size());
@@ -231,6 +279,9 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 mElements.add(elementsInsertionIdx, newAppElement);
                 notifyItemInserted(elementsInsertionIdx);
             }
+            LifecycleLogUtils.logEvent(
+                LifecycleLogUtils.LogType.LOG,
+                "Spliced in " + newAppElement.toString() + " at " + elementsInsertionIdx);
         }
 
         // Iterates through mElements, add any headers we need, and remove any we dont'
@@ -259,10 +310,13 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         }
         for (Pair<Integer, Character> change : changeIndices) {
             if (change.second == removeCharacter) {
-                mElements.remove((int) change.first);
+                AdapterElement removedElement = mElements.remove((int) change.first);
+                LifecycleLogUtils.logEvent(LifecycleLogUtils.LogType.LOG, "Spliced out " + removedElement.toString() + " at " + change.first);
                 notifyItemRemoved(change.second);
             } else {
-                mElements.add(change.first, AdapterElement.createHeaderElement(change.second));
+                final AdapterElement newElement = AdapterElement.createHeaderElement(change.second);
+                mElements.add(change.first, newElement);
+                LifecycleLogUtils.logEvent(LifecycleLogUtils.LogType.LOG, "Spliced in " + newElement.toString() + " at " + change.first);
                 notifyItemInserted(change.first);
             }
         }
@@ -271,7 +325,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         notifyItemChanged(0);
     }
 
-    public void hideApp(ApplicationIcon ai) {
+    public synchronized void hideApp(ApplicationIcon ai) {
         // We both remove the relevant app from mElements and mApps
         int position = -1;
         ApplicationIconHideable searchKey = new ApplicationIconHideable(mActivity, ai.getPackageName(), ai.getActivityName(), false);
@@ -336,7 +390,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     // Set up specific customIcon with data
     @Override
-    public void onBindViewHolder(final RecyclerView.ViewHolder holder, int i) {
+    public synchronized void onBindViewHolder(final RecyclerView.ViewHolder holder, int i) {
         final int itemViewType = getItemViewType(i);
         if (itemViewType == ITEM_VIEW_TYPE_TOP_HEADER) {
             final TopHeaderHolder headerHolder = (TopHeaderHolder) holder;
@@ -413,7 +467,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     }
 
     @Override
-    public long getItemId(int position) {
+    public synchronized long getItemId(int position) {
         switch (getItemViewType(position)) {
             case ITEM_VIEW_TYPE_TOP_HEADER:
                 return HEADER_ITEM_ID;
@@ -426,12 +480,12 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     }
 
     @Override
-    public int getItemCount() {
+    public synchronized int getItemCount() {
         return mElements.size();
     }
 
     @Override
-    public int getItemViewType(int position) {
+    public synchronized int getItemViewType(int position) {
         return mElements.get(position).getElementType();
     }
 

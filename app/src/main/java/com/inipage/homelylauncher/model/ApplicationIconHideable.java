@@ -3,6 +3,7 @@ package com.inipage.homelylauncher.model;
 import android.content.Context;
 import android.content.pm.LauncherActivityInfo;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 public class ApplicationIconHideable extends ApplicationIcon {
@@ -45,5 +46,11 @@ public class ApplicationIconHideable extends ApplicationIcon {
             return false;
         }
         return obj.hashCode() == this.hashCode();
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return super.toString() + (mIsHidden ? " (hidden)" : "");
     }
 }

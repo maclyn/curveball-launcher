@@ -5,6 +5,7 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.ViewConfiguration;
@@ -127,7 +128,7 @@ public class GesturePageLayout extends FrameLayout {
                         GESTURE_LONG_PRESS,
                         (int) event.getRawX(),
                         (int) event.getRawY()),
-                    event.getDownTime() + mLongPressTimeout);
+                    SystemClock.uptimeMillis() + mLongPressTimeout);
                 return false;
             case ACTION_MOVE:
                 log("ACTION_MOVE");

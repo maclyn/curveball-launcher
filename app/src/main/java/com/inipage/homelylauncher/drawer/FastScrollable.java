@@ -10,7 +10,18 @@ import java.util.Locale;
 public abstract class FastScrollable {
 
     public final static char NUMERIC = '#';
-    private static final Comparator<Character> CHAR_COMPARATOR = (o1c, o2c) -> o1c - o2c;
+    private static final Comparator<Character> CHAR_COMPARATOR = (o1c, o2c) -> {
+        if (o1c == o2c) {
+            return 0;
+        }
+        if (o1c == NUMERIC) {
+            return -1;
+        }
+        if (o2c == NUMERIC) {
+            return 1;
+        }
+        return o1c - o2c;
+    };
     private static final Comparator<FastScrollable> COMPARATOR = (o1, o2) -> {
         final char o1c = o1.getScrollableField();
         final char o2c = o2.getScrollableField();

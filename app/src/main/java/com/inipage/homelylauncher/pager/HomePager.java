@@ -28,6 +28,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Adapter for a the core application ViewPager.
+ */
 public class HomePager extends RecyclerView.Adapter<HomePager.PagerHolder> {
 
     private static final int VIEW_TYPE_APP_DRAWER = 0;
@@ -149,7 +152,6 @@ public class HomePager extends RecyclerView.Adapter<HomePager.PagerHolder> {
     @Override
     public void onViewDetachedFromWindow(@NonNull PagerHolder holder) {
         if (holder.pageController != null) {
-            getAppDrawerController().getView().getContext();
             holder.pageController.detach(getActivity());
         }
     }
@@ -178,7 +180,7 @@ public class HomePager extends RecyclerView.Adapter<HomePager.PagerHolder> {
     }
 
     public float getWallpaperOffset(int selectedItem, float offset) {
-        final float delta = getItemCount() / 1F;
+        final float delta = getItemCount();
         return (selectedItem * delta) + (offset * delta);
     }
 
