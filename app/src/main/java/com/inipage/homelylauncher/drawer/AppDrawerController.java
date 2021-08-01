@@ -2,11 +2,14 @@ package com.inipage.homelylauncher.drawer;
 
 import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.net.ParseException;
 import android.net.Uri;
+import android.util.Log;
 import android.view.DragEvent;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -26,6 +29,7 @@ import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.inipage.homelylauncher.BuildConfig;
 import com.inipage.homelylauncher.R;
 import com.inipage.homelylauncher.SettingsActivity;
 import com.inipage.homelylauncher.caches.AppInfoCache;
@@ -47,9 +51,11 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.SortedMap;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import butterknife.BindView;
@@ -243,7 +249,7 @@ public class AppDrawerController implements BasePageController {
     }
 
     private void showOptionsBottomSheet(View view) {
-        new BottomSheetHelper()
+        final BottomSheetHelper bottomSheetHelper = new BottomSheetHelper()
             .addItem(
                 R.drawable.ic_visibility_off_white_48dp,
                 R.string.hidden_apps_setting_title,
@@ -266,8 +272,56 @@ public class AppDrawerController implements BasePageController {
                 settingsActivity.setFlags(
                     Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 ViewUtils.activityOf(mContext).startActivity(settingsActivity);
-            })
-            .show(mContext, mContext.getString(R.string.settings));
+            });
+        if (BuildConfig.DEBUG) {
+            // Crude tests of spliceInPackageChanges()
+            bottomSheetHelper
+                .addItem(R.drawable.ic_more_vert_white_48dp, R.string.splice_test, () -> {
+                    List<ApplicationIconHideable> apps = AppInfoCache
+                        .get()
+                        .getAppDrawerActivities();
+                    String tested = "";
+                    int i;
+                    for (i = 0; i < 100; i++) {
+                        int target = (int) (Math.random() * apps.size());
+                        ApplicationIconHideable sample = apps.get(target);
+                        List<ApplicationIconHideable> toAdd = apps.stream()
+                            .filter(app -> app.getPackageName().equals(sample.getPackageName()))
+                            .collect(Collectors.toList());
+                        tested += sample.getPackageName() + "\n";
+                        mAdapter.spliceInPackageChanges(
+                            sample.getPackageName(),
+                            toAdd);
+                        if (!mAdapter.isConsistent_USE_FOR_DEBUGGING_ONLY()) {
+                            tested = tested.trim();
+                            Toast.makeText(mContext, "Failed after: \n" + tested, Toast.LENGTH_LONG).show();
+                            ClipboardManager cm = (ClipboardManager) mContext.getSystemService(Context.CLIPBOARD_SERVICE);
+                            cm.setPrimaryClip(ClipData.newPlainText("", tested));
+                            break;
+                        }
+                    }
+                    if (i == 100) {
+                        Toast
+                            .makeText(mContext,
+                                      "Passed 100 iteration splice test.",
+                                      Toast.LENGTH_SHORT)
+                            .show();
+                    }
+                });
+            bottomSheetHelper.addItem(R.drawable.ic_reorder_white_48dp, R.string.run_preset_splice_test, () -> {
+                ClipboardManager cm = (ClipboardManager) mContext.getSystemService(Context.CLIPBOARD_SERVICE);
+                String clipContents = String.valueOf(cm.getPrimaryClip().getItemAt(0).getText());
+                String[] pkgs = clipContents.split("\n");
+                for (int i = 0; i < pkgs.length; i++) {
+                    if (i == pkgs.length - 1) {
+                        Log.d("AppDrawerController", "Set a breakpoint here");
+                    }
+                    mAdapter.spliceInPackageChanges(
+                        pkgs[i], AppInfoCache.get().getActivitiesForPackage(pkgs[i]));
+                }
+            });
+        }
+        bottomSheetHelper.show(mContext, mContext.getString(R.string.settings));
     }
 
     public void showHideAppsMenu() {

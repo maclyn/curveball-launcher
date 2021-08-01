@@ -105,6 +105,26 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                         "Letter header for " + getUnderlyingHeaderChar() :
                             "App element for " + getUnderlyingApp().toString());
         }
+
+        @Override
+        public boolean equals(@Nullable Object obj) {
+            if (!(obj instanceof AdapterElement)) {
+                return false;
+            }
+            final AdapterElement other = (AdapterElement) obj;
+            if (getElementType() != other.getElementType()) {
+                return false;
+            }
+            switch (mElementType) {
+                case ITEM_VIEW_TYPE_APP:
+                    return getUnderlyingApp().equals(other.getUnderlyingApp());
+                case ITEM_VIEW_TYPE_LETTER_HEADER:
+                    return getUnderlyingHeaderChar() == other.getUnderlyingHeaderChar();
+                case ITEM_VIEW_TYPE_TOP_HEADER:
+                default:
+                    return true;
+            }
+        }
     }
 
     private static final Comparator<AdapterElement> ELEMENT_COMPARATOR = new Comparator<AdapterElement>() {
@@ -226,13 +246,13 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         // elements to cleanly animate away
 
         // Kill the existing items in mApps and mElements with the package name
-        Set<Integer> toRemoveFromApps = new HashSet<>();
+        List<Integer> toRemoveFromApps = new ArrayList<>();
         for (int i = 0; i < mApps.size(); i++) {
             if (mApps.get(i).getPackageName().equals(changedPackage)) {
                 toRemoveFromApps.add(i);
             }
         }
-        Set<Integer> toRemoveFromElements = new HashSet<>();
+        List<Integer> toRemoveFromElements = new ArrayList<>();
         for (int i = 0; i < mElements.size(); i++) {
             final AdapterElement element = mElements.get(i);
             if (element.getElementType() != ITEM_VIEW_TYPE_APP) {
@@ -262,7 +282,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         for (ApplicationIconHideable activity : activities) {
             final int appsInsertionIdx =
                 Math.abs(Collections.binarySearch(
-                    mApps, activity, FastScrollable.getComparator()) - 1);
+                    mApps, activity, FastScrollable.getComparator()) + 1);
             if (appsInsertionIdx >= mApps.size()) {
                 mApps.add(activity);
             } else {
@@ -271,10 +291,10 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             mAppsTree.put(activity.getName().toLowerCase(Locale.getDefault()), activity);
 
             final AdapterElement newAppElement = AdapterElement.createAppElement(activity);
-            final int elementsInsertionIdx = Math.abs(Collections.binarySearch(mElements, newAppElement, ELEMENT_COMPARATOR) - 1);
+            final int elementsInsertionIdx = Math.abs(Collections.binarySearch(mElements, newAppElement, ELEMENT_COMPARATOR) + 1);
             if (elementsInsertionIdx >= mElements.size()) {
                 mElements.add(newAppElement);
-                notifyItemInserted(mElements.size());
+                notifyItemInserted(mElements.size() - 1);
             } else {
                 mElements.add(elementsInsertionIdx, newAppElement);
                 notifyItemInserted(elementsInsertionIdx);
@@ -284,7 +304,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 "Spliced in " + newAppElement.toString() + " at " + elementsInsertionIdx);
         }
 
-        // Iterates through mElements, add any headers we need, and remove any we dont'
+        // Iterates through mElements, add any headers we need, and remove any we don't
         final Set<Pair<Integer, Character>> changeIndices = new HashSet<>();
         // When iterating through changeIndices, hitting removeCharacter = remove this index
         final char removeCharacter = '0';
@@ -359,6 +379,18 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     public ApplicationIcon getFirstApp() {
         Preconditions.checkState(mMode == Mode.SEARCH_RESULTS);
         return mElements.get(0).getUnderlyingApp();
+    }
+
+    /**
+     * Destructive test of adapter internal consistency.
+     * @return Checks if a fresh rebuild (which will be "correct") matches the old state. After
+     * this is called, the adapter *will* be consistent.
+     */
+    public boolean isConsistent_USE_FOR_DEBUGGING_ONLY() {
+        final List<AdapterElement> old = new ArrayList<>(mElements);
+        rebuild(null);
+        notifyDataSetChanged();
+        return old.equals(mElements);
     }
 
     @NotNull
@@ -491,6 +523,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     /**
      * Use mode and search query to rebuild the elements that'll be rendered.
+     * @param query The search query. Pass {@code null} to reload the list.
      * @return True if mElements has been updated.
      */
     private boolean rebuild(@Nullable String query) {

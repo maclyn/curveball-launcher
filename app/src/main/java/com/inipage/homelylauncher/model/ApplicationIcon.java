@@ -45,7 +45,7 @@ public class ApplicationIcon extends FastScrollable {
     }
 
     @Override
-    public int hashCode() {
+    public int  hashCode() {
         return hashCode;
     }
 

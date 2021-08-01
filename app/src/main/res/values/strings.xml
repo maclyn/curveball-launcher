@@ -255,5 +255,7 @@
     <string name="manage_hidden_calendars_description">Choose the calendars that won\'t show up in dock suggestions.</string>
     <string name="apps_installed">apps</string>
     <string name="export_log_description">Export log to storage.</string>
+    <string name="splice_test">Splice test</string>
+    <string name="run_preset_splice_test">Run splice test from clipboard</string>
 </resources>
 
