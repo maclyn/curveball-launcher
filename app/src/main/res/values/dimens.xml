@@ -52,4 +52,5 @@
     <dimen name="pocket_drop_view_internal_padding">4dp</dimen>
     <dimen name="min_dot_start_velocity_dp_s">140dp</dimen>
     <dimen name="actuation_distance">120dp</dimen>
+    <dimen name="app_row_horizontal_padding">8dp</dimen>
 </resources>

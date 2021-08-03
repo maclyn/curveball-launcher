@@ -38,9 +38,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.stream.Collectors;
@@ -192,6 +194,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     private final Delegate mDelegate;
     private final List<ApplicationIconHideable> mApps;
     private final PatriciaTrie<ApplicationIconHideable> mAppsTree = new PatriciaTrie<>();
+    private final Map<String, Integer> mHeaderToCount = new HashMap<>();
     private final Activity mActivity;
 
     private List<AdapterElement> mElements;
@@ -265,7 +268,12 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         int removedCount = 0;
         for (Integer idx : toRemoveFromApps) {
             final int realIdx = idx - removedCount;
-            mAppsTree.remove(mApps.get(realIdx).getName().toLowerCase(Locale.getDefault()));
+            final ApplicationIconHideable removedApp = mApps.get(realIdx);
+            final String headerMapKey = String.valueOf(removedApp.getScrollableField());
+            mAppsTree.remove(removedApp.getName().toLowerCase(Locale.getDefault()));
+            if (mHeaderToCount.containsKey(headerMapKey)) {
+                mHeaderToCount.put(headerMapKey, mHeaderToCount.get(headerMapKey) - 1);
+            }
             mApps.remove(realIdx);
             removedCount++;
         }
@@ -289,6 +297,13 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 mApps.add(appsInsertionIdx, activity);
             }
             mAppsTree.put(activity.getName().toLowerCase(Locale.getDefault()), activity);
+            final String headerMapKey = String.valueOf(activity.getScrollableField());
+            if (mHeaderToCount.containsKey(headerMapKey)) {
+                int count = mHeaderToCount.get(headerMapKey);
+                mHeaderToCount.put(headerMapKey, count + 1);
+            } else {
+                mHeaderToCount.put(headerMapKey, 1);
+            }
 
             final AdapterElement newAppElement = AdapterElement.createAppElement(activity);
             final int elementsInsertionIdx = Math.abs(Collections.binarySearch(mElements, newAppElement, ELEMENT_COMPARATOR) + 1);
@@ -364,6 +379,10 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
           mElements.get(position + 1).getElementType() == ITEM_VIEW_TYPE_LETTER_HEADER;
         mElements.remove(position);
         mAppsTree.remove(searchKey.getName().toLowerCase(Locale.getDefault()));
+        String headerMapKey = String.valueOf(searchKey.getScrollableField());
+        if (mHeaderToCount.containsKey(headerMapKey)) {
+            mHeaderToCount.put(headerMapKey, mHeaderToCount.get(headerMapKey) - 1);
+        }
         notifyItemRemoved(position);
         // Maybe remove the header too?
         if (lastItemInSection) {
@@ -433,7 +452,11 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         }
         if (itemViewType == ITEM_VIEW_TYPE_LETTER_HEADER) {
             final LetterHolder letterHolder = (LetterHolder) holder;
-            letterHolder.title.setText(String.valueOf(mElements.get(i).getUnderlyingHeaderChar()));
+            String underlyingCharacter = String.valueOf(mElements.get(i).getUnderlyingHeaderChar());
+            letterHolder.title.setHeaderChar(underlyingCharacter);
+            if (mHeaderToCount.containsKey(underlyingCharacter)) {
+                letterHolder.title.setHeaderCount(mHeaderToCount.get(underlyingCharacter));
+            }
             return;
         }
 
@@ -531,13 +554,20 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             mLastSearchResult = null;
             mElements = new ArrayList<>();
             mElements.add(AdapterElement.createTopElement());
-            char currentScrollableField = '@'; // never a scrollable field, i guess
+            char currentScrollableField = '@'; // Never a scrollable field?
             for (ApplicationIconHideable app : mApps) {
                 if (app.getScrollableField() != currentScrollableField) {
                     mElements.add(AdapterElement.createHeaderElement(app.getScrollableField()));
                     currentScrollableField = app.getScrollableField();
                 }
                 mElements.add(AdapterElement.createAppElement(app));
+                final String headerKey = String.valueOf(currentScrollableField);
+                if (mHeaderToCount.get(headerKey) == null) {
+                    mHeaderToCount.put(headerKey, 0);
+                }
+                mHeaderToCount.put(
+                    headerKey,
+                    mHeaderToCount.get(headerKey) + 1);
             }
             return true;
         }
@@ -581,11 +611,11 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     }
 
     public static class LetterHolder extends AlphaAwareViewHolder {
-        TextView title;
+        AppHeaderView title;
 
         public LetterHolder(View view) {
             super(view);
-            this.title = ViewCompat.requireViewById(view, R.id.letter_header_text);
+            this.title = ViewCompat.requireViewById(view, R.id.app_header_view);
         }
     }
 

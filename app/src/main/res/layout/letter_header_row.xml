@@ -1,28 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:gravity="center_vertical"
     android:orientation="horizontal"
-    android:paddingHorizontal="22dp"
     android:paddingVertical="4dp">
 
-    <!-- TODO: Make this a cooler custom View, ala WP -->
-    <TextView
-        android:id="@+id/letter_header_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:gravity="start"
-        android:maxLines="1"
-        android:text="A"
-        android:textColor="@color/primary_text_color"
-        android:textSize="24sp" />
-
-    <View
-        android:background="@drawable/apps_letter_header_line"
-        android:layout_marginStart="16dp"
+    <com.inipage.homelylauncher.drawer.AppHeaderView
+        android:id="@+id/app_header_view"
         android:layout_width="match_parent"
-        android:layout_height="1.5dp" />
+        android:layout_height="wrap_content"
+        app:letterCircleRadius="16dp"
+        app:appIconRadius="24dp"
+        app:dotCircleRadius="1.5dp"
+        app:circleColor="@color/app_row_letter_color" />
 </LinearLayout>

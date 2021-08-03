@@ -10,7 +10,7 @@
 
     <com.inipage.homelylauncher.drawer.BitmapView
         android:id="@+id/app_icon_image"
-        android:layout_marginStart="8dp"
+        android:layout_marginStart="@dimen/app_row_horizontal_padding"
         android:layout_width="48dp"
         android:layout_height="48dp" />
 
@@ -21,7 +21,7 @@
         android:ellipsize="end"
         android:gravity="center"
         android:maxLines="1"
-        android:layout_marginHorizontal="8dp"
+        android:layout_marginHorizontal="@dimen/app_row_horizontal_padding"
         android:text="@string/sample_text"
         android:textColor="@color/primary_text_color"
         android:textSize="16sp" />

@@ -30,7 +30,7 @@
     <LinearLayout
         android:id="@+id/app_drawer_action_bar"
         android:layout_width="match_parent"
-        android:layout_height="64dp"
+        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:background="@color/transparent"
         android:gravity="center_vertical"
@@ -40,8 +40,8 @@
 
         <EditText
             android:id="@+id/search_box"
-            android:layout_width="match_parent"
-            android:layout_height="40dp"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginHorizontal="8dp"
             android:autofillHints=""
@@ -61,6 +61,7 @@
             android:id="@+id/close_search_button"
             android:layout_width="48dp"
             android:layout_height="48dp"
+            android:layout_gravity="center_vertical"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="6dp"
             android:src="@drawable/ic_clear_white_48dp"

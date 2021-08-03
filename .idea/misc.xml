@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="..\:/Users/macly/Documents/Git/curveball-launcher/app/src/main/res/layout/application_header_row.xml" value="0.18432971014492755" />
+        <entry key="..\:/Users/macly/Documents/Git/curveball-launcher/app/src/main/res/layout/letter_header_row.xml" value="0.18432971014492755" />
+        <entry key="..\:/Users/macly/Documents/Git/curveball-launcher/app/src/main/res/layout/sample_app_header_view.xml" value="0.17617753623188406" />
+      </map>
+    </option>
+  </component>
   <component name="EntryPointsManager">
     <list size="1">
       <item index="0" class="java.lang.String" itemvalue="org.greenrobot.eventbus.Subscribe" />

@@ -1,0 +1,8 @@
+<resources>
+    <declare-styleable name="AppHeaderView">
+        <attr name="letterCircleRadius" format="dimension" />
+        <attr name="appIconRadius" format="dimension" />
+        <attr name="dotCircleRadius" format="dimension" />
+        <attr name="circleColor" format="color" />
+    </declare-styleable>
+</resources>
