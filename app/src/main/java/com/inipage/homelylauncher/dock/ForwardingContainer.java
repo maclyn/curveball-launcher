@@ -23,6 +23,7 @@ public class ForwardingContainer extends RelativeLayout {
 
     private float mStartX;
     private float mStartY;
+    private boolean mIsDropped;
     private boolean mIsForwarding;
     @Nullable
     private ForwardingListener mListener;
@@ -43,6 +44,7 @@ public class ForwardingContainer extends RelativeLayout {
     private void reset() {
         mStartX = mStartY = -1F;
         mIsForwarding = false;
+        mIsDropped = false;
         if (getParent() != null) {
             getParent().requestDisallowInterceptTouchEvent(false);
         }
@@ -80,7 +82,7 @@ public class ForwardingContainer extends RelativeLayout {
     }
 
     private boolean handleMoveEvent(MotionEvent event) {
-        if (mListener == null) {
+        if (mListener == null || mIsDropped) {
             return false;
         }
 
@@ -90,7 +92,11 @@ public class ForwardingContainer extends RelativeLayout {
             return false;
         }
 
-        if (Math.abs(distY) > Math.abs(distX) && mListener.shouldHandleEvent(distY)) {
+        if (Math.abs(distY) > Math.abs(distX)) {
+            if (!mListener.shouldHandleEvent(event, distY)) {
+                mIsDropped = true;
+                return false;
+            }
             DebugLogUtils.needle(DebugLogUtils.TAG_POCKET_ANIMATION, "Forwarding");
             mIsForwarding = true;
             return true;
@@ -100,12 +106,15 @@ public class ForwardingContainer extends RelativeLayout {
 
     @Override
     public void requestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+        // Empty: FowardingContainers are ALWAYS aware of what happens inside
+        // This means ScrollViews embedded inside need special treatment
     }
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
+                reset();
                 mStartX = ev.getRawX();
                 mStartY = ev.getRawY();
                 getParent().requestDisallowInterceptTouchEvent(true);
@@ -125,6 +134,6 @@ public class ForwardingContainer extends RelativeLayout {
     public interface ForwardingListener {
         void onForwardEvent(MotionEvent event, float deltaY);
 
-        boolean shouldHandleEvent(float deltaY);
+        boolean shouldHandleEvent(MotionEvent event, float deltaY);
     }
 }

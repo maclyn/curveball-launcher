@@ -1,4 +1,4 @@
-package com.inipage.homelylauncher.swipefolders;
+package com.inipage.homelylauncher.pocket;
 
 import android.content.Context;
 import android.graphics.Bitmap;

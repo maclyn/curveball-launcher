@@ -522,8 +522,8 @@ public class HomeActivity extends AppCompatActivity implements
         forwardingContainer.setVisibility(VISIBLE);
         dockViewScrollView.setAlpha(1 - percent);
         pagerView.setAlpha(1 - percent);
-        pagerView.setScaleX(1 - (percent * PocketController.SCALE_DELTA));
-        pagerView.setScaleY(1 - (percent * PocketController.SCALE_DELTA));
+        pagerView.setScaleX(1 - (percent * PocketController.Companion.getSCALE_DELTA()));
+        pagerView.setScaleY(1 - (percent * PocketController.Companion.getSCALE_DELTA()));
         pagerView.setTranslationY(-actuationDistance * percent);
 
         updateBackgroundAlpha(percent);
@@ -536,8 +536,8 @@ public class HomeActivity extends AppCompatActivity implements
         forwardingContainer.setVisibility(GONE);
         dockViewScrollView.setAlpha(0);
         pagerView.setAlpha(0);
-        pagerView.setScaleX(1 - PocketController.SCALE_DELTA);
-        pagerView.setScaleY(1 - PocketController.SCALE_DELTA);
+        pagerView.setScaleX(1 - PocketController.Companion.getSCALE_DELTA());
+        pagerView.setScaleY(1 - PocketController.Companion.getSCALE_DELTA());
         pagerView.setTranslationY(-actuationDistance);
         updateBackgroundAlpha(1);
     }

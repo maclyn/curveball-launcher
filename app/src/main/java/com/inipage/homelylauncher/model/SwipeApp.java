@@ -6,7 +6,7 @@ import android.util.Pair;
 
 import com.inipage.homelylauncher.caches.AppLabelCache;
 import com.inipage.homelylauncher.caches.IconCacheSync;
-import com.inipage.homelylauncher.swipefolders.RowContent;
+import com.inipage.homelylauncher.pocket.RowContent;
 
 public class SwipeApp extends RowContent {
 

@@ -6,7 +6,7 @@ import android.util.Pair;
 
 import com.google.common.collect.ImmutableList;
 import com.inipage.homelylauncher.caches.IconCacheSync;
-import com.inipage.homelylauncher.swipefolders.RowContent;
+import com.inipage.homelylauncher.pocket.RowContent;
 
 import java.util.List;
 

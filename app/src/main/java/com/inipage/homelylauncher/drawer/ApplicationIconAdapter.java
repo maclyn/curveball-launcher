@@ -272,7 +272,8 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             final String headerMapKey = String.valueOf(removedApp.getScrollableField());
             mAppsTree.remove(removedApp.getName().toLowerCase(Locale.getDefault()));
             if (mHeaderToCount.containsKey(headerMapKey)) {
-                mHeaderToCount.put(headerMapKey, mHeaderToCount.get(headerMapKey) - 1);
+                int newCount = mHeaderToCount.get(headerMapKey) - 1;
+                mHeaderToCount.put(headerMapKey, newCount);
             }
             mApps.remove(realIdx);
             removedCount++;
@@ -299,8 +300,8 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             mAppsTree.put(activity.getName().toLowerCase(Locale.getDefault()), activity);
             final String headerMapKey = String.valueOf(activity.getScrollableField());
             if (mHeaderToCount.containsKey(headerMapKey)) {
-                int count = mHeaderToCount.get(headerMapKey);
-                mHeaderToCount.put(headerMapKey, count + 1);
+                int newCount = mHeaderToCount.get(headerMapKey) + 1;
+                mHeaderToCount.put(headerMapKey, newCount);
             } else {
                 mHeaderToCount.put(headerMapKey, 1);
             }
@@ -381,7 +382,8 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         mAppsTree.remove(searchKey.getName().toLowerCase(Locale.getDefault()));
         String headerMapKey = String.valueOf(searchKey.getScrollableField());
         if (mHeaderToCount.containsKey(headerMapKey)) {
-            mHeaderToCount.put(headerMapKey, mHeaderToCount.get(headerMapKey) - 1);
+            int newCount = mHeaderToCount.get(headerMapKey) - 1;
+            mHeaderToCount.put(headerMapKey, newCount);
         }
         notifyItemRemoved(position);
         // Maybe remove the header too?
@@ -554,6 +556,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             mLastSearchResult = null;
             mElements = new ArrayList<>();
             mElements.add(AdapterElement.createTopElement());
+            mHeaderToCount.clear();
             char currentScrollableField = '@'; // Never a scrollable field?
             for (ApplicationIconHideable app : mApps) {
                 if (app.getScrollableField() != currentScrollableField) {
@@ -565,9 +568,8 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 if (mHeaderToCount.get(headerKey) == null) {
                     mHeaderToCount.put(headerKey, 0);
                 }
-                mHeaderToCount.put(
-                    headerKey,
-                    mHeaderToCount.get(headerKey) + 1);
+                int newValue = mHeaderToCount.get(headerKey) + 1;
+                mHeaderToCount.put(headerKey, newValue);
             }
             return true;
         }

@@ -11,38 +11,21 @@
         android:layout_width="match_parent"
         android:layout_height="20dp" />
 
-    <!-- Icon container -->
-    <HorizontalScrollView
-        android:layout_above="@+id/pocket_folder_container_scrollview"
-        android:layout_width="wrap_content"
+    <ScrollView
+        android:id="@+id/pocket_container_view_scroll_view"
+        android:layout_above="@+id/pocket_bottom_scrim"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
         android:scrollbars="none"
         android:fillViewport="true">
 
         <LinearLayout
-            android:id="@+id/pocket_folder_app_container"
-            android:layout_width="wrap_content"
-            android:layout_height="48dp"
-            android:orientation="horizontal" />
-    </HorizontalScrollView>
-
-    <!-- Folder container -->
-    <HorizontalScrollView
-        android:id="@+id/pocket_folder_container_scrollview"
-        android:layout_above="@+id/pocket_bottom_scrim"
-        android:layout_width="match_parent"
-        android:layout_height="64dp"
-        android:scrollbars="none"
-        android:layout_marginTop="24dp">
-
-        <LinearLayout
-            android:id="@+id/pocket_folder_container"
-            android:layout_width="wrap_content"
-            android:layout_height="64dp"
-            android:layout_gravity="center_horizontal"
-            android:orientation="horizontal" />
-    </HorizontalScrollView>
+            android:id="@+id/pocket_container_view_row_container"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="bottom" />
+    </ScrollView>
 
     <View
         android:layout_alignParentBottom="true"

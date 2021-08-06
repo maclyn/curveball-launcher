@@ -19,7 +19,6 @@ import kotlin.properties.Delegates
  */
 class AppHeaderView : View {
 
-    private val XFERMODE_CLEAR = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
     private val TEXT_BOUNDS_TMP = Rect()
 
     private var _circleColor: Int = Color.WHITE
