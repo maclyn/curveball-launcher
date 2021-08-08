@@ -42,7 +42,7 @@ import com.inipage.homelylauncher.pager.PagerIndicatorView;
 import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.pocket.PocketController;
 import com.inipage.homelylauncher.pocket.PocketControllerDropView;
-import com.inipage.homelylauncher.pocket.PocketControllerIdleView;
+import com.inipage.homelylauncher.pocket.PocketOpenArrowView;
 import com.inipage.homelylauncher.state.EditingEvent;
 import com.inipage.homelylauncher.state.LayoutEditingSingleton;
 import com.inipage.homelylauncher.state.PagesChangedEvent;
@@ -98,7 +98,7 @@ public class HomeActivity extends AppCompatActivity implements
     @BindView(R.id.pocket_view_container)
     ForwardingContainer pocketContainer;
     @BindView(R.id.bottom_indicator)
-    PocketControllerIdleView pocketIdleView;
+    PocketOpenArrowView pocketIdleView;
     @BindView(R.id.pocket_drop_view)
     PocketControllerDropView pocketDropView;
     @BindView(R.id.pager_indicator_view)
@@ -128,10 +128,11 @@ public class HomeActivity extends AppCompatActivity implements
                 mPager.getAppDrawerController().getView().setAlpha(1 - positionOffset);
                 forwardingContainer.setTranslationX(
                     forwardingContainer.getWidth() - positionOffsetPixels);
-                // MAYBE
+                forwardingContainer.setAlpha(positionOffset);
                 mPager.getAppDrawerController().quitSearch();
             } else if (position >= 1) {
                 dockView.setAlpha(1);
+                forwardingContainer.setAlpha(1);
                 updateBackgroundAlpha(0);
                 forwardingContainer.setTranslationX(0);
             }
@@ -175,10 +176,10 @@ public class HomeActivity extends AppCompatActivity implements
             switch (state) {
                 case ViewPager2.SCROLL_STATE_DRAGGING:
                 case ViewPager2.SCROLL_STATE_SETTLING:
-                    pagerIndicatorView.animateIn();
+                    // User is dragging
                     break;
                 case ViewPager2.SCROLL_STATE_IDLE:
-                    pagerIndicatorView.animateOut();
+                    // User stopped touching
                     break;
                 default:
                     break;
@@ -521,6 +522,8 @@ public class HomeActivity extends AppCompatActivity implements
 
         forwardingContainer.setVisibility(VISIBLE);
         dockViewScrollView.setAlpha(1 - percent);
+        pagerIndicatorView.setAlpha(1 - percent);
+        pocketIdleView.setAlpha(1 - percent);
         pagerView.setAlpha(1 - percent);
         pagerView.setScaleX(1 - (percent * PocketController.Companion.getSCALE_DELTA()));
         pagerView.setScaleY(1 - (percent * PocketController.Companion.getSCALE_DELTA()));
@@ -535,6 +538,8 @@ public class HomeActivity extends AppCompatActivity implements
 
         forwardingContainer.setVisibility(GONE);
         dockViewScrollView.setAlpha(0);
+        pagerIndicatorView.setAlpha(0);
+        pocketIdleView.setAlpha(0);
         pagerView.setAlpha(0);
         pagerView.setScaleX(1 - PocketController.Companion.getSCALE_DELTA());
         pagerView.setScaleY(1 - PocketController.Companion.getSCALE_DELTA());
@@ -548,6 +553,8 @@ public class HomeActivity extends AppCompatActivity implements
 
         forwardingContainer.setVisibility(VISIBLE);
         dockViewScrollView.setAlpha(1);
+        pagerIndicatorView.setAlpha(1);
+        pocketIdleView.setAlpha(1);
         pagerView.setAlpha(1);
         pagerView.setScaleX(1);
         pagerView.setScaleY(1);

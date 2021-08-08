@@ -77,21 +77,19 @@
             android:layout_alignParentBottom="true"
             android:layout_marginHorizontal="@dimen/home_activity_margin" />
 
-        <com.inipage.homelylauncher.pocket.PocketControllerIdleView
+        <com.inipage.homelylauncher.pocket.PocketOpenArrowView
             android:id="@+id/bottom_indicator"
-            android:layout_above="@+id/dock_container"
+            android:layout_alignParentTop="true"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="@dimen/home_activity_margin" />
-    </com.inipage.homelylauncher.dock.ForwardingContainer>
+            android:layout_height="12dp" />
 
-    <com.inipage.homelylauncher.pager.PagerIndicatorView
-        android:id="@+id/pager_indicator_view"
-        android:alpha="0"
-        android:focusableInTouchMode="false"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/top_scrim"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="8dp"/>
+        <com.inipage.homelylauncher.pager.PagerIndicatorView
+            android:id="@+id/pager_indicator_view"
+            android:focusableInTouchMode="false"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="48dp"/>
+    </com.inipage.homelylauncher.dock.ForwardingContainer>
 </RelativeLayout>

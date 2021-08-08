@@ -18,6 +18,9 @@
         <!-- Translucent status bar/navigation bar -->
         <item name="android:statusBarColor">@color/transparent</item>
         <item name="android:navigationBarColor">@color/transparent</item>
+
+        <item name="android:windowEnterTransition">@transition/activity_transition</item>
+        <item name="android:windowExitTransition">@transition/activity_transition</item>
     </style>
 
     <style name="HomeThemeAppCompatSource" parent="Theme.AppCompat">

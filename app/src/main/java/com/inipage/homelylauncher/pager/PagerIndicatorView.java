@@ -20,8 +20,6 @@ import static com.inipage.homelylauncher.utils.AttributeApplier.intValue;
 
 public class PagerIndicatorView extends View {
 
-    private static final Interpolator sInterpolator = new AccelerateDecelerateInterpolator();
-    private static final int ANIMATION_DURATION_MS = 250;
     private final int INACTIVE_ALPHA = 80;
     private final int ACTIVE_ALPHA = 220;
     private final int INDICATOR_WIDTH_FACTOR = 8;
@@ -47,7 +45,7 @@ public class PagerIndicatorView extends View {
     public PagerIndicatorView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         AttributeApplier.applyDensity(this, getContext());
-        setBackground(context.getDrawable(R.drawable.indicator_view_background));
+        // setBackground(context.getDrawable(R.drawable.indicator_view_background));
         mPaint = new Paint();
         mPaint.setStrokeWidth(STROKE_WIDTH);
     }
@@ -58,20 +56,6 @@ public class PagerIndicatorView extends View {
         mIsSetup = true;
         requestLayout();
         invalidate();
-    }
-
-    public void animateIn() {
-        animate().alpha(1)
-            .setInterpolator(sInterpolator)
-            .setDuration(ANIMATION_DURATION_MS)
-            .start();
-    }
-
-    public void animateOut() {
-        animate().alpha(0)
-            .setInterpolator(sInterpolator)
-            .setDuration(ANIMATION_DURATION_MS)
-            .start();
     }
 
     public void updateActiveItem(int activeItem) {

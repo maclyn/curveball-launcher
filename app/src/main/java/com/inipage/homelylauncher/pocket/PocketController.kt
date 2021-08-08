@@ -34,14 +34,14 @@ class PocketController(
     container: ForwardingContainer,
     dockView: View,
     dropView: PocketControllerDropView,
-    idleView: PocketControllerIdleView
+    idleView: PocketOpenArrowView
 ) : PocketControllerDropView.Host, ForwardingContainer.ForwardingListener {
     private val mContext: Context
     private val mHost: Host
     private val mContainer: ForwardingContainer
     private val mDockView: View
     private val mDropView: PocketControllerDropView
-    private val mIdleView: PocketControllerIdleView
+    private val mIdleView: PocketOpenArrowView
     private val scrollView: ScrollView
     private val rowContainer: LinearLayout
     private val topScrim: View
@@ -332,7 +332,6 @@ class PocketController(
     override fun onAppAddedToFolder(folderIdx: Int, app: ApplicationIcon) {
         mFolders[folderIdx].addApp(Pair(app.packageName, app.activityName))
         DatabaseEditor.get().saveGestureFavorites(mFolders)
-        mIdleView.setDotCount(mFolders.size)
         mHost.clearActiveDragTarget()
     }
 
@@ -374,7 +373,6 @@ class PocketController(
 
     private fun rebind() {
         mDropView.attachHost(this)
-        mIdleView.setDotCount(mFolders.size)
         val inflater = LayoutInflater.from(mContext)
         rowContainer.removeAllViews()
         for (i in mFolders.indices) {
