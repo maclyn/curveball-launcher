@@ -1,13 +1,12 @@
 package com.inipage.homelylauncher.drawer;
 
+import android.animation.Animator;
 import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
-import android.net.ParseException;
 import android.net.Uri;
 import android.util.Log;
 import android.view.DragEvent;
@@ -19,7 +18,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
+import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -33,7 +32,6 @@ import com.inipage.homelylauncher.BuildConfig;
 import com.inipage.homelylauncher.R;
 import com.inipage.homelylauncher.SettingsActivity;
 import com.inipage.homelylauncher.caches.AppInfoCache;
-import com.inipage.homelylauncher.caches.IconCacheSync;
 import com.inipage.homelylauncher.caches.PackageModifiedEvent;
 import com.inipage.homelylauncher.caches.PackagesBulkModifiedEvent;
 import com.inipage.homelylauncher.grid.AppViewHolder;
@@ -42,20 +40,16 @@ import com.inipage.homelylauncher.model.ApplicationIconHideable;
 import com.inipage.homelylauncher.pager.BasePageController;
 import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.utils.InstalledAppUtils;
-import com.inipage.homelylauncher.utils.Prewarmer;
 import com.inipage.homelylauncher.utils.ViewUtils;
 import com.inipage.homelylauncher.views.BottomSheetHelper;
 import com.inipage.homelylauncher.views.DecorViewDragger;
+import com.inipage.homelylauncher.views.DecorViewManager;
 
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
-import java.util.SortedMap;
-import java.util.function.Predicate;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import butterknife.BindView;
@@ -71,10 +65,11 @@ import static android.view.View.VISIBLE;
  * The controller instantiates the conventional vertically scrolling app drawer provided by the
  * default launcher {@linkplain com.inipage.homelylauncher.HomeActivity}.
  */
-public class AppDrawerController implements BasePageController {
+public class AppDrawerController implements BasePageController, FastScrollController.Host {
 
     private final Host mHost;
     private final Context mContext;
+    private final FastScrollController mScrollController;
     private final LinearLayoutManager mLayoutManager;
     @BindView(R.id.all_apps_root_view)
     View rootView;
@@ -131,6 +126,11 @@ public class AppDrawerController implements BasePageController {
         }
 
         @Override
+        public void enterFastScrollMode(View v) {
+            mScrollController.enterFastScroll();
+        }
+
+        @Override
         public void showOptionsMenu(View v) {
             showOptionsBottomSheet(v);
         }
@@ -140,6 +140,7 @@ public class AppDrawerController implements BasePageController {
     public AppDrawerController(Host host, ViewGroup rootView) {
         mHost = host;
         mContext = rootView.getContext();
+        mScrollController = new FastScrollController(this);
 
         final LayoutInflater inflater = LayoutInflater.from(mContext);
         final View appDrawerView = inflater.inflate(R.layout.app_drawer_view, rootView, false);
@@ -170,11 +171,11 @@ public class AppDrawerController implements BasePageController {
                 for (int idx = firstItem; idx <= lastItem; idx++) {
                     RecyclerView.ViewHolder holder =
                         appRecyclerView.findViewHolderForAdapterPosition(idx);
-                    if (!(holder instanceof ApplicationIconAdapter.AlphaAwareViewHolder)) {
+                    if (!(holder instanceof ApplicationIconAdapter.AnimatableViewHolder)) {
                         continue;
                     }
-                    ApplicationIconAdapter.AlphaAwareViewHolder iconHolder =
-                        (ApplicationIconAdapter.AlphaAwareViewHolder) holder;
+                    ApplicationIconAdapter.AnimatableViewHolder iconHolder =
+                        (ApplicationIconAdapter.AnimatableViewHolder) holder;
                     if (idx == firstItem && firstItem != firstCompletelyVisibleItem ||
                         idx == lastItem && lastItem != lastCompletelyVisibleItem) {
                         iconHolder.applyAlpha(recyclerView);
@@ -400,6 +401,39 @@ public class AppDrawerController implements BasePageController {
 
     public void hideApp(ApplicationIcon ai) {
         mAdapter.hideApp(ai);
+    }
+
+    @Override
+    public void onFastScrollStateChange(boolean isEntering) {
+        // FLip around all the items
+        final int firstItem = mLayoutManager.findFirstVisibleItemPosition();
+        final int lastItem = mLayoutManager.findLastVisibleItemPosition();
+        for (int idx = firstItem; idx <= lastItem; idx++) {
+            RecyclerView.ViewHolder holder =
+                appRecyclerView.findViewHolderForAdapterPosition(idx);
+            if (!(holder instanceof ApplicationIconAdapter.AnimatableViewHolder)) {
+                continue;
+            }
+            ApplicationIconAdapter.AnimatableViewHolder iconHolder =
+                (ApplicationIconAdapter.AnimatableViewHolder) holder;
+            if (isEntering) {
+                iconHolder.applyFlip();
+            } else {
+                iconHolder.undoFlip();
+            }
+        }
+    }
+
+    @NonNull
+    @Override
+    public Map<String, Integer> getHeaderToCountMap() {
+        return mAdapter.getHeaderToCountMap();
+    }
+
+    @NonNull
+    @Override
+    public Context getHostContext() {
+        return mContext;
     }
 
     public interface Host {

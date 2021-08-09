@@ -56,6 +56,8 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
         void enterSearchMode(View v);
 
+        void enterFastScrollMode(View v);
+
         void showOptionsMenu(View v);
     }
 
@@ -459,6 +461,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             if (mHeaderToCount.containsKey(underlyingCharacter)) {
                 letterHolder.title.setHeaderCount(mHeaderToCount.get(underlyingCharacter));
             }
+            letterHolder.title.setOnClickListener(mDelegate::enterFastScrollMode);
             return;
         }
 
@@ -546,6 +549,10 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         return mElements.get(position).getElementType();
     }
 
+    public Map<String, Integer> getHeaderToCountMap() {
+        return mHeaderToCount;
+    }
+
     /**
      * Use mode and search query to rebuild the elements that'll be rendered.
      * @param query The search query. Pass {@code null} to reload the list.
@@ -599,7 +606,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         return true;
     }
 
-    public static class TopHeaderHolder extends AlphaAwareViewHolder {
+    public static class TopHeaderHolder extends AnimatableViewHolder {
         TextView installCount;
         View enterSearchButton;
         View showOptionsMenu;
@@ -612,7 +619,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         }
     }
 
-    public static class LetterHolder extends AlphaAwareViewHolder {
+    public static class LetterHolder extends AnimatableViewHolder {
         AppHeaderView title;
 
         public LetterHolder(View view) {
@@ -621,7 +628,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         }
     }
 
-    public static class AppIconHolder extends AlphaAwareViewHolder {
+    public static class AppIconHolder extends AnimatableViewHolder {
         final int[] tmp = new int[2];
         ApplicationIconLayout mainView;
         BitmapView icon;
@@ -633,29 +640,14 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             this.title = mainView.findViewById(R.id.app_icon_label);
             this.icon = mainView.findViewById(R.id.app_icon_image);
         }
-
-        public void applyAlpha(RecyclerView container) {
-            container.getLocationOnScreen(tmp);
-            final float containerTop = tmp[1];
-            mainView.getLocationOnScreen(tmp);
-            final float itemTop = tmp[1];
-            final float itemHeight = mainView.getHeight();
-            if (itemTop < containerTop) { // itemTop < containerTop --> falling off top
-                final float amountOffScreen = containerTop - itemTop;
-                mainView.setAlpha(1 - (amountOffScreen / itemHeight));
-            } else { // itemTop > containerTop --> falling off bottom
-                final float bottomOfContainer = containerTop + container.getHeight();
-                mainView.setAlpha((bottomOfContainer - itemTop) / itemHeight);
-            }
-        }
     }
 
-    public static class AlphaAwareViewHolder extends RecyclerView.ViewHolder {
+    public static class AnimatableViewHolder extends RecyclerView.ViewHolder {
 
         private final int[] tmp = new int[2];
         View view;
 
-        public AlphaAwareViewHolder(View view) {
+        public AnimatableViewHolder(View view) {
             super(view);
             this.view = view;
         }
@@ -673,6 +665,16 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 final float bottomOfContainer = containerTop + container.getHeight();
                 view.setAlpha((bottomOfContainer - itemTop) / itemHeight);
             }
+        }
+
+        public void applyFlip() {
+            view.setPivotX(view.getWidth() / 2F);
+            view.animate().rotationXBy(90F).setDuration(200);
+        }
+
+        public void undoFlip() {
+            view.setPivotX(view.getWidth() / 2F);
+            view.animate().rotationXBy(-90F).setDuration(200);
         }
     }
 }

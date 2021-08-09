@@ -9,6 +9,7 @@
 
     <com.inipage.homelylauncher.drawer.AppHeaderView
         android:id="@+id/app_header_view"
+        android:background="?attr/selectableItemBackground"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:letterCircleRadius="16dp"
