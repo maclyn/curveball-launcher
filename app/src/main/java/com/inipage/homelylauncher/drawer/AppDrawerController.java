@@ -29,6 +29,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.inipage.homelylauncher.BuildConfig;
+import com.inipage.homelylauncher.NewUserBottomSheet;
 import com.inipage.homelylauncher.R;
 import com.inipage.homelylauncher.SettingsActivity;
 import com.inipage.homelylauncher.caches.AppInfoCache;
@@ -320,6 +321,9 @@ public class AppDrawerController implements BasePageController, FastScrollContro
                     mAdapter.spliceInPackageChanges(
                         pkgs[i], AppInfoCache.get().getActivitiesForPackage(pkgs[i]));
                 }
+            });
+            bottomSheetHelper.addItem(R.drawable.ic_visibility_white_48dp, R.string.show_new_user_bottom_sheet, () -> {
+                new NewUserBottomSheet(mContext).show();
             });
         }
         bottomSheetHelper.show(mContext, mContext.getString(R.string.settings));

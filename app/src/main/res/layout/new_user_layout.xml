@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="16dp">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/weclome_headline"
+            android:textColor="@color/primary_text_color"
+            android:textSize="18sp"
+            android:gravity="start" />
+
+        <!-- Core permissions -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/welcome_subtitle"
+            android:textColor="@color/primary_text_color"
+            android:textSize="16sp"
+            android:gravity="start" />
+
+        <Button
+            android:id="@+id/grant_permissions_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:gravity="center"
+            android:text="@string/grant_permissions" />
+
+        <!-- App usage permission -->
+        <TextView
+            android:id="@+id/app_usage_explainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/app_usage_explainer"
+            android:textColor="@color/primary_text_color"
+            android:textSize="16sp"
+            android:gravity="start" />
+
+        <Button
+            android:id="@+id/grant_app_usage_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:gravity="center"
+            android:text="@string/grant_app_usage_permission" />
+    </LinearLayout>
+</ScrollView>

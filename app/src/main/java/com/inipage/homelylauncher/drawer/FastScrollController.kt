@@ -2,6 +2,7 @@ package com.inipage.homelylauncher.drawer
 
 import android.animation.Animator
 import android.content.Context
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -83,7 +84,8 @@ class FastScrollController(host: Host) {
             },
             FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.CENTER
             )
         )
     }

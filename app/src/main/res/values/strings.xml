@@ -72,7 +72,7 @@
     <string name="default_phone_app">Phone shortcut</string>
     <string name="default_phone_app_summary">App to show in suggestions bar when on a phone call.</string>
     <string name="welcome_title">Welcome</string>
-    <string name="welcome_message"><![CDATA[Thanks for downloading our beta! We\'re still in the early stages, but we think you\'ll love what we\'ve built. It\'s completely different from any launcher you\'ve probably used before, so you should probably watch the tutorial (see below; it\'s short, don\'t worry). Feel free to email us with bugs, feature requests, feedback, and support questions at support@justpage.me. Thanks!]]></string>
+
     <string name="lets_go">Lets go!</string>
     <string name="tutorial_please">Tutorial please.</string>
     <string name="bah_humbug">Bah humbug.</string>
@@ -257,5 +257,11 @@
     <string name="export_log_description">Export log to storage.</string>
     <string name="splice_test">Splice test</string>
     <string name="run_preset_splice_test">Run splice test from clipboard</string>
+    <string name="show_new_user_bottom_sheet">Show new user bottom sheet</string>
+    <string name="weclome_headline">Welcome! Consider granting the following permissions for the best experience.</string>
+    <string name="grant_permissions">Enable app usage permission</string>
+    <string name="welcome_subtitle">Calendar permission is used to show your next event in the dock, location permission is used to get weather data, and phone is used to get ongoing calls and battery state for dock items. If you don\'t grant any or all of these permissions, the launcher will still work without that functionality.</string>
+    <string name="app_usage_explainer">The app usage access allows the launcher show recently used apps in the dock.</string>
+    <string name="grant_app_usage_permission">Grant app usage permission</string>
 </resources>
 
