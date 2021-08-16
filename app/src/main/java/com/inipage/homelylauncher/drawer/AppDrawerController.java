@@ -1,6 +1,5 @@
 package com.inipage.homelylauncher.drawer;
 
-import android.animation.Animator;
 import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
@@ -18,7 +17,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -27,6 +26,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.inipage.homelylauncher.BuildConfig;
 import com.inipage.homelylauncher.NewUserBottomSheet;
@@ -49,6 +49,7 @@ import com.inipage.homelylauncher.views.DecorViewManager;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -82,6 +83,9 @@ public class AppDrawerController implements BasePageController, FastScrollContro
     View actionBar;
     @BindView(R.id.search_box)
     EditText searchBox;
+    @BindView(R.id.search_pull_layout)
+    SwipeRefreshLayout searchPullLayout;
+
     private ApplicationIconAdapter mAdapter;
     // This flag isn't necessarily synced with mMode == SEARCH_RESULTS in the adapter; this flag
     // indicates a visible search box but not per se text entered and search results displayed
@@ -135,6 +139,11 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         public void showOptionsMenu(View v) {
             showOptionsBottomSheet(v);
         }
+
+        @Override
+        public void scrollToIndex(int idx) {
+            appRecyclerView.scrollToPosition(idx);
+        }
     };
 
     @SuppressLint("ClickableViewAccessibility")
@@ -186,7 +195,19 @@ public class AppDrawerController implements BasePageController, FastScrollContro
                 }
             }
         });
+        searchPullLayout.setOnRefreshListener(() -> {
+            searchPullLayout.setRefreshing(false);
+            if (!mIsSearching) {
+                enterSearch();
+            }
+        });
+        setSearchDrawable();
         reloadAppList();
+    }
+
+    @Override
+    public void onPause() {
+        appRecyclerView.setScrollY(0);
     }
 
     public void reloadAppList() {
@@ -209,7 +230,19 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         actionBar.setVisibility(GONE);
         storeSearchButton.setVisibility(GONE);
         mLayoutManager.setReverseLayout(false);
+        searchPullLayout.setEnabled(true);
         mAdapter.leaveSearch();
+    }
+
+    private void setSearchDrawable() {
+        try {
+            final Field circleViewField = searchPullLayout.getClass().getDeclaredField("mCircleView");
+            circleViewField.setAccessible(true);
+            @Nullable final ImageView circleView = (ImageView) circleViewField.get(searchPullLayout);
+            if (circleView != null) {
+                circleView.setImageResource(R.drawable.ic_search_48);
+            }
+        } catch (Exception ignored) {} // NoSuchElement/IllegalAccessException, most likely
     }
 
     private void hideKeyboard() {
@@ -238,6 +271,7 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         mIsSearching = true;
         actionBar.setVisibility(VISIBLE);
         searchBox.requestFocus();
+        searchPullLayout.setEnabled(false);
         showKeyboard();
         onSearchChanged("", 0, 0, 0);
     }
@@ -409,23 +443,9 @@ public class AppDrawerController implements BasePageController, FastScrollContro
 
     @Override
     public void onFastScrollStateChange(boolean isEntering) {
-        // FLip around all the items
-        final int firstItem = mLayoutManager.findFirstVisibleItemPosition();
-        final int lastItem = mLayoutManager.findLastVisibleItemPosition();
-        for (int idx = firstItem; idx <= lastItem; idx++) {
-            RecyclerView.ViewHolder holder =
-                appRecyclerView.findViewHolderForAdapterPosition(idx);
-            if (!(holder instanceof ApplicationIconAdapter.AnimatableViewHolder)) {
-                continue;
-            }
-            ApplicationIconAdapter.AnimatableViewHolder iconHolder =
-                (ApplicationIconAdapter.AnimatableViewHolder) holder;
-            if (isEntering) {
-                iconHolder.applyFlip();
-            } else {
-                iconHolder.undoFlip();
-            }
-        }
+        appRecyclerView.animate().alpha(isEntering ? 0F : 1F).setDuration(200).start();
+        appRecyclerView.animate().scaleX(isEntering ? 0.9F : 1F).setDuration(200).start();
+        appRecyclerView.animate().scaleY(isEntering ? 0.9F : 1F).setDuration(200).start();
     }
 
     @NonNull
@@ -434,10 +454,21 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         return mAdapter.getHeaderToCountMap();
     }
 
+    @Override
+    public void scrollToLetter(char letter) {
+        mAdapter.scrollToLetter(letter);
+        appRecyclerView.post(() -> DecorViewManager.get(mContext).detachTopView());
+    }
+
     @NonNull
     @Override
     public Context getHostContext() {
         return mContext;
+    }
+
+    @Override
+    public int hostWidth() {
+        return appRecyclerView.getWidth();
     }
 
     public interface Host {

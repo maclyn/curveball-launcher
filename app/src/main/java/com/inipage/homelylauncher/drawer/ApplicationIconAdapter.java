@@ -58,6 +58,8 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
         void enterFastScrollMode(View v);
 
+        void scrollToIndex(int idx);
+
         void showOptionsMenu(View v);
     }
 
@@ -447,6 +449,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     @Override
     public synchronized void onBindViewHolder(final RecyclerView.ViewHolder holder, int i) {
         final int itemViewType = getItemViewType(i);
+
         if (itemViewType == ITEM_VIEW_TYPE_TOP_HEADER) {
             final TopHeaderHolder headerHolder = (TopHeaderHolder) holder;
             headerHolder.installCount.setText(String.valueOf(mApps.size()));
@@ -547,6 +550,19 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     @Override
     public synchronized int getItemViewType(int position) {
         return mElements.get(position).getElementType();
+    }
+
+    public synchronized void scrollToLetter(char letter) {
+        for (int i = 0; i < mElements.size(); i++) {
+            AdapterElement element = mElements.get(i);
+            if (element.getElementType() != ITEM_VIEW_TYPE_LETTER_HEADER) {
+                continue;
+            }
+            if (element.getUnderlyingHeaderChar() != letter) {
+                continue;
+            }
+            mDelegate.scrollToIndex(i);
+        }
     }
 
     public Map<String, Integer> getHeaderToCountMap() {
@@ -665,16 +681,6 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 final float bottomOfContainer = containerTop + container.getHeight();
                 view.setAlpha((bottomOfContainer - itemTop) / itemHeight);
             }
-        }
-
-        public void applyFlip() {
-            view.setPivotX(view.getWidth() / 2F);
-            view.animate().rotationXBy(90F).setDuration(200);
-        }
-
-        public void undoFlip() {
-            view.setPivotX(view.getWidth() / 2F);
-            view.animate().rotationXBy(-90F).setDuration(200);
         }
     }
 }

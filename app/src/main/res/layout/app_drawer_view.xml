@@ -5,12 +5,20 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/all_apps_layout"
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/search_pull_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/app_drawer_action_bar"
-        android:scrollbars="none" />
+        >
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/all_apps_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scrollbars="none" />
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
 
     <Button
         android:id="@+id/store_search_button"
