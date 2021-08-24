@@ -251,6 +251,21 @@ public class DatabaseEditor {
         mDB.insert(TABLE_DOCK, null, cv);
     }
 
+    public void overwriteHiddenAppDockPreferences(List<DockItem> items) {
+        mDB.delete(
+            TABLE_DOCK,
+            COLUMN_WHEN_TO_SHOW + "=?",
+            new String[]{String.valueOf(DockItem.DOCK_SHOW_NEVER)});
+
+        for (DockItem item : items) {
+            final ContentValues cv = new ContentValues();
+            cv.put(COLUMN_PACKAGE, item.getPackageName());
+            cv.put(COLUMN_ACTIVITY_NAME, item.getActivityName());
+            cv.put(COLUMN_WHEN_TO_SHOW, item.getWhenToShow());
+            mDB.insert(TABLE_DOCK, null, cv);
+        }
+    }
+
     // Hidden apps
 
     public void saveHiddenAppsFromIcons(List<ApplicationIconHideable> apps) {
@@ -280,7 +295,7 @@ public class DatabaseEditor {
         mDB.insert(TABLE_HIDDEN_APPS, null, cv);
     }
 
-    public Map<Pair<String, String>, Boolean> getHiddenAppsAsMap() {
+    public Map<Pair<String, String>, Boolean> getHiddenAppsAsMap(boolean hideInternalApps) {
         Map<Pair<String, String>, Boolean> hiddenApps = new HashMap<>();
         final Cursor loadItems =
             mDB.query(TABLE_HIDDEN_APPS, null, null, null, null, null, null);
@@ -304,7 +319,9 @@ public class DatabaseEditor {
             }
         }
         loadItems.close();
-        hiddenApps.put(new Pair<>(Constants.PACKAGE, HomeActivity.class.getName()), true);
+        if (hideInternalApps) {
+            hiddenApps.put(new Pair<>(Constants.PACKAGE, HomeActivity.class.getName()), true);
+        }
         return hiddenApps;
     }
 

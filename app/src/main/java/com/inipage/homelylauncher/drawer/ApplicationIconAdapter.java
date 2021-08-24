@@ -61,6 +61,12 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         void scrollToIndex(int idx);
 
         void showOptionsMenu(View v);
+
+        int getFirstIndexOnScreen();
+
+        int getLastIndexOnScreen();
+
+        int getTotalCount();
     }
 
     private static class AdapterElement {
@@ -552,7 +558,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         return mElements.get(position).getElementType();
     }
 
-    public synchronized void scrollToLetter(char letter) {
+    public synchronized void scrollToLetter(char letter, int itemCountOnScreen) {
         for (int i = 0; i < mElements.size(); i++) {
             AdapterElement element = mElements.get(i);
             if (element.getElementType() != ITEM_VIEW_TYPE_LETTER_HEADER) {
@@ -561,7 +567,21 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             if (element.getUnderlyingHeaderChar() != letter) {
                 continue;
             }
-            mDelegate.scrollToIndex(i);
+
+            int firstVisibleItem = mDelegate.getFirstIndexOnScreen();
+            int lastVisibleItem = mDelegate.getLastIndexOnScreen();
+            int visibleItemCount = lastVisibleItem - firstVisibleItem;
+            int targetIdx = i;
+            if (i < firstVisibleItem) {
+                // Scrolling up, header will wind up at very top of screen
+            } else if (i > lastVisibleItem) {
+                // Scrolling down to the item, and then some
+                targetIdx = (int) (i + (visibleItemCount * 0.6));
+            } else {
+                // Scroll position is somewhere on screen, so this operation is unneeded
+                return;
+            }
+            mDelegate.scrollToIndex(Math.min(mDelegate.getTotalCount() - 1, targetIdx));
         }
     }
 

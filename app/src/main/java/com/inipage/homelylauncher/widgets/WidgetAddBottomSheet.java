@@ -54,7 +54,7 @@ public class WidgetAddBottomSheet {
                 context);
         final String handle = new BottomSheetHelper()
             .setContentView(recyclerView)
-            .setFixedScreenPercent(0.75F)
+            .setIsFixedHeight()
             .show(context, context.getString(R.string.add_widget));
         widgetAddAdapter.setOnClickListener(awpi -> {
             DecorViewManager.get(context).removeView(handle);

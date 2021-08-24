@@ -83,8 +83,16 @@ class PocketController(
                 oldBottom: Int
             ) {
                 if (bottom - top <= 0) return
+                if (activity.window.decorView.width == 0) return
                 val scrollViewParams = scrollView.layoutParams
-                scrollViewParams.height = activity.window.decorView.height / 2
+                val windowHeight = activity.window.decorView.height
+                val aspectRatio = windowHeight / activity.window.decorView.width
+                scrollViewParams.height =
+                    when {
+                        aspectRatio < 1.1 -> (windowHeight * 0.85).toInt()
+                        aspectRatio < 1.5 -> (windowHeight * 0.66).toInt()
+                        else -> windowHeight / 2
+                    }
                 scrollView.layoutParams = scrollViewParams
                 activity.window.decorView.removeOnLayoutChangeListener(this)
             }
@@ -253,11 +261,11 @@ class PocketController(
                     event.rawX <= _scratchArray[0] + scrollView.width &&
                     event.rawY >= _scratchArray[1] &&
                     event.rawY <= _scratchArray[1] + scrollView.height
-            val scrollsUp = scrollView.canScrollVertically(1)
-            val scrollsDown = scrollView.canScrollVertically(-1)
+            val scrollsDown = scrollView.canScrollVertically(1)
+            val scrollsUp = scrollView.canScrollVertically(-1)
             val doesntScroll = !scrollsUp && !scrollsDown
             // Swipe down
-            deltaY < 0 && (!touchWithinScrollView || doesntScroll || scrollView.canScrollVertically(1))
+            deltaY < 0 && ((!touchWithinScrollView) || doesntScroll || !scrollsUp);
         } else {
             // Swipe up
             deltaY > 0

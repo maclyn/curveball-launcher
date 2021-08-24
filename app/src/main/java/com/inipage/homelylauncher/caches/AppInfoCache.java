@@ -35,7 +35,7 @@ import static android.os.Process.myUserHandle;
 
 /**
  * Keeps a cache of sorted installed activities and shortcuts from those activities. Keeping this
- * close is much faster than regular hitting system services (potential IPC!) to refetch.
+ * close is much faster than regular hitting system services (potential IPC) to refetch.
  */
 public class AppInfoCache {
 
@@ -210,7 +210,7 @@ public class AppInfoCache {
     private List<ApplicationIconHideable> getInstalledAppsImpl(@Nullable String packageName) {
         final List<LauncherActivityInfo> launcherApps = getAppsFromSystem(packageName);
         final Map<Pair<String, String>, Boolean> hiddenAppsMap =
-            DatabaseEditor.get().getHiddenAppsAsMap();
+            DatabaseEditor.get().getHiddenAppsAsMap(true);
         final List<ApplicationIconHideable> result = new ArrayList<>();
         for (LauncherActivityInfo app : launcherApps) {
             result.add(

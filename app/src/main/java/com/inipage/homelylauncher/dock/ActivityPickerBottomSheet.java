@@ -24,7 +24,7 @@ public class ActivityPickerBottomSheet {
 
     public ActivityPickerBottomSheet(Context context, Callback callback, String phrase) {
         final Map<Pair<String, String>, Boolean> hiddenAppsMap =
-            DatabaseEditor.get().getHiddenAppsAsMap();
+            DatabaseEditor.get().getHiddenAppsAsMap(true);
         final Stream<ApplicationIconHideable> visibleAppsStream =
             AppInfoCache.get().getAllActivities()
                 .parallelStream()
@@ -45,7 +45,7 @@ public class ActivityPickerBottomSheet {
         recyclerView.setLayoutManager(new LinearLayoutManager(context));
         mDecorViewKey = new BottomSheetHelper()
             .setContentView(recyclerView)
-            .setFixedScreenPercent(0.75F)
+            .setIsFixedHeight()
             .show(context, context.getString(R.string.choose_right_app, phrase));
     }
 

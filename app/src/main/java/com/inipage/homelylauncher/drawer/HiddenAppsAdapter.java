@@ -57,7 +57,7 @@ public class HiddenAppsAdapter extends RecyclerView.Adapter<HiddenAppsAdapter.Ap
         return mData.size();
     }
 
-    interface Callback {
+    public interface Callback {
         void onAppsUpdated(List<ApplicationIconHideable> modifiedList);
     }
 

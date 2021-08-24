@@ -26,6 +26,7 @@ public class HiddenCalendarsPickerBottomSheet {
 
     public static void show(Context context, @Nullable final Callback callback) {
         List<CalendarUtils.Calendar> systemCalendars = CalendarUtils.getCalendars(context);
+
         final HiddenCalendarsAdapter adapter =
             new HiddenCalendarsAdapter(
                 systemCalendars,
@@ -40,7 +41,7 @@ public class HiddenCalendarsPickerBottomSheet {
         recyclerView.setLayoutManager(new LinearLayoutManager(context));
         new BottomSheetHelper()
             .setContentView(recyclerView)
-            .setFixedScreenPercent(0.75F)
+            .setIsFixedHeight()
             .show(context, context.getString(R.string.choose_calendars_to_hide));
     }
 }

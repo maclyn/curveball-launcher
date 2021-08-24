@@ -1,5 +1,8 @@
 package com.inipage.homelylauncher.model;
 
+import android.app.Application;
+import android.content.Context;
+
 public class DockItem {
 
     public static final int DOCK_SHOW_NEVER = 1;
@@ -9,7 +12,6 @@ public class DockItem {
 
     private static final String UNSET_STRING_FIELD = "unset";
     private static final int UNSET_INT_FIELD = -1;
-
 
     private final int mWhenToShow;
     private String mPackageName;
@@ -36,6 +38,11 @@ public class DockItem {
 
     public String getActivityName() {
         return mActivityName;
+    }
+
+    public ApplicationIconHideable buildAppItem(Context context, boolean useLocalHiddenField) {
+        return new ApplicationIconHideable(
+            context, mPackageName, mActivityName, useLocalHiddenField && mWhenToShow == DOCK_SHOW_NEVER);
     }
 
     public boolean hasValidComponent() {

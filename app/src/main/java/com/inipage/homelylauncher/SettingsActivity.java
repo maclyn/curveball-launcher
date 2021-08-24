@@ -6,11 +6,15 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.preference.PreferenceFragment;
+import android.util.Pair;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.Window;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -20,12 +24,14 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NavUtils;
 
+import com.inipage.homelylauncher.dock.HiddenRecentAppsBottomSheet;
 import com.inipage.homelylauncher.dock.items.HiddenCalendarsPickerBottomSheet;
 import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.persistence.DatabaseHelper;
 import com.inipage.homelylauncher.utils.FileUtils;
 import com.inipage.homelylauncher.utils.LifecycleLogUtils;
 import com.inipage.homelylauncher.utils.ViewUtils;
+import com.inipage.homelylauncher.views.ProvidesOverallDimensions;
 import com.jakewharton.processphoenix.ProcessPhoenix;
 
 import java.io.File;
@@ -35,7 +41,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-public class SettingsActivity extends AppCompatActivity {
+public class SettingsActivity extends AppCompatActivity implements ProvidesOverallDimensions {
 
     private static final int EXPORT_DATABASE_REQUEST_CODE = 1001;
     private static final int IMPORT_DATABASE_REQUEST_CODE = 1002;
@@ -138,6 +144,18 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public Pair<Integer, Integer> provideScrims() {
+        View view = getWindow().getDecorView();
+        return new Pair<>(view.getRootWindowInsets().getStableInsetTop(), view.getRootWindowInsets().getStableInsetBottom());
+    }
+
+    @Override
+    public Rect provideOverallBounds() {
+        View view = getWindow().getDecorView();
+        return new Rect(view.getLeft(), view.getTop(), view.getRight(), view.getBottom());
+    }
+
     public static class MainFragment extends PreferenceFragment {
 
         @Override
@@ -147,6 +165,8 @@ public class SettingsActivity extends AppCompatActivity {
 
             // Dock
             bindPreference("manage_cals", ctx -> HiddenCalendarsPickerBottomSheet.show(ctx, null));
+            bindPreference("manage_hidden_apps",
+               HiddenRecentAppsBottomSheet.INSTANCE::showHiddenRecentAppsBottomSheet);
 
             // Logging
             bindPreference("log_show", this::showLogs);

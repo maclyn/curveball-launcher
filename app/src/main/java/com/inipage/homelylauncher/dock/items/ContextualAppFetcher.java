@@ -42,7 +42,7 @@ public class ContextualAppFetcher {
 
         // This mostly works
         Stream<String> hiddenByDrawer =
-            DatabaseEditor.get().getHiddenAppsAsMap().keySet()
+            DatabaseEditor.get().getHiddenAppsAsMap(true).keySet()
                 .stream()
                 .map(key -> lookupKey(key.first, key.second));
 

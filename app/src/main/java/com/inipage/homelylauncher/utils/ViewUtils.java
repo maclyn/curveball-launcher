@@ -92,34 +92,6 @@ public class ViewUtils {
         return null;
     }
 
-    public static int getKeyboardOffset(View view) {
-        final Rect tempRect = new Rect();
-        view.getWindowVisibleDisplayFrame(tempRect);
-        try {
-            final Field attachInfoField = View.class.getDeclaredField("mAttachInfo");
-            attachInfoField.setAccessible(true);
-            @Nullable final Object attachInfo = attachInfoField.get(view);
-            if (attachInfo == null) {
-                return 0;
-            }
-            final Field visibleInsets =
-                attachInfo.getClass().getDeclaredField("mVisibleInsets");
-            final Field stableInsets =
-                attachInfo.getClass().getDeclaredField("mStableInsets");
-            visibleInsets.setAccessible(true);
-            stableInsets.setAccessible(true);
-            @Nullable final Rect stableInsetsValue = (Rect) stableInsets.get(attachInfo);
-            @Nullable final Rect visibleInsetsValue = (Rect) visibleInsets.get(attachInfo);
-            if (stableInsetsValue == null || visibleInsetsValue == null) {
-                return 0;
-            }
-            // visibleInsetsValue accounts for navigation bar and keyboard from panning
-            return visibleInsetsValue.bottom - stableInsetsValue.bottom;
-        } catch (SecurityException | NoSuchFieldException | IllegalAccessException e) {
-            return 0;
-        }
-    }
-
     public static Animator.AnimatorListener onEndListener(Runnable r) {
         return new Animator.AnimatorListener() {
             @Override

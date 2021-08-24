@@ -10,6 +10,7 @@ import com.inipage.homelylauncher.R;
 import com.inipage.homelylauncher.caches.AppInfoCache;
 import com.inipage.homelylauncher.model.ApplicationIconHideable;
 import com.inipage.homelylauncher.persistence.DatabaseEditor;
+import com.inipage.homelylauncher.utils.Constants;
 import com.inipage.homelylauncher.views.BottomSheetHelper;
 
 import java.util.List;
@@ -21,7 +22,7 @@ public class HiddenAppsBottomSheet {
 
     public static void show(Context context, Callback callback) {
         final Map<Pair<String, String>, Boolean> hiddenAppsMap =
-            DatabaseEditor.get().getHiddenAppsAsMap();
+            DatabaseEditor.get().getHiddenAppsAsMap(false);
         final Stream<ApplicationIconHideable> hiddenAppsStream = hiddenAppsMap
             .entrySet()
             .parallelStream()
@@ -31,6 +32,8 @@ public class HiddenAppsBottomSheet {
         final Stream<ApplicationIconHideable> visibleAppsStream =
             AppInfoCache.get().getAllActivities()
                 .parallelStream()
+                .filter(applicationIconHideable -> !applicationIconHideable.getPackageName().equals(
+                    Constants.PACKAGE))
                 .filter(applicationIconHideable -> !hiddenAppsMap.containsKey(new Pair<>(
                     applicationIconHideable.getPackageName(),
                     applicationIconHideable.getActivityName())));
@@ -45,7 +48,7 @@ public class HiddenAppsBottomSheet {
         recyclerView.setLayoutManager(new LinearLayoutManager(context));
         new BottomSheetHelper()
             .setContentView(recyclerView)
-            .setFixedScreenPercent(0.75F)
+            .setIsFixedHeight()
             .show(context, context.getString(R.string.hidden_apps_bottom_sheet_title));
     }
 

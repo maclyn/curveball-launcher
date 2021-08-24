@@ -138,7 +138,7 @@ public class CalendarUtils {
             CalendarContract.Calendars.CALENDAR_DISPLAY_NAME + " desc");
 
         if (cursor == null || !cursor.moveToFirst()) {
-            return null;
+            return result;
         }
         final int calendarIdIntCol = cursor.getColumnIndex(CalendarContract.Calendars._ID);
         final int displayNameStrCol = cursor.getColumnIndex(CalendarContract.Calendars.CALENDAR_DISPLAY_NAME);

@@ -106,7 +106,7 @@ public class IconPickerBottomSheet {
         mAttachmentToken =
             new BottomSheetHelper()
                 .setContentView(contentView)
-                .setFixedScreenPercent(0.75F)
+                .setIsFixedHeight()
                 .show(context, context.getString(R.string.pick_an_icon));
     }
 

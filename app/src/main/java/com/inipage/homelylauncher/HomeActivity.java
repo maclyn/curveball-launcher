@@ -40,6 +40,7 @@ import com.inipage.homelylauncher.pager.BasePageController;
 import com.inipage.homelylauncher.pager.HomePager;
 import com.inipage.homelylauncher.pager.PagerIndicatorView;
 import com.inipage.homelylauncher.persistence.DatabaseEditor;
+import com.inipage.homelylauncher.persistence.PrefsHelper;
 import com.inipage.homelylauncher.pocket.PocketController;
 import com.inipage.homelylauncher.pocket.PocketControllerDropView;
 import com.inipage.homelylauncher.pocket.PocketOpenArrowView;
@@ -234,6 +235,10 @@ public class HomeActivity extends AppCompatActivity implements
             rootView.addOnLayoutChangeListener(mFirstLayoutListener);
             rootView.requestLayout();
             mPocketController.applyScrims(topScrim, bottomScrim);
+            // New user experience
+            if (PrefsHelper.checkAndUpdateIsNewUser(this)) {
+                new NewUserBottomSheet(this).show();
+            }
             return insets.consumeSystemWindowInsets();
         });
         DecorViewDragger.get(this)

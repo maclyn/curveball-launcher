@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 
 import androidx.annotation.Nullable;
 import androidx.dynamicanimation.animation.FlingAnimation;
@@ -207,7 +208,7 @@ public class BottomSheetContainer extends LinearLayout {
         if (underPointView == null) {
             return true;
         }
-        if (underPointView instanceof RecyclerView) {
+        if (underPointView instanceof RecyclerView || underPointView instanceof ScrollView) {
             return !underPointView.canScrollVertically(-1);
         }
         if (underPointView instanceof ViewGroup) {

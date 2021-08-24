@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:nestedScrollingEnabled="true"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:layout_margin="16dp">
+    android:layout_height="match_parent">
 
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:padding="16dp">
 
         <TextView
             android:layout_width="match_parent"
@@ -24,10 +26,34 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:text="@string/welcome_subtitle"
+            android:text="@string/welcome_subtitle_calendar"
             android:textColor="@color/primary_text_color"
             android:textSize="16sp"
-            android:gravity="start" />
+            android:gravity="start"
+            android:drawablePadding="8dp"
+            app:drawableStartCompat="@drawable/ic_outline_event_24" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/welcome_subtitle_phone"
+            android:textColor="@color/primary_text_color"
+            android:textSize="16sp"
+            android:gravity="start"
+            android:drawablePadding="8dp"
+            app:drawableStartCompat="@drawable/dock_icon_call" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/welcome_subtitle_location"
+            android:textColor="@color/primary_text_color"
+            android:textSize="16sp"
+            android:gravity="start"
+            android:drawablePadding="8dp"
+            app:drawableStartCompat="@drawable/ic_baseline_location_on_24" />
 
         <Button
             android:id="@+id/grant_permissions_button"
@@ -46,7 +72,9 @@
             android:text="@string/app_usage_explainer"
             android:textColor="@color/primary_text_color"
             android:textSize="16sp"
-            android:gravity="start" />
+            android:gravity="start"
+            android:drawablePadding="8dp"
+            app:drawableStartCompat="@drawable/ic_baseline_apps_24" />
 
         <Button
             android:id="@+id/grant_app_usage_button"
@@ -55,5 +83,24 @@
             android:layout_marginBottom="16dp"
             android:gravity="center"
             android:text="@string/grant_app_usage_permission" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/choose_default_home_explainer"
+            android:textColor="@color/primary_text_color"
+            android:textSize="16sp"
+            android:gravity="start"
+            android:drawablePadding="8dp"
+            app:drawableStartCompat="@drawable/ic_baseline_home_24" />
+
+        <Button
+            android:id="@+id/choose_default_home_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:gravity="center"
+            android:text="@string/grant_home_app_button" />
     </LinearLayout>
 </ScrollView>

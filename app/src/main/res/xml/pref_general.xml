@@ -8,6 +8,11 @@
             android:title="@string/manage_hidden_calendars"
             android:summary="@string/manage_hidden_calendars_description"
             android:key="manage_cals"/>
+
+        <Preference
+            android:title="@string/manage_hidden_apps"
+            android:summary="@string/manage_hidden_recents_description"
+            android:key="manage_hidden_apps"/>
     </PreferenceCategory>
 
     <PreferenceCategory

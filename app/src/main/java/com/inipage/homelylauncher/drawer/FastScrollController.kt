@@ -6,14 +6,18 @@ import android.graphics.drawable.Drawable
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AnimationSet
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import com.inipage.homelylauncher.R
+import com.inipage.homelylauncher.utils.ViewUtils
 import com.inipage.homelylauncher.views.DecorViewManager
+import com.inipage.homelylauncher.views.ProvidesOverallDimensions
 import java.util.*
 import kotlin.collections.HashMap
+import kotlin.collections.HashSet
 
 class FastScrollController(private val host: Host) {
 
@@ -26,6 +30,7 @@ class FastScrollController(private val host: Host) {
         fun scrollToLetter(letter: Char)
 
         fun hostWidth(): Int
+
 
         fun onFastScrollStateChange(isEntering: Boolean)
     }
@@ -52,7 +57,15 @@ class FastScrollController(private val host: Host) {
 
         host.onFastScrollStateChange(true)
         val context = host.getHostContext()
+        val activity = ViewUtils.activityOf(context) ?: return
         val root = ScrollView(context)
+        if (activity is ProvidesOverallDimensions) {
+            root.setPadding(
+                0,
+                (activity as ProvidesOverallDimensions).provideScrims().first,
+                0,
+                0)
+        }
         val container = LinearLayout(context)
         container.orientation = LinearLayout.VERTICAL
         root.addView(container)
@@ -84,8 +97,17 @@ class FastScrollController(private val host: Host) {
                 }
             }
             workingContainer.addView(letter, LinearLayout.LayoutParams(itemWidth, itemHeight))
+
+            letter.rotationX = 90F
+            letter.animate().rotationXBy(-90F).duration = 200
         }
 
+        root.alpha = 0F
+        root.scaleX = 1.2F
+        root.scaleY = 1.2F
+        root.animate().alphaBy(1F).duration = 200L
+        root.animate().scaleXBy(-0.2F).duration = 200L
+        root.animate().scaleYBy(-0.2F).duration = 200L
         DecorViewManager.get(context).attachView(
             root,
             object : DecorViewManager.Callback {
@@ -103,14 +125,15 @@ class FastScrollController(private val host: Host) {
         )
     }
 
+    private fun leaveFastScroll() {
+        host.onFastScrollStateChange(false)
+    }
+
+
     private fun Context.drawableFromAttribute(attribute: Int): Drawable? {
         val attributes = obtainStyledAttributes(intArrayOf(attribute))
         val drawable = attributes.getDrawable(0)
         attributes.recycle()
         return drawable
-    }
-
-    private fun leaveFastScroll() {
-        host.onFastScrollStateChange(false)
     }
 }

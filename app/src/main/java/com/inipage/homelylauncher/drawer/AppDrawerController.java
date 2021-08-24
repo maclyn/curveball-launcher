@@ -24,6 +24,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
+import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -144,6 +145,21 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         public void scrollToIndex(int idx) {
             appRecyclerView.scrollToPosition(idx);
         }
+
+        @Override
+        public int getFirstIndexOnScreen() {
+            return mLayoutManager.findFirstVisibleItemPosition();
+        }
+
+        @Override
+        public int getLastIndexOnScreen() {
+            return mLayoutManager.findLastVisibleItemPosition();
+        }
+
+        @Override
+        public int getTotalCount() {
+            return mLayoutManager.getItemCount();
+        }
     };
 
     @SuppressLint("ClickableViewAccessibility")
@@ -232,6 +248,7 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         mLayoutManager.setReverseLayout(false);
         searchPullLayout.setEnabled(true);
         mAdapter.leaveSearch();
+        appRecyclerView.post(() -> appRecyclerView.setItemAnimator(new DefaultItemAnimator()));
     }
 
     private void setSearchDrawable() {
@@ -240,7 +257,7 @@ public class AppDrawerController implements BasePageController, FastScrollContro
             circleViewField.setAccessible(true);
             @Nullable final ImageView circleView = (ImageView) circleViewField.get(searchPullLayout);
             if (circleView != null) {
-                circleView.setImageResource(R.drawable.ic_search_48);
+                circleView.setImageResource(R.drawable.ic_search_wrapper);
             }
         } catch (Exception ignored) {} // NoSuchElement/IllegalAccessException, most likely
     }
@@ -269,6 +286,7 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         }
 
         mIsSearching = true;
+        appRecyclerView.setItemAnimator(null);
         actionBar.setVisibility(VISIBLE);
         searchBox.requestFocus();
         searchPullLayout.setEnabled(false);
@@ -456,7 +474,7 @@ public class AppDrawerController implements BasePageController, FastScrollContro
 
     @Override
     public void scrollToLetter(char letter) {
-        mAdapter.scrollToLetter(letter);
+        mAdapter.scrollToLetter(letter, approxItemCountOnScreen());
         appRecyclerView.post(() -> DecorViewManager.get(mContext).detachTopView());
     }
 
@@ -469,6 +487,11 @@ public class AppDrawerController implements BasePageController, FastScrollContro
     @Override
     public int hostWidth() {
         return appRecyclerView.getWidth();
+    }
+
+    private int approxItemCountOnScreen() {
+        int itemHeight = mContext.getResources().getDimensionPixelSize(R.dimen.app_icon_row_height);
+        return (int) Math.floor(appRecyclerView.getHeight() / itemHeight);
     }
 
     public interface Host {

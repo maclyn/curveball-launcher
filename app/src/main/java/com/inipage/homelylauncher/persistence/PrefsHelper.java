@@ -38,4 +38,13 @@ public class PrefsHelper {
                 .collect(Collectors.toSet());
         prefs.edit().putStringSet(Constants.DISABLED_CALENDARS_PREF, prefValue).apply();
     }
+
+    public static boolean checkAndUpdateIsNewUser(Context context) {
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        if (prefs.getBoolean(Constants.HAS_SHOWN_NEW_USER_EXPERIENCE, false)) {
+            return false;
+        }
+        prefs.edit().putBoolean(Constants.HAS_SHOWN_NEW_USER_EXPERIENCE, true).apply();
+        return true;
+    }
 }
