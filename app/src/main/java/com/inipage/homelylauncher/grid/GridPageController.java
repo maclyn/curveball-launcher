@@ -118,6 +118,8 @@ public class GridPageController implements BasePageController {
         final int height = mRootContainer.getHeight();
         final int width = mRootContainer.getWidth();
 
+        // TODO: The follow logic works if the screen doesn't change size or rotate
+
         if (mPage.areDimensionsUnset()) {
             mMetrics = new GridMetrics(height, width, Constants.DEFAULT_COLUMN_COUNT);
             mPage.sizeFromContainer(mMetrics);

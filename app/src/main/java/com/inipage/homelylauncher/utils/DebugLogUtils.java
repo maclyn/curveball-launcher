@@ -19,7 +19,7 @@ public class DebugLogUtils {
     public static final String TAG_BOTTOM_SHEET = "tag_bottom_sheet";
     public static final String TAG_POCKET_ANIMATION = "tag_pocket_animation";
 
-    private static final String NEEDLED = TAG_CUSTOM_TOUCHEVENTS;
+    private static final String NEEDLED = TAG_PAGE_SCROLL;
 
     public static void needle(String tag, String... out) {
         needle(tag, 0, null, out);

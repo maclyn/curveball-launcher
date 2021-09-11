@@ -18,6 +18,7 @@ import android.view.DragEvent;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
@@ -51,6 +52,7 @@ import com.inipage.homelylauncher.utils.AttributeApplier;
 import com.inipage.homelylauncher.utils.DebugLogUtils;
 import com.inipage.homelylauncher.utils.SizeDimenAttribute;
 import com.inipage.homelylauncher.utils.SizeValAttribute;
+import com.inipage.homelylauncher.utils.StatusBarUtils;
 import com.inipage.homelylauncher.utils.ViewUtils;
 import com.inipage.homelylauncher.views.DecorViewDragger;
 import com.inipage.homelylauncher.views.DecorViewManager;
@@ -87,7 +89,9 @@ public class HomeActivity extends AppCompatActivity implements
 
     public static final long PAGE_SWITCH_DELAY = 750L;
 
+    // TODO: Fix this
     private static final boolean DISABLE_WALLPAPER_OFFSET_CHANGING = true;
+
     @SizeValAttribute(16)
     int distanceFromEdgeToSwitchPages;
     @SizeDimenAttribute(R.dimen.actuation_distance)
@@ -130,7 +134,9 @@ public class HomeActivity extends AppCompatActivity implements
                 forwardingContainer.setTranslationX(
                     forwardingContainer.getWidth() - positionOffsetPixels);
                 forwardingContainer.setAlpha(positionOffset);
-                mPager.getAppDrawerController().quitSearch();
+                if (!mSyntheticScrolling) {
+                    mPager.getAppDrawerController().quitSearch();
+                }
             } else if (position >= 1) {
                 dockView.setAlpha(1);
                 forwardingContainer.setAlpha(1);
@@ -180,7 +186,8 @@ public class HomeActivity extends AppCompatActivity implements
                     // User is dragging
                     break;
                 case ViewPager2.SCROLL_STATE_IDLE:
-                    // User stopped touching
+                    // User stopped touching/screen stopped scrolling
+                    mSyntheticScrolling = false;
                     break;
                 default:
                     break;
@@ -194,6 +201,13 @@ public class HomeActivity extends AppCompatActivity implements
     @Nullable
     private String mPendingGridPageId;
 
+    // For weird devices...
+    private float mPagingSlop;
+    private boolean mProcessingVirtualTrackpadGesture;
+    private int mTargetPointerId;
+    private float mVirtualTrackpadXStart, mVirtualTrackpadYStart;
+    private boolean mSyntheticScrolling;
+
     //region Android lifecycle
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -203,6 +217,7 @@ public class HomeActivity extends AppCompatActivity implements
         AttributeApplier.applyDensity(this, this);
 
         mPager = new HomePager(this, rootView);
+        mPagingSlop = ViewConfiguration.get(this).getScaledPagingTouchSlop();
         pagerView.setAdapter(mPager);
         pagerView.registerOnPageChangeCallback(mOnPageChangeCallback);
         pagerView.setOffscreenPageLimit(100);
@@ -256,7 +271,7 @@ public class HomeActivity extends AppCompatActivity implements
                 public void onDrag(View v, DecorViewDragger.DragEvent event) {
                     switch (event.getAction()) {
                         case DragEvent.ACTION_DRAG_STARTED:
-                            if (pagerView.getCurrentItem() == 0) {
+                            if (isOnAppDrawer()) {
                                 switchPageRight();
                             }
                             break;
@@ -331,6 +346,25 @@ public class HomeActivity extends AppCompatActivity implements
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (ViewUtils.isEventFromVirtualTrackball(event)) {
+            // These are caught in dispatchGenericMotionEvent()
+            return true;
+        }
+
+        if (ViewUtils.isEventFromPhysicalKeyboard(event)) {
+            mProcessingVirtualTrackpadGesture = false;
+            if (!isOnAppDrawer()) {
+                mSyntheticScrolling = true;
+                pagerView.setCurrentItem(0, true);
+                mPager.getAppDrawerController().feedKeyboardEvent(event);
+                return true;
+            } else if (!mPager.getAppDrawerController().isSearching()) {
+                mPager.getAppDrawerController().feedKeyboardEvent(event);
+                return true;
+            }
+            return super.onKeyDown(keyCode, event);
+        }
+
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             if (DecorViewManager.get(this).detachTopView()) {
                 return true;
@@ -339,7 +373,7 @@ public class HomeActivity extends AppCompatActivity implements
                 mPocketController.collapse();
                 return true;
             }
-            if (pagerView.getCurrentItem() == 0) {
+            if (isOnAppDrawer()) {
                 pagerView.setCurrentItem(1, true);
                 return true;
             }
@@ -347,7 +381,7 @@ public class HomeActivity extends AppCompatActivity implements
                 LayoutEditingSingleton.getInstance().setEditing(false);
                 return true;
             }
-            if (pagerView.getCurrentItem() != 1) {
+            if (!isOnFirstHomeScreen()) {
                 pagerView.setCurrentItem(1, true);
                 return true;
             }
@@ -356,48 +390,73 @@ public class HomeActivity extends AppCompatActivity implements
         return super.onKeyDown(keyCode, event);
     }
 
-    private void updateWallpaperOffsetSteps() {
-        final WallpaperManager wm = WallpaperManager.getInstance(this);
-        if (wm.getWallpaperInfo() == null) {
-            return;
+    @Override
+    public boolean dispatchGenericMotionEvent(MotionEvent ev) {
+        if (ViewUtils.isEventFromVirtualTrackball(ev)) {
+            if (isOnAppDrawer() && !mPager.getAppDrawerController().isSearching()) {
+                mPager.getAppDrawerController().feedTrackballEvent(ev);
+                // TODO: Scroll app drawer here
+                return false;
+            }
+
+            // Handle virtual trackball as a trackball
+            switch (ev.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    mProcessingVirtualTrackpadGesture = true;
+                    mTargetPointerId = ev.getPointerId(0);
+                    mVirtualTrackpadXStart = ev.getRawX();
+                    mVirtualTrackpadYStart = ev.getRawY();
+                    break;
+                case MotionEvent.ACTION_UP:
+                    if (!mProcessingVirtualTrackpadGesture || ev.getPointerId(0) != mTargetPointerId) {
+                        return false;
+                    }
+                    final float xDelta = ev.getRawX() - mVirtualTrackpadXStart;
+                    final float yDelta = ev.getRawY() - mVirtualTrackpadYStart;
+                    if (Math.abs(xDelta) < mPagingSlop && Math.abs(yDelta) < mPagingSlop) {
+                        return false;
+                    }
+                    final boolean isVerticalScroll = Math.abs(yDelta) > Math.abs(xDelta);
+                    if (isVerticalScroll) {
+                        if (isOnAppDrawer()) {
+                            break;
+                        }
+                        if (yDelta > 0) {
+                            if (mPocketController.isExpanded()) {
+                                mPocketController.collapse();
+                            } else {
+                                StatusBarUtils.expandStatusBar(this);
+                            }
+                        } else {
+                            mPocketController.expand();
+                        }
+                    } else {
+                        if (xDelta > 0) {
+                            if (!isOnAppDrawer()) {
+                                pagerView.setCurrentItem(pagerView.getCurrentItem() - 1, true);
+                            }
+                        } else {
+                            if (!isOnLastPage()) {
+                                pagerView.setCurrentItem(pagerView.getCurrentItem() + 1, true);
+                            }
+                        }
+                    }
+                    break;
+            }
+            return false;
         }
-        if (DISABLE_WALLPAPER_OFFSET_CHANGING) {
-            return;
-        }
-        wm.setWallpaperOffsetSteps(mPager.getWallpaperOffsetSteps(), 0);
-        DebugLogUtils.needle(
-            TAG_WALLPAPER_OFFSET,
-            "Offset steps:",
-            String.valueOf(mPager.getWallpaperOffsetSteps()));
+        return super.dispatchGenericMotionEvent(ev);
     }
 
-    private void updateWallpaperOffset(int currentItem, float marginalOffset) {
-        final WallpaperManager wm = WallpaperManager.getInstance(HomeActivity.this);
-        if (wm.getWallpaperInfo() == null) {
-            return;
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (isOnAppDrawer() &&
+            mPager.getAppDrawerController().isAlphabeticalPickerOpen() &&
+            ViewUtils.isSquarishDevice(this)) {
+            mPager.getAppDrawerController().feedKeyboardEvent(event);
+            return false;
         }
-        if (DISABLE_WALLPAPER_OFFSET_CHANGING) {
-            return;
-        }
-        wm.setWallpaperOffsets(
-            pagerView.getWindowToken(),
-            mPager.getWallpaperOffset(currentItem, marginalOffset),
-            0);
-        DebugLogUtils.needle(
-            TAG_WALLPAPER_OFFSET,
-            "Update wallpaper offset:",
-            String.valueOf(mPager.getWallpaperOffset(currentItem, marginalOffset)));
-
-    }
-
-    private void switchPageRight() {
-        final int currentPage = pagerView.getCurrentItem();
-        if (currentPage == mPager.getItemCount() - 1) {
-            mPager.spawnNewPage();
-            updateWallpaperOffsetSteps();
-        } else {
-            pagerView.setCurrentItem(currentPage + 1, true);
-        }
+        return super.dispatchKeyEvent(event);
     }
 
     @Nullable
@@ -479,7 +538,7 @@ public class HomeActivity extends AppCompatActivity implements
                 mPocketController.collapse();
                 return;
             }
-            if (pagerView.getCurrentItem() != 1) {
+            if (!isOnFirstHomeScreen()) {
                 pagerView.setCurrentItem(1, true);
                 return;
             }
@@ -492,7 +551,7 @@ public class HomeActivity extends AppCompatActivity implements
     }
 
     private void switchPageLeft() {
-        if (pagerView.getCurrentItem() <= 1) {
+        if (isOnAppDrawer()) {
             return;
         }
         pagerView.setCurrentItem(pagerView.getCurrentItem() - 1, true);
@@ -572,14 +631,7 @@ public class HomeActivity extends AppCompatActivity implements
         final BasePageController pageController =
             mPager.getPageController(pagerView.getCurrentItem());
         if (pageController instanceof GridPageController) {
-            ((GridPageController) pageController).clearDragTarget();
-        }
-    }
-
-    private void updateBackgroundAlpha(float newAlpha) {
-        backgroundTint.setAlpha(LayoutEditingSingleton.getInstance().isEditing() ?
-                                Math.max(newAlpha, 1) :
-                                newAlpha);
+            ((GridPageController) pageController).clearDragTarget();        }
     }
 
     @Override
@@ -596,6 +648,72 @@ public class HomeActivity extends AppCompatActivity implements
             out[1],
             out[0] + backgroundTint.getWidth(),
             out[1] + backgroundTint.getHeight());
+    }
+
+
+
+    private void updateWallpaperOffsetSteps() {
+        final WallpaperManager wm = WallpaperManager.getInstance(this);
+        if (wm.getWallpaperInfo() == null) {
+            return;
+        }
+        if (DISABLE_WALLPAPER_OFFSET_CHANGING) {
+            return;
+        }
+        wm.setWallpaperOffsetSteps(mPager.getWallpaperOffsetSteps(), 0);
+        DebugLogUtils.needle(
+            TAG_WALLPAPER_OFFSET,
+            "Offset steps:",
+            String.valueOf(mPager.getWallpaperOffsetSteps()));
+    }
+
+    private void updateWallpaperOffset(int currentItem, float marginalOffset) {
+        final WallpaperManager wm = WallpaperManager.getInstance(HomeActivity.this);
+        if (wm.getWallpaperInfo() == null) {
+            return;
+        }
+        if (DISABLE_WALLPAPER_OFFSET_CHANGING) {
+            return;
+        }
+        wm.setWallpaperOffsets(
+            pagerView.getWindowToken(),
+            mPager.getWallpaperOffset(currentItem, marginalOffset),
+            0);
+        DebugLogUtils.needle(
+            TAG_WALLPAPER_OFFSET,
+            "Update wallpaper offset:",
+            String.valueOf(mPager.getWallpaperOffset(currentItem, marginalOffset)));
+    }
+
+    private void switchPageRight() {
+        final int currentPage = pagerView.getCurrentItem();
+        if (currentPage == mPager.getItemCount() - 1) {
+            mPager.spawnNewPage();
+            updateWallpaperOffsetSteps();
+        } else {
+            pagerView.setCurrentItem(currentPage + 1, true);
+        }
+    }
+
+    private void updateBackgroundAlpha(float newAlpha) {
+        backgroundTint.setAlpha(
+            LayoutEditingSingleton.getInstance().isEditing() ? Math.max(newAlpha, 1) : newAlpha);
+    }
+
+    private boolean isOnAppDrawer() {
+        return pagerView.getCurrentItem() == 0;
+    }
+
+    private boolean isOnFirstHomeScreen() {
+        return pagerView.getCurrentItem() == 1;
+    }
+
+    private boolean isOnAnyHomeScreen() {
+        return pagerView.getCurrentItem() > 0;
+    }
+
+    private boolean isOnLastPage() {
+        return pagerView.getCurrentItem() == mPager.getItemCount() - 1;
     }
 
     private class SwitchPageHandler implements Handler.Callback {

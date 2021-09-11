@@ -4,6 +4,7 @@ import android.animation.Animator
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.view.Gravity
+import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AnimationSet
@@ -31,10 +32,10 @@ class FastScrollController(private val host: Host) {
 
         fun hostWidth(): Int
 
-
         fun onFastScrollStateChange(isEntering: Boolean)
     }
 
+    var inFastScroll = false
     private val languageMap = HashMap<String, Array<Char>>()
     private val lettersPerRow = 5
 
@@ -47,6 +48,7 @@ class FastScrollController(private val host: Host) {
     }
 
     fun enterFastScroll() {
+        inFastScroll = true
         val languageKey = Locale.getDefault().language
         val headersToCounts = host.getHeaderToCountMap()
         val alphabet: Array<Char> =
@@ -126,9 +128,9 @@ class FastScrollController(private val host: Host) {
     }
 
     private fun leaveFastScroll() {
+        inFastScroll = false
         host.onFastScrollStateChange(false)
     }
-
 
     private fun Context.drawableFromAttribute(attribute: Int): Drawable? {
         val attributes = obtainStyledAttributes(intArrayOf(attribute))

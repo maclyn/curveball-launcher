@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.graphics.Rect;
+import android.view.InputEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -112,5 +113,23 @@ public class ViewUtils {
             public void onAnimationRepeat(Animator animation) {
             }
         };
+    }
+
+    public static boolean isEventFromVirtualTrackball(InputEvent event) {
+        return event.getDevice().getName().equals(
+            Constants.VIRTUAL_TITAN_POCKET_SCROLLPAD_INPUT_DEVICE_NAME);
+    }
+
+    public static boolean isEventFromPhysicalKeyboard(InputEvent event) {
+        return event.getDevice().getName().equals(
+            Constants.PHYSICAL_TITAN_POCKET_KEYBOARD_INPUT_DEVICE_NAME);
+    }
+
+    public static boolean isSquarishDevice(Context context) {
+        @Nullable final Activity activity = activityOf(context);
+        if (activity == null) return false;
+        float windowHeight = activity.getWindow().getDecorView().getHeight();
+        float aspectRatio = windowHeight / activity.getWindow().getDecorView().getWidth();
+        return aspectRatio < 1.1;
     }
 }

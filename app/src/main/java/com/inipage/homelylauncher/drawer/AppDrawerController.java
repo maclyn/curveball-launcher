@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.DragEvent;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
@@ -241,6 +242,8 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         }
         searchBox.setText("");
         searchBox.clearFocus();
+        searchBox.setFocusable(false);
+        searchBox.setFocusableInTouchMode(false);
         hideKeyboard();
         mIsSearching = false;
         actionBar.setVisibility(GONE);
@@ -288,6 +291,8 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         mIsSearching = true;
         appRecyclerView.setItemAnimator(null);
         actionBar.setVisibility(VISIBLE);
+        searchBox.setFocusable(true);
+        searchBox.setFocusableInTouchMode(true);
         searchBox.requestFocus();
         searchPullLayout.setEnabled(false);
         showKeyboard();
@@ -459,6 +464,14 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         mAdapter.hideApp(ai);
     }
 
+    public boolean isSearching() {
+        return mIsSearching;
+    }
+
+    public boolean isAlphabeticalPickerOpen() {
+        return mScrollController.getInFastScroll();
+    }
+
     @Override
     public void onFastScrollStateChange(boolean isEntering) {
         appRecyclerView.animate().alpha(isEntering ? 0F : 1F).setDuration(200).start();
@@ -474,7 +487,7 @@ public class AppDrawerController implements BasePageController, FastScrollContro
 
     @Override
     public void scrollToLetter(char letter) {
-        mAdapter.scrollToLetter(letter, approxItemCountOnScreen());
+        mAdapter.scrollToLetter(letter);
         appRecyclerView.post(() -> DecorViewManager.get(mContext).detachTopView());
     }
 
@@ -492,6 +505,25 @@ public class AppDrawerController implements BasePageController, FastScrollContro
     private int approxItemCountOnScreen() {
         int itemHeight = mContext.getResources().getDimensionPixelSize(R.dimen.app_icon_row_height);
         return (int) Math.floor(appRecyclerView.getHeight() / itemHeight);
+    }
+
+    public void feedKeyboardEvent(KeyEvent event) {
+        if (isAlphabeticalPickerOpen()) {
+            if (event.getAction() == KeyEvent.ACTION_UP) {
+                scrollToLetter((char) event.getUnicodeChar(0));
+            }
+            return;
+        }
+
+        if (!mIsSearching) {
+            enterSearch();
+        }
+        searchBox.requestFocus();
+        searchBox.onKeyDown(event.getKeyCode(), event);
+    }
+
+    public void feedTrackballEvent(MotionEvent event) {
+        appRecyclerView.onTouchEvent(event);
     }
 
     public interface Host {

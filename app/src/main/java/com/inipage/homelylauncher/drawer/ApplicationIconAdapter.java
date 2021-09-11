@@ -558,13 +558,14 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         return mElements.get(position).getElementType();
     }
 
-    public synchronized void scrollToLetter(char letter, int itemCountOnScreen) {
+    public synchronized void scrollToLetter(char letter) {
+        letter = Character.toLowerCase(letter);
         for (int i = 0; i < mElements.size(); i++) {
             AdapterElement element = mElements.get(i);
             if (element.getElementType() != ITEM_VIEW_TYPE_LETTER_HEADER) {
                 continue;
             }
-            if (element.getUnderlyingHeaderChar() != letter) {
+            if (Character.toLowerCase(element.getUnderlyingHeaderChar()) != letter) {
                 continue;
             }
 
@@ -582,6 +583,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 return;
             }
             mDelegate.scrollToIndex(Math.min(mDelegate.getTotalCount() - 1, targetIdx));
+            break;
         }
     }
 

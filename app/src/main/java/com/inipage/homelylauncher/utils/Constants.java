@@ -18,10 +18,19 @@ public class Constants {
 
     public static final boolean DEBUG_RENDER = false;
 
-    // More than this, and widget start to freak out
+    // More than this, and widgets start to freak out
     public static final int DEFAULT_COLUMN_COUNT = 5;
     public static final int DEFAULT_MAX_ROW_COUNT = 6;
+
     // Each cell of the homescreen isn't actually square -- we have to apply this factor,
     // or widgets aren't going to fit right...
-    public static final float WIDTH_TO_HEIGHT_SCALAR = 1.5F;
+    public static final float DEFAULT_WIDTH_TO_HEIGHT_SCALAR = 1.5F;
+
+    // Width-to-height scalar for smaller screens; widgets don't fit super great at this factor,
+    // but it squeezes an extra row on for a square screen
+    public static final float SQUAT_WIDTH_TO_HEIGHT_SCALAR = 1.15F;
+
+    public static final String VIRTUAL_TITAN_POCKET_SCROLLPAD_INPUT_DEVICE_NAME = "mtk-pad";
+
+    public static final String PHYSICAL_TITAN_POCKET_KEYBOARD_INPUT_DEVICE_NAME = "aw9523-key";
 }
