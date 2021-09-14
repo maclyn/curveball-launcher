@@ -502,11 +502,6 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         return appRecyclerView.getWidth();
     }
 
-    private int approxItemCountOnScreen() {
-        int itemHeight = mContext.getResources().getDimensionPixelSize(R.dimen.app_icon_row_height);
-        return (int) Math.floor(appRecyclerView.getHeight() / itemHeight);
-    }
-
     public void feedKeyboardEvent(KeyEvent event) {
         if (isAlphabeticalPickerOpen()) {
             if (event.getAction() == KeyEvent.ACTION_UP) {

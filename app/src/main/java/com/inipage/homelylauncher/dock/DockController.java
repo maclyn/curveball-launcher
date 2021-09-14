@@ -1,8 +1,10 @@
 package com.inipage.homelylauncher.dock;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
+import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +20,7 @@ import com.inipage.homelylauncher.dock.items.CalendarMappedDockItem;
 import com.inipage.homelylauncher.dock.items.ContextualAppFetcher;
 import com.inipage.homelylauncher.dock.items.PhoneMappedDockItem;
 import com.inipage.homelylauncher.dock.items.PowerMappedDockItem;
+import com.inipage.homelylauncher.dock.items.WeatherDockItem;
 import com.inipage.homelylauncher.model.DockItem;
 import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.utils.ViewUtils;
@@ -31,6 +34,9 @@ import java.util.stream.Collectors;
 
 import static android.view.View.GONE;
 
+/**
+ * Manages dock items at the bottom of the home screen.
+ */
 public class DockController {
 
     private static final int MAX_ITEM_COUNT = 10;
@@ -44,7 +50,6 @@ public class DockController {
         mContainer = container;
         mAppFetcher = new ContextualAppFetcher();
         mAppBackedItemsCache = new HashMap<>();
-        mContainer.post(this::reloadDock);
     }
 
     public void reloadDock() {
@@ -64,8 +69,13 @@ public class DockController {
         mContainer.removeAllViews();
         final List<DockControllerItem> items = getActiveItems();
         final Context context = mContainer.getContext();
+        final boolean isSquarish = ViewUtils.isSquarishDevice(context);
         mContainer.addView(ViewUtils.createFillerWidthView(
-            context, (int) context.getResources().getDimension(R.dimen.home_activity_margin)));
+            context,
+            (int) context.getResources().getDimension(
+                isSquarish ?
+                    R.dimen.home_activity_squarish :
+                    R.dimen.home_activity_margin)));
         for (int i = 0; i < Math.min(items.size(), MAX_ITEM_COUNT); i++) {
             final LinearLayout.LayoutParams layoutParams =
                 new LinearLayout.LayoutParams(
@@ -74,58 +84,74 @@ public class DockController {
             final View view =
                 LayoutInflater.from(context).inflate(
                     R.layout.dock_collapsed_item, mContainer, false);
-
-            // Setup background color
-            final View dockItemContainer = view.findViewById(R.id.dock_item_root_container);
-            dockItemContainer.getBackground().setColorFilter(
-                new PorterDuffColorFilter(
-                    item.getTint(context, color ->
-                        dockItemContainer.getBackground()
-                            .setColorFilter(new PorterDuffColorFilter(
-                                color,
-                                PorterDuff.Mode.SRC_IN))),
-                    PorterDuff.Mode.SRC_IN));
-
-            // Map icon
-            if (item.getIcon() != 0) {
-                ((ImageView) view.findViewById(R.id.contextual_dock_item_icon)).setImageResource(
-                    item.getIcon());
-            } else {
-                ((ImageView) view.findViewById(R.id.contextual_dock_item_icon)).setImageBitmap(
-                    item.getBitmap(context));
+            final DockControllerItem.LoadingCallback callback = () -> {
+                bindViewToLoadedItem(context, isSquarish, view, item);
+                view.setVisibility(View.VISIBLE);
+            };
+            if (!item.startLoading(context, callback)) {
+                view.setVisibility(GONE);
+                mContainer.addView(view, layoutParams);
+                continue;
             }
-
-            // Map text
-            @Nullable final String label = item.getLabel(context);
-            if (label != null) {
-                ((TextView) view.findViewById(R.id.contextual_dock_item_label)).setText(label);
-            } else {
-                ((View) view.findViewById(R.id.contextual_dock_item_label).getParent())
-                    .setVisibility(GONE);
-            }
-            @Nullable final String secondaryLabel = item.getSecondaryLabel(context);
-            if (secondaryLabel != null) {
-                ((TextView) view.findViewById(R.id.contextual_dock_item_secondary_label)).setText(
-                    secondaryLabel);
-            } else {
-                view.findViewById(R.id.contextual_dock_item_secondary_label).setVisibility(GONE);
-            }
-
-            // Map actions
-            view.setOnClickListener(v -> item.getAction(v, context).run());
-            view.setOnLongClickListener(v -> {
-                @Nullable final Runnable action = item.getSecondaryAction(
-                    v, context, () -> view.setVisibility(GONE));
-                if (action != null) {
-                    action.run();
-                }
-                return action != null;
-            });
-
+            bindViewToLoadedItem(context, isSquarish, view, item);
             mContainer.addView(view, layoutParams);
         }
         mContainer.addView(ViewUtils.createFillerWidthView(
             context, (int) context.getResources().getDimension(R.dimen.home_activity_margin)));
+    }
+
+    private void bindViewToLoadedItem(
+            Context context, boolean isSquarish, View view, DockControllerItem item) {
+        // Setup background color
+        final View dockItemContainer = view.findViewById(R.id.dock_item_root_container);
+        dockItemContainer.getBackground().setColorFilter(
+            new PorterDuffColorFilter(
+                item.getTint(context, color ->
+                    dockItemContainer.getBackground()
+                        .setColorFilter(new PorterDuffColorFilter(
+                            color,
+                            PorterDuff.Mode.SRC_IN))),
+                PorterDuff.Mode.SRC_IN));
+
+        // Map icon
+        ImageView itemIcon = ((ImageView) view.findViewById(R.id.contextual_dock_item_icon));
+        int icon = item.getIcon();
+        @Nullable Bitmap bitmap = item.getBitmap(context);
+        @Nullable Drawable drawable = item.getDrawable(context);
+        if (icon != 0) {
+            itemIcon.setImageResource(icon);
+        } else if (bitmap != null) {
+            itemIcon.setImageBitmap(bitmap);
+        } else if (drawable != null) {
+            itemIcon.setImageDrawable(drawable);
+        }
+
+        // Map text
+        @Nullable final String label = item.getLabel(context);
+        if (label != null) {
+            ((TextView) view.findViewById(R.id.contextual_dock_item_label)).setText(label);
+        } else {
+            ((View) view.findViewById(R.id.contextual_dock_item_label).getParent())
+                .setVisibility(GONE);
+        }
+        @Nullable final String secondaryLabel = item.getSecondaryLabel(context);
+        if (secondaryLabel != null && !isSquarish) {
+            ((TextView) view.findViewById(R.id.contextual_dock_item_secondary_label)).setText(
+                secondaryLabel);
+        } else {
+            view.findViewById(R.id.contextual_dock_item_secondary_label).setVisibility(GONE);
+        }
+
+        // Map actions
+        view.setOnClickListener(v -> item.getAction(v, context).run());
+        view.setOnLongClickListener(v -> {
+            @Nullable final Runnable action = item.getSecondaryAction(
+                v, context, () -> view.setVisibility(GONE));
+            if (action != null) {
+                action.run();
+            }
+            return action != null;
+        });
     }
 
     private List<DockControllerItem> getActiveItems() {
@@ -133,6 +159,7 @@ public class DockController {
         final List<DockControllerItem> items = new ArrayList<>();
         items.add(new AlarmMappedDockItem(context));
         items.add(new CalendarMappedDockItem(context));
+        items.add(new WeatherDockItem());
         items.add(new PhoneMappedDockItem(context, mAppBackedItemsCache));
         items.add(new PowerMappedDockItem(context, mAppBackedItemsCache));
         items.addAll(mAppFetcher.getRecentApps(context));

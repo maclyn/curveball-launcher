@@ -67,7 +67,7 @@ public class BylineController implements WeatherController.WeatherPresenter {
         float fontSizeHeight = fontMetrics.descent - fontMetrics.ascent;
         mIconSize = fontSizeHeight / 1.3F;
         render();
-        WeatherController.requestWeather(mContext, this, false);
+        WeatherController.requestWeather(mContext, this);
     }
 
     public void render() {
@@ -238,9 +238,10 @@ public class BylineController implements WeatherController.WeatherPresenter {
         CleanedUpWeatherModel cModel =
             CleanedUpWeatherModel.parseFromLTSForecastModel(weather, mContext);
         final String condition = cModel.getCondition();
-        final String temperature = cModel.getTemp();
+        final String temperature = cModel.getCurrentTemp();
         mWeatherString = String.format("%1$s and %2$s", temperature, condition);
-        mWeatherRes = cModel.getResourceId();
+        // mWeatherRes = cModel.getResourceId();
+        mWeatherRes = R.drawable.ic_delete_white_48dp;
         render();
     }
 

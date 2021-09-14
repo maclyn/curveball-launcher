@@ -54,14 +54,14 @@ public class PowerMappedDockItem extends ConfigurableAppBackedDockItem {
     }
 
     @Override
-    public int getTint(Context context, Callback __) {
+    public int getTint(Context context, TintCallback __) {
         return context.getColor(R.color.dock_item_power_color);
     }
 
     @Override
     public long getBasePriority() {
         return mIsLowPower ?
-               DockItemPriorities.PRIORITY_POWER_EVENT_LOW :
-               DockItemPriorities.PRIORITY_POWER_EVENT_CHARGING;
+               DockItemPriorities.PRIORITY_POWER_EVENT_LOW.getPriority() :
+               DockItemPriorities.PRIORITY_POWER_EVENT_CHARGING.getPriority();
     }
 }

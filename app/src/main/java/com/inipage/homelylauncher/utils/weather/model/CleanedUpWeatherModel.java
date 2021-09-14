@@ -4,35 +4,57 @@ import android.content.Context;
 import android.preference.PreferenceManager;
 import android.util.Pair;
 
-import com.inipage.homelylauncher.R;
 import com.inipage.homelylauncher.utils.Constants;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Calendar;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
-import java.util.GregorianCalendar;
+import java.util.List;
 
 /**
  * It's a pain to get displayable data from the {@linkplain LTSForecastModel}; this class takes one
  * of those and cleans it up to give you easily displayable data.
  */
 public class CleanedUpWeatherModel {
-    public static final String TAG = "CleanedUpWeatherModel";
-    private final String condition;
-    private final String temp;
-    private final String high;
-    private final String low;
-    int resourceId;
+
+    public class HourlyModel {
+
+    }
+
+    public class DailyModel {
+
+    }
+
+    // Values representing the current state
+    private final String mCondition;
+    private final String mCurrentTemp;
+    private final String mHighTemp;
+    private final String mLowTemp;
+    private final String mConditionAssetId;
+
+    // Values representing an hourly forecast
+    private final List<HourlyModel> mHourlyModels;
+
+    // Values representing a daily forecast
+    private final List<DailyModel> mDailyModels;
 
     public CleanedUpWeatherModel(
-        int resourceId, String temp, String condition, String high, String low) {
-        this.resourceId = resourceId;
-        this.condition = condition;
-        this.temp = temp;
-        this.high = high;
-        this.low = low;
+        String resourceId,
+        String currentTemp,
+        String condition,
+        String highTemp,
+        String lowTemp,
+        List<HourlyModel> hourlyModels,
+        List<DailyModel> dailyModels) {
+        this.mConditionAssetId = resourceId;
+        this.mCondition = condition;
+        this.mCurrentTemp = currentTemp;
+        this.mHighTemp = highTemp;
+        this.mLowTemp = lowTemp;
+        mHourlyModels = hourlyModels;
+        mDailyModels = dailyModels;
     }
 
     public static CleanedUpWeatherModel parseFromLTSForecastModel(
@@ -41,12 +63,7 @@ public class CleanedUpWeatherModel {
         Pair<Date, LocationModel> temperatureEntry = null;
         Pair<Date, LocationModel> rangeEntry = null;
 
-        GregorianCalendar cal = new GregorianCalendar();
-        cal.set(Calendar.YEAR, 2100);
-        Date earliestTime = cal.getTime();
-
-        Collections.sort(
-            model.getProduct().getTimeEntries(), (t1, t2) -> t1.getFrom().compareTo(t2.getFrom()));
+        model.getProduct().getTimeEntries().sort(Comparator.comparing(TimeModel::getFrom));
         for (TimeModel forecast : model.getProduct().getTimeEntries()) {
             LocationModel l = forecast.getLocation();
             if (l != null) {
@@ -74,11 +91,10 @@ public class CleanedUpWeatherModel {
         //  if high is higher, that's the max
         //  if low is lower, that's the min
         // find closest time; use that for condition & temp
-
         String condition = "";
-        int conditionId = -1;
+        String conditionId = "";
         if (conditionEntry != null) {
-            conditionId = convertConditionToId(conditionEntry.second.getSymbol().getId());
+            conditionId = conditionEntry.second.getSymbol().getCode();
             condition = convertConditionToString(conditionEntry.second.getSymbol().getId());
         }
         String temperatureValue = null;
@@ -97,68 +113,8 @@ public class CleanedUpWeatherModel {
         }
 
         return new CleanedUpWeatherModel(
-            conditionId, temperatureValue, condition, highValue, lowValue);
-    }
-
-    private static int convertConditionToId(String condition) {
-        if (condition == null) {
-            return -1;
-        }
-
-        condition = condition.replace("Dark_", "");
-        switch (condition) {
-            case "Sun":
-                return R.drawable.clima_sun;
-            case "PartlyCloud":
-            case "LightCloud":
-                return R.drawable.clima_cloud_sun;
-            case "Cloud":
-                return R.drawable.clima_cloud;
-            case "Drizzle":
-            case "LightRain":
-                return R.drawable.clima_cloud_drizzle;
-            case "LightRainSun":
-            case "RainSun":
-            case "DrizzleSun":
-                return R.drawable.clima_cloud_rain_sun;
-            case "Rain":
-                return R.drawable.clima_cloud_rain;
-            case "LightRainThunder":
-            case "RainThunder":
-            case "RainThunderSun":
-            case "DrizzleThunder":
-            case "LightRainThunderSun":
-            case "DrizzleThunderSun":
-                return R.drawable.clima_cloud_lightning;
-            case "Fog":
-                return R.drawable.clima_cloud_fog;
-            case "Sleet":
-            case "SleetThunder":
-            case "SleetSun":
-            case "SleetSunThunder":
-            case "SnowSun":
-            case "LightSleetThunderSun":
-            case "LightSleetSun":
-            case "HeavySleetSun":
-            case "HeavySleetThunderSun":
-            case "LightSleetThunder":
-            case "HeavySleetThunder":
-            case "Snow":
-            case "LightSleet":
-            case "HeavySleet":
-            case "SnowThunder":
-            case "SnowSunThunder":
-            case "LightSnowSun":
-            case "LightSnowThunder":
-            case "HeavySnowThunder":
-                return R.drawable.clima_cloud_snow;
-            case "HeavySnow":
-            case "HeavysnowSun":
-            case "LightSnowThunderSun":
-            case "HeavySnowThunderSun":
-                return R.drawable.clima_cloud_snow_alt;
-        }
-        return R.drawable.clima_umbrella;
+            conditionId, temperatureValue, condition, highValue, lowValue, new ArrayList<>(),
+            new ArrayList<>());
     }
 
     private static String convertConditionToString(@Nullable String condition) {
@@ -169,30 +125,30 @@ public class CleanedUpWeatherModel {
         condition = condition.replace("Dark_", "");
         switch (condition) {
             case "Sun":
-                return "sunny";
+                return "Sunny";
             case "PartlyCloud":
-                return "partly cloudy";
+                return "Partly Cloudy";
             case "LightCloud":
             case "Cloud":
-                return "cloudy";
+                return "Cloudy";
             case "Drizzle":
             case "LightRain":
-                return "drizzle";
+                return "Drizzle";
             case "LightRainSun":
             case "RainSun":
             case "DrizzleSun":
-                return "sun showers";
+                return "Sun Showers";
             case "Rain":
-                return "rainy";
+                return "Rainy";
             case "LightRainThunder":
             case "RainThunder":
             case "RainThunderSun":
             case "DrizzleThunder":
             case "LightRainThunderSun":
             case "DrizzleThunderSun":
-                return "thunderstorms";
+                return "Thunderstorms";
             case "Fog":
-                return "foggy";
+                return "Foggy";
             case "Sleet":
             case "SleetThunder":
             case "SleetSun":
@@ -205,7 +161,7 @@ public class CleanedUpWeatherModel {
             case "HeavySleetThunder":
             case "LightSleet":
             case "HeavySleet":
-                return "sleet";
+                return "Sleet";
             case "LightSnowThunderSun":
             case "HeavySnowThunderSun":
             case "LightSnowSun":
@@ -215,10 +171,10 @@ public class CleanedUpWeatherModel {
             case "Snow":
             case "SnowThunder":
             case "SnowSunThunder":
-                return "snowy";
+                return "Snowy";
             case "HeavySnow":
             case "HeavysnowSun":
-                return "blizzard";
+                return "Blizzard";
         }
         return "Rainy";
     }
@@ -237,23 +193,23 @@ public class CleanedUpWeatherModel {
             .getBoolean(Constants.WEATHER_USE_CELCIUS_PREF, false);
     }
 
-    public int getResourceId() {
-        return resourceId;
+    public String getAssetId() {
+        return mConditionAssetId;
     }
 
-    public String getTemp() {
-        return temp;
+    public String getCurrentTemp() {
+        return mCurrentTemp;
     }
 
-    public String getHigh() {
-        return high;
+    public String getHighTemp() {
+        return mHighTemp;
     }
 
     public String getLow() {
-        return low;
+        return mLowTemp;
     }
 
     public String getCondition() {
-        return condition;
+        return mCondition;
     }
 }

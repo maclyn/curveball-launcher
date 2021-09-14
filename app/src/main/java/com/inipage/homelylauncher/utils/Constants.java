@@ -5,7 +5,7 @@ import com.google.gson.Gson;
 public class Constants {
 
     public static final String CACHED_WEATHER_RESPONSE_JSON_PREFERENCE = "cached_weather_response_json_pref";
-    public static final String CACHED_WEATHER_RESPONSE_TIME_PREFERENCE = "cached_weather_response_time_pref";
+    public static final String CACHED_WEATHER_RESPONSE_EXPIRY_PREFERENCE = "cached_weather_response_expire_pref";
     public static final String WEATHER_USE_CELCIUS_PREF = "celsius_pref";
 
     public static final String DISABLED_CALENDARS_PREF = "disabled_calendars_pref";

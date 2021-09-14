@@ -6,9 +6,7 @@ import android.view.View;
 import androidx.annotation.Nullable;
 
 import com.inipage.homelylauncher.R;
-import com.inipage.homelylauncher.dock.DockControllerItem;
 import com.inipage.homelylauncher.dock.DockItemPriorities;
-import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.persistence.PrefsHelper;
 import com.inipage.homelylauncher.utils.CalendarUtils;
 
@@ -16,7 +14,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-public class CalendarMappedDockItem implements DockControllerItem {
+public class CalendarMappedDockItem extends SynchDockControllerItem {
 
     private static final SimpleDateFormat EVENT_DATE_FORMATTER = new SimpleDateFormat(
         "h:mm aa",
@@ -63,7 +61,7 @@ public class CalendarMappedDockItem implements DockControllerItem {
     }
 
     @Override
-    public int getTint(Context context, Callback __) {
+    public int getTint(Context context, TintCallback __) {
         return context.getColor(R.color.dock_item_calendar_color);
     }
 
@@ -74,18 +72,18 @@ public class CalendarMappedDockItem implements DockControllerItem {
 
     @Nullable
     @Override
-    public Runnable getSecondaryAction(View view, Context context, ControllerHandle controllerHandle) {
+    public Runnable getSecondaryAction(View view, Context context, ItemCallback itemCallback) {
         return () -> HiddenCalendarsPickerBottomSheet.show(context, () -> {
             if (mEvent != null && PrefsHelper.getDisabledCalendars(context).containsKey(mEvent.getCalendarId())) {
-                controllerHandle.hideMe();
+                itemCallback.hideMe();
             }
         });
     }
 
     @Override
     public long getBasePriority() {
-        return mEvent.getAllDay() ?
-               DockItemPriorities.PRIORITY_EVENT_ALL_DAY :
-               DockItemPriorities.PRIORITY_EVENT_RANGED;
+        return mEvent != null && mEvent.getAllDay() ?
+               DockItemPriorities.PRIORITY_EVENT_ALL_DAY.getPriority() :
+               DockItemPriorities.PRIORITY_EVENT_RANGED.getPriority();
     }
 }

@@ -7,11 +7,10 @@ import android.view.View;
 import androidx.annotation.Nullable;
 
 import com.inipage.homelylauncher.R;
-import com.inipage.homelylauncher.dock.DockControllerItem;
 import com.inipage.homelylauncher.dock.DockItemPriorities;
 import com.inipage.homelylauncher.utils.AlarmUtils;
 
-public class AlarmMappedDockItem implements DockControllerItem {
+public class AlarmMappedDockItem extends SynchDockControllerItem {
 
     private final boolean mHasAlarm;
     private final long mNextAlarmTimeMs;
@@ -53,7 +52,7 @@ public class AlarmMappedDockItem implements DockControllerItem {
     }
 
     @Override
-    public int getTint(Context context, Callback __) {
+    public int getTint(Context context, TintCallback __) {
         return context.getColor(R.color.dock_item_alarm_color);
     }
 
@@ -72,7 +71,7 @@ public class AlarmMappedDockItem implements DockControllerItem {
 
     @Override
     public long getBasePriority() {
-        return DockItemPriorities.PRIORITY_ALARM;
+        return DockItemPriorities.PRIORITY_ALARM.getPriority();
     }
 
     @Override

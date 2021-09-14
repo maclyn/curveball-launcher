@@ -6,6 +6,10 @@ import androidx.annotation.Nullable;
 
 import com.inipage.homelylauncher.BuildConfig;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class DebugLogUtils {
 
     public static final String TAG_DRAG_OFFSET = "tag_drag_offset";
@@ -18,8 +22,14 @@ public class DebugLogUtils {
     public static final String TAG_WALLPAPER_OFFSET = "tag_wallpaper_offset";
     public static final String TAG_BOTTOM_SHEET = "tag_bottom_sheet";
     public static final String TAG_POCKET_ANIMATION = "tag_pocket_animation";
+    public static final String TAG_VIRTUAL_TRACKPAD = "tag_virtual_trackpad";
 
-    private static final String NEEDLED = TAG_PAGE_SCROLL;
+    private static final String NEEDLED = TAG_VIRTUAL_TRACKPAD;
+
+    public static void needle(String tag, Object... out) {
+        String[] array = Arrays.stream(out).map(Object::toString).toArray(String[]::new);
+        needle(tag, array);
+    }
 
     public static void needle(String tag, String... out) {
         needle(tag, 0, null, out);
@@ -35,11 +45,14 @@ public class DebugLogUtils {
         StackTraceElement[] stack = new Exception("").getStackTrace();
         @Nullable StackTraceElement element = null;
         for (int i = 2 + skipCount; i < stack.length; i++) {
-            if (skipString != null &&
-                stack[i].getClassName().toLowerCase().contains(skipString.toLowerCase())) {
+            final String className = stack[i].getClassName().toLowerCase();
+            if (skipString != null && className.contains(skipString.toLowerCase())) {
                 continue;
             }
-            if (stack[i].getMethodName().toLowerCase().contains("log")) {
+            if (className.contains("log")) {
+                continue;
+            }
+            if (className.contains("debuglogutils")) {
                 continue;
             }
             element = stack[i];
@@ -62,10 +75,10 @@ public class DebugLogUtils {
         }
 
         for (String o : out) {
-            output.append(" [");
+            output.append(" ");
             output.append(o);
-            output.append("]");
+            output.append(" ");
         }
-        Log.d("MACLYN", output.toString());
+        Log.d(NEEDLED, output.toString());
     }
 }

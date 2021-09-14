@@ -5,12 +5,18 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.view.InputEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 
+import androidx.core.content.ContextCompat;
+
+import com.inipage.homelylauncher.R;
+
+import java.io.IOException;
 import java.lang.reflect.Field;
 
 import javax.annotation.Nullable;
@@ -131,5 +137,13 @@ public class ViewUtils {
         float windowHeight = activity.getWindow().getDecorView().getHeight();
         float aspectRatio = windowHeight / activity.getWindow().getDecorView().getWidth();
         return aspectRatio < 1.1;
+    }
+
+    public static Drawable getDrawableFromAssetPNG(Context context, String assetId) {
+        try {
+            return Drawable.createFromStream(context.getAssets().open(assetId + ".png"), null);
+        } catch (IOException e) {
+            return ContextCompat.getDrawable(context, R.drawable.ic_info_white_48dp);
+        }
     }
 }

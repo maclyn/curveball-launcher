@@ -11,11 +11,18 @@ public class SymbolModel {
     @Attribute
     String number;
 
+    @Attribute
+    String code;
+
     public String getId() {
         return id;
     }
 
     public String getNumber() {
         return number;
+    }
+
+    public String getCode() {
+        return code;
     }
 }

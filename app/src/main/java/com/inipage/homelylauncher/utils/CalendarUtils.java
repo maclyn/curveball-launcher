@@ -34,7 +34,8 @@ public class CalendarUtils {
         CalendarContract.Instances.ALL_DAY,
         CalendarContract.Instances.EVENT_LOCATION,
         CalendarContract.Instances.CALENDAR_ID,
-        };
+        CalendarContract.Instances.STATUS
+    };
 
     @Nullable
     public static Event findRelevantEvent(Context context) {
@@ -62,6 +63,7 @@ public class CalendarUtils {
         final int titleCol = cursor.getColumnIndex(CalendarContract.Instances.TITLE);
         final int locationCol = cursor.getColumnIndex(CalendarContract.Instances.EVENT_LOCATION);
         final int calendarIdCol = cursor.getColumnIndex(CalendarContract.Instances.CALENDAR_ID);
+        final int statusCol = cursor.getColumnIndex(CalendarContract.Instances.STATUS);
 
         if (startCol == -1 ||
             endCol == -1 ||
@@ -70,6 +72,7 @@ public class CalendarUtils {
             locationCol == -1 ||
             idCol == -1 ||
             calendarIdCol == -1 ||
+            statusCol == -1 ||
             cursor.getCount() == 0) {
             cursor.close();
             return null;
@@ -86,10 +89,14 @@ public class CalendarUtils {
 
             final String title = cursor.getString(titleCol);
             final int id = cursor.getInt(idCol);
+            final int status = cursor.getInt(statusCol);
             @Nullable final String location = cursor.getString(locationCol);
             final boolean allDay = cursor.getInt(allDayCol) == 1;
             final long startTime = cursor.getLong(startCol);
             final long endTime = cursor.getLong(endCol);
+            if (status == CalendarContract.Instances.STATUS_CANCELED) {
+                continue;
+            }
             if (allDay && fallbackEvent == null) {
                 fallbackEvent = new Event(startTime, endTime, allDay, id, calendarId, title, location);
                 cursor.moveToNext();

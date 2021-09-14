@@ -3,13 +3,17 @@ package com.inipage.homelylauncher.dock;
 import android.content.Context;
 import android.view.View;
 
+import com.inipage.homelylauncher.dock.items.SynchDockControllerItem;
 import com.inipage.homelylauncher.model.DockItem;
 import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.utils.InstalledAppUtils;
 
 import java.util.Map;
 
-public abstract class ConfigurableAppBackedDockItem implements DockControllerItem {
+/**
+ * Base class for dock items that show some app (which can be configured) when clicked.
+ */
+public abstract class ConfigurableAppBackedDockItem extends SynchDockControllerItem {
 
     private final DockItem mBackingItem;
 

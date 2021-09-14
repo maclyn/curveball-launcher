@@ -8,7 +8,6 @@ import androidx.annotation.Nullable;
 
 import com.inipage.homelylauncher.caches.IconCacheSync;
 import com.inipage.homelylauncher.caches.IconColorCache;
-import com.inipage.homelylauncher.dock.DockControllerItem;
 import com.inipage.homelylauncher.dock.DockItemPriorities;
 import com.inipage.homelylauncher.model.ApplicationIcon;
 import com.inipage.homelylauncher.model.DockItem;
@@ -16,7 +15,7 @@ import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.utils.InstalledAppUtils;
 import com.inipage.homelylauncher.views.AppPopupMenu;
 
-public class RecentAppDockItem implements DockControllerItem {
+public class RecentAppDockItem extends SynchDockControllerItem {
 
     private final ContextualAppFetcher.SuggestionApp mSuggestionApp;
 
@@ -37,9 +36,9 @@ public class RecentAppDockItem implements DockControllerItem {
     }
 
     @Override
-    public int getTint(Context context, Callback callback) {
+    public int getTint(Context context, TintCallback tintCallback) {
         return IconColorCache.getInstance().getColorForBitmap(
-            context, getBitmap(context), callback::onTintLoaded);
+            context, getBitmap(context), tintCallback::onTintLoaded);
     }
 
     @Override
@@ -60,7 +59,7 @@ public class RecentAppDockItem implements DockControllerItem {
 
     @Nullable
     @Override
-    public Runnable getSecondaryAction(View view, Context context, ControllerHandle controllerHandle) {
+    public Runnable getSecondaryAction(View view, Context context, ItemCallback itemCallback) {
         return () -> {
             ApplicationIcon applicationIcon = new ApplicationIcon(
                 mSuggestionApp.getPackageName(), mSuggestionApp.getActivityName(), context);
@@ -80,7 +79,7 @@ public class RecentAppDockItem implements DockControllerItem {
                         DatabaseEditor.get().addDockPreference(
                             DockItem.createHiddenItem(
                                 applicationIcon.getPackageName(), applicationIcon.getActivityName()));
-                        controllerHandle.hideMe();
+                        itemCallback.hideMe();
                     }
 
                     @Override
@@ -91,7 +90,7 @@ public class RecentAppDockItem implements DockControllerItem {
 
     @Override
     public long getBasePriority() {
-        return DockItemPriorities.PRIORITY_RECENT_APP;
+        return DockItemPriorities.PRIORITY_RECENT_APP.getPriority();
     }
 
     @Override

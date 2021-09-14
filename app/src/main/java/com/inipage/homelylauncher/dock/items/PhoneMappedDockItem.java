@@ -37,12 +37,12 @@ public class PhoneMappedDockItem extends ConfigurableAppBackedDockItem {
     }
 
     @Override
-    public int getTint(Context context, Callback __) {
+    public int getTint(Context context, TintCallback __) {
         return context.getColor(R.color.dock_item_call_color);
     }
 
     @Override
     public long getBasePriority() {
-        return DockItemPriorities.PRIORITY_CALL;
+        return DockItemPriorities.PRIORITY_CALL.getPriority();
     }
 }

@@ -36,7 +36,7 @@
                 android:textSize="14sp"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:maxWidth="100dp"
+                android:maxWidth="120dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
 
@@ -47,13 +47,12 @@
                 android:textSize="12sp"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:maxWidth="100dp"
+                android:maxWidth="120dp"
                 android:gravity="center"
                 android:layout_gravity="center_horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
         </LinearLayout>
-
 
         <View
             android:layout_width="@dimen/contextual_dock_internal_padding_horizontal"

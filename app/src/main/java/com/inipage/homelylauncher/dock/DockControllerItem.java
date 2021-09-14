@@ -3,58 +3,75 @@ package com.inipage.homelylauncher.dock;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.view.View;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.Nullable;
 
-public interface DockControllerItem {
+public abstract class DockControllerItem {
 
-    interface ControllerHandle {
-
+    public interface ItemCallback {
         void hideMe();
     }
 
-    boolean isActive(Context context);
+    public interface TintCallback {
+        void onTintLoaded(int tintColor);
+    }
 
-    default int getIcon() {
+    public interface LoadingCallback {
+        void onLoaded();
+    }
+
+    /**
+     * @return True if loading has completed, false if loading is ongoing.
+     */
+    public boolean startLoading(Context context, LoadingCallback controllerHandle) {
+        controllerHandle.onLoaded();
+        return true;
+    }
+
+    public abstract boolean isActive(Context context);
+
+    public int getIcon() {
         return 0;
     }
 
     @Nullable
-    default Bitmap getBitmap(Context context) {
+    public Bitmap getBitmap(Context context) {
         return null;
     }
 
-    default @Nullable
-    String getLabel(Context context) {
+    @Nullable
+    public Drawable getDrawable(Context context) {
         return null;
     }
 
-    default @Nullable
-    String getSecondaryLabel(Context context) {
+    @Nullable
+    public String getLabel(Context context) {
         return null;
     }
 
-    default @ColorInt
-    int getTint(Context context, Callback callback) {
+    @Nullable
+    public String getSecondaryLabel(Context context) {
+        return null;
+    }
+
+    @ColorInt
+    public int getTint(Context context, TintCallback tintCallback) {
         return Color.WHITE;
     }
 
-    Runnable getAction(View view, Context context);
+    public abstract Runnable getAction(View view, Context context);
 
-    default @Nullable
-    Runnable getSecondaryAction(View view, Context context, ControllerHandle handle) {
+    @Nullable
+    public Runnable getSecondaryAction(View view, Context context, ItemCallback handle) {
         return null;
     }
 
-    long getBasePriority();
+    public abstract long getBasePriority();
 
-    default long getSubPriority() {
+    public long getSubPriority() {
         return 0L;
-    }
-
-    interface Callback {
-        void onTintLoaded(int tintColor);
     }
 }

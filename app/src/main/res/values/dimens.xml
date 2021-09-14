@@ -6,6 +6,7 @@
     <dimen name="reorder_item_view_width">96dp</dimen>
     <dimen name="indicator_height">16dp</dimen>
     <dimen name="home_activity_margin">16dp</dimen>
+    <dimen name="home_activity_squarish">8dp</dimen>
     <dimen name="grid_horizontal_margin">8dp</dimen>
     <dimen name="byline_text_size">18sp</dimen>
     <dimen name="log_text_size">4sp</dimen>

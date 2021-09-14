@@ -24,13 +24,12 @@ public class WeatherApiFactory {
         RegistryMatcher matcher = new RegistryMatcher();
         matcher.bind(Date.class, new WeatherDateTransformer());
 
-        //Weirdly fitting question: http://stackoverflow
-        // .com/questions/8862548/simple-xml-framework-on-android-class-attribute
+        // Weirdly fitting question: http://stackoverflow.com/questions/8862548/simple-xml-framework-on-android-class-attribute
         Strategy strategy = new TreeStrategy("clazz", "len");
         Serializer serializer = new Persister(strategy, matcher);
 
         Retrofit retrofit =
-            new Retrofit.Builder().baseUrl("http://api.met.no/weatherapi/")
+            new Retrofit.Builder().baseUrl("https://api.met.no/weatherapi/")
                 .addConverterFactory(SimpleXmlConverterFactory.create(serializer))
                 .build();
         return instance = retrofit.create(WeatherApiInterface.class);

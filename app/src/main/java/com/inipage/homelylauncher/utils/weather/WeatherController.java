@@ -9,6 +9,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Debug;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -28,33 +29,73 @@ import retrofit2.Response;
 
 import static com.inipage.homelylauncher.utils.DebugLogUtils.TAG_WEATHER_LOADING;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+
 /**
- * A wrapper for fetching weather. Makes things nice and shiny.
+ * A wrapper for fetching weather from Met.no, handling some necessary caching logic.
  */
 public class WeatherController {
-    private static final String TAG = "WeatherController";
-    private static final long WEATHER_CACHE_DURATION = 60 * 60 * 1000; //1 hour
 
-    public static void requestWeather(
-        Context context, WeatherPresenter presenter,
-        boolean forceRefresh) {
-        SharedPreferences reader = PreferenceManager.getDefaultSharedPreferences(context);
-        long lastWeatherResponseTime =
-            reader.getLong(Constants.CACHED_WEATHER_RESPONSE_TIME_PREFERENCE, -1);
-        if (lastWeatherResponseTime > (System.currentTimeMillis() - (WEATHER_CACHE_DURATION)) &&
-            !forceRefresh) {
-            try {
-                DebugLogUtils.needle(TAG_WEATHER_LOADING, "Displaying cached weather...");
-                presenter.onWeatherFound(LTSForecastModel.deserialize(reader.getString(
-                    Constants.CACHED_WEATHER_RESPONSE_JSON_PREFERENCE, null)));
-            } catch (Exception e) {
-                Log.e(TAG, "Error displaying cached weather", e);
-                refreshWeather(context, presenter);
-            }
-        } else {
-            DebugLogUtils.needle(TAG_WEATHER_LOADING, "Weather data is stale; refreshing");
+    public interface WeatherPresenter {
+        void requestLocationPermission();
+
+        void onWeatherFound(LTSForecastModel weather);
+
+        void onFetchFailure();
+    }
+
+    private static final String TAG = "WeatherController";
+    private static final boolean DEBUG_WEATHER = false;
+    private static final SimpleDateFormat RFC_1123_PARSER =
+        new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
+
+    public static boolean requestWeather(Context context, WeatherPresenter presenter)
+    {
+        if (DEBUG_WEATHER) {
             refreshWeather(context, presenter);
+            return false;
         }
+
+        final SharedPreferences reader = PreferenceManager.getDefaultSharedPreferences(context);
+        @Nullable String cachedJSON =
+            reader.getString(Constants.CACHED_WEATHER_RESPONSE_JSON_PREFERENCE, null);
+        @Nullable String cachedExpiration =
+            reader.getString(Constants.CACHED_WEATHER_RESPONSE_EXPIRY_PREFERENCE, null);
+        if (cachedExpiration == null || cachedJSON == null) {
+            DebugLogUtils.needle(TAG_WEATHER_LOADING, "No cached weather data; refreshing");
+            refreshWeather(context, presenter);
+            return false;
+        }
+
+        try {
+            final LTSForecastModel weatherResponse = LTSForecastModel.deserialize(reader.getString(
+                Constants.CACHED_WEATHER_RESPONSE_JSON_PREFERENCE, null));
+            @Nullable final Date expiryDate = RFC_1123_PARSER.parse(cachedExpiration);
+            if (expiryDate != null && expiryDate.getTime() > System.currentTimeMillis()) {
+                DebugLogUtils.needle(TAG_WEATHER_LOADING, "Displaying cached weather...");
+                presenter.onWeatherFound(weatherResponse);
+                return true;
+            }
+        } catch (Exception ignored) {}
+
+        DebugLogUtils.needle(TAG_WEATHER_LOADING, "Weather data is stale or wrong; refreshing");
+        refreshWeather(context, presenter);
+        return false;
+    }
+
+    public static void invalidateCache(@Nullable Context context) {
+        if (context == null) return;
+        final SharedPreferences.Editor writer =
+            PreferenceManager.getDefaultSharedPreferences(context).edit();
+        writer.remove(Constants.CACHED_WEATHER_RESPONSE_JSON_PREFERENCE);
+        writer.remove(Constants.CACHED_WEATHER_RESPONSE_EXPIRY_PREFERENCE);
+        writer.commit();
     }
 
     private static void refreshWeather(final Context context, final WeatherPresenter presenter) {
@@ -104,7 +145,8 @@ public class WeatherController {
     private static void fetchWeatherForLocation(
         final Context context,
         final WeatherPresenter presenter,
-        Location location) {
+        Location location)
+    {
         if (location != null) {
             DebugLogUtils.needle(
                 TAG_WEATHER_LOADING,
@@ -113,26 +155,42 @@ public class WeatherController {
             return;
         }
 
-        WeatherApiFactory.getInstance().getWeatherLTS(
-            location.getLatitude(),
-            location.getLongitude()).enqueue(new Callback<LTSForecastModel>() {
+        // Round to 4 places to avoid wasteful API requests
+        double lat = BigDecimal.valueOf(location.getLatitude()).setScale(4, RoundingMode.DOWN).doubleValue();
+        double lon = BigDecimal.valueOf(location.getLongitude()).setScale(4, RoundingMode.DOWN).doubleValue();
+        WeatherApiFactory
+            .getInstance()
+            .getWeatherLTS(lat, lon)
+            .enqueue(new Callback<LTSForecastModel>()
+        {
             @Override
             public void onResponse(
                 @NotNull Call<LTSForecastModel> call,
                 @NotNull Response<LTSForecastModel> response) {
                 DebugLogUtils.needle(TAG_WEATHER_LOADING, "Got weather response!");
                 try {
-                    LTSForecastModel model = response.body();
-                    presenter.onWeatherFound(model);
-                    SharedPreferences.Editor writer =
-                        PreferenceManager.getDefaultSharedPreferences(context).edit();
-                    writer.putString(
-                        Constants.CACHED_WEATHER_RESPONSE_JSON_PREFERENCE,
-                        model.serialize());
-                    writer.putLong(
-                        Constants.CACHED_WEATHER_RESPONSE_TIME_PREFERENCE,
-                        System.currentTimeMillis());
-                    writer.commit();
+                    @Nullable final LTSForecastModel model = response.body();
+                    if (model == null) {
+                        DebugLogUtils.needle(TAG_WEATHER_LOADING, "Null response");
+                        presenter.onFetchFailure();
+                        return;
+                    } else {
+                        presenter.onWeatherFound(model);
+                    }
+
+                    // Try and cache the response for later use
+                    final List<String> expiryHeaders = response.headers().values("Expires");
+                    if (expiryHeaders.size() > 0) {
+                        final SharedPreferences.Editor writer =
+                            PreferenceManager.getDefaultSharedPreferences(context).edit();
+                        writer.putString(
+                            Constants.CACHED_WEATHER_RESPONSE_JSON_PREFERENCE,
+                            model.serialize());
+                        writer.putString(
+                            Constants.CACHED_WEATHER_RESPONSE_EXPIRY_PREFERENCE,
+                            expiryHeaders.get(0));
+                        writer.apply();
+                    }
                 } catch (Exception ignored) {
                     DebugLogUtils.needle(TAG_WEATHER_LOADING, response.raw().toString());
                     presenter.onFetchFailure();
@@ -145,13 +203,5 @@ public class WeatherController {
                 presenter.onFetchFailure();
             }
         });
-    }
-
-    public interface WeatherPresenter {
-        void requestLocationPermission();
-
-        void onWeatherFound(LTSForecastModel weather);
-
-        void onFetchFailure();
     }
 }

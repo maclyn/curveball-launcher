@@ -1,12 +1,23 @@
 package com.inipage.homelylauncher.dock;
 
-public class DockItemPriorities {
+public enum DockItemPriorities {
+    
+    PRIORITY_CALL(1000),
+    PRIORITY_EVENT_RANGED(990),
+    PRIORITY_ALARM(950),
+    PRIORITY_POWER_EVENT_LOW(500),
+    PRIORITY_EVENT_ALL_DAY(400),
+    PRIORITY_WEATHER(350),
+    PRIORITY_POWER_EVENT_CHARGING(300),
+    PRIORITY_RECENT_APP(0);
 
-    public static final long PRIORITY_CALL = 1000;
-    public static final long PRIORITY_EVENT_RANGED = 990;
-    public static final long PRIORITY_ALARM = 950;
-    public static final long PRIORITY_POWER_EVENT_LOW = 500;
-    public static final long PRIORITY_EVENT_ALL_DAY = 400;
-    public static final long PRIORITY_POWER_EVENT_CHARGING = 300;
-    public static final long PRIORITY_RECENT_APP = 0;
+    private final int mValue;
+
+    DockItemPriorities(int value) {
+        mValue = value;
+    }
+
+    public int getPriority() {
+        return mValue;
+    }
 }

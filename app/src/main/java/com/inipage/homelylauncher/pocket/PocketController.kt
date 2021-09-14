@@ -54,17 +54,18 @@ class PocketController(
     @SizeValAttribute(8F)
     var betweenItemMargin = 0
 
-    val _scaleDelta = 0.1F
+    val scaleDelta = 0.1F
+    val animationDuration = 200L
 
     companion object {
         val SCALE_DELTA = 0.1F
     }
 
-    private var mIsSwiping = false
+    private var isSwiping = false
     var isExpanded = false
         private set
-    private var mVelocityTracker: VelocityTracker? = null
-    private var mFolders: MutableList<SwipeFolder>
+    private var velocityTracker: VelocityTracker? = null
+    private var folders: MutableList<SwipeFolder>
 
     fun applyScrims(topScrimSize: Int, bottomScrimSize: Int) {
         ViewUtils.setHeight(topScrim, topScrimSize)
@@ -117,6 +118,7 @@ class PocketController(
 
             override fun onAnimationRepeat(animation: Animator) {}
         })
+        animator.duration = animationDuration
         animator.start()
     }
 
@@ -127,7 +129,9 @@ class PocketController(
         val animator = ValueAnimator.ofFloat(0f, 1f)
         animator.addUpdateListener { animation: ValueAnimator -> setPercentExpanded(animation.animatedValue as Float) }
         animator.addListener(object : Animator.AnimatorListener {
-            override fun onAnimationStart(animation: Animator) {}
+            override fun onAnimationStart(animation: Animator) {
+                mContainer.visibility = View.VISIBLE
+            }
             override fun onAnimationEnd(animation: Animator) {
                 commitExpand()
             }
@@ -138,16 +142,17 @@ class PocketController(
 
             override fun onAnimationRepeat(animation: Animator) {}
         })
+        animator.duration = animationDuration
         animator.start()
     }
 
     fun editFolderOrder() {
         ReorderFolderBottomSheet.show(
             mContext,
-            mFolders
+            folders
         ) { reorderedFolders: MutableList<SwipeFolder> ->
-            mFolders = reorderedFolders
-            DatabaseEditor.get().saveGestureFavorites(mFolders)
+            folders = reorderedFolders
+            DatabaseEditor.get().saveGestureFavorites(folders)
             rebind()
         }
     }
@@ -169,33 +174,33 @@ class PocketController(
         }
         setPercentExpanded(percentExpanded)
         log("Percent expanded ", deltaY.toString())
-        if (!mIsSwiping) {
-            mIsSwiping = true
-            mVelocityTracker = VelocityTracker.obtain()
+        if (!isSwiping) {
+            isSwiping = true
+            velocityTracker = VelocityTracker.obtain()
             mContainer.visibility = View.VISIBLE
             mContainer.isFocusableInTouchMode = true
         }
-        mVelocityTracker?.addMovement(event)
+        velocityTracker?.addMovement(event)
         when (event.action) {
             MotionEvent.ACTION_MOVE -> {
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                mIsSwiping = false
+                isSwiping = false
                 if (percentExpanded <= 0) {
-                    mVelocityTracker?.recycle()
+                    velocityTracker?.recycle()
                     commitCollapse()
                     return
                 } else if (percentExpanded >= 1) {
-                    mVelocityTracker?.recycle()
+                    velocityTracker?.recycle()
                     commitExpand()
                     return
                 }
                 val context = mContainer.context
-                mVelocityTracker?.computeCurrentVelocity(
+                velocityTracker?.computeCurrentVelocity(
                     1000,  // px/s
                     ViewConfiguration.get(context).scaledMaximumFlingVelocity.toFloat()
                 )
-                val speed = mVelocityTracker?.yVelocity ?: 5F
+                val speed = velocityTracker?.yVelocity ?: 5F
                 // Though deltaY will be > 0, speed is negative in an upwards flings
                 val flingIsExpand = speed < 0
                 val startPoint = mContainer.translationY
@@ -282,8 +287,8 @@ class PocketController(
     private fun setPercentExpanded(percent: Float) {
         mContainer.alpha = percent
         mContainer.translationY = actuationDistance - percent * actuationDistance
-        mContainer.scaleX = 1 - (1 - percent) * _scaleDelta
-        mContainer.scaleY = 1 - (1 - percent) * _scaleDelta
+        mContainer.scaleX = 1 - (1 - percent) * scaleDelta
+        mContainer.scaleY = 1 - (1 - percent) * scaleDelta
         mIdleView.rotation = percent
         mHost.onPartiallyExpandedPocket(percent)
     }
@@ -292,8 +297,8 @@ class PocketController(
         setPercentExpanded(0f)
         mContainer.visibility = View.GONE
         mContainer.isFocusableInTouchMode = false
-        mIsSwiping = false
-        isExpanded = mIsSwiping
+        isSwiping = false
+        isExpanded = isSwiping
         mHost.onPocketCollapsed()
         scrollView.scrollTo(0, 0)
     }
@@ -303,7 +308,7 @@ class PocketController(
         mContainer.visibility = View.VISIBLE
         mContainer.isFocusableInTouchMode = true
         isExpanded = true
-        mIsSwiping = false
+        isSwiping = false
         mHost.onPocketExpanded()
     }
 
@@ -338,9 +343,10 @@ class PocketController(
     }
 
     override fun onAppAddedToFolder(folderIdx: Int, app: ApplicationIcon) {
-        mFolders[folderIdx].addApp(Pair(app.packageName, app.activityName))
-        DatabaseEditor.get().saveGestureFavorites(mFolders)
+        folders[folderIdx].addApp(Pair(app.packageName, app.activityName))
+        DatabaseEditor.get().saveGestureFavorites(folders)
         mHost.clearActiveDragTarget()
+        rebind()
     }
 
     override fun onNewFolderRequested(ai: ApplicationIcon) {
@@ -366,8 +372,8 @@ class PocketController(
                     newFolder.replaceApps(reorderedApps)
                     newFolder.title = title
                     newFolder.setDrawable(iconDrawable, iconPackage)
-                    mFolders.add(newFolder)
-                    DatabaseEditor.get().saveGestureFavorites(mFolders)
+                    folders.add(newFolder)
+                    DatabaseEditor.get().saveGestureFavorites(folders)
                     rebind()
                 }
 
@@ -376,15 +382,15 @@ class PocketController(
     }
 
     override fun getFolders(): List<SwipeFolder> {
-        return mFolders
+        return folders
     }
 
     private fun rebind() {
         mDropView.attachHost(this)
         val inflater = LayoutInflater.from(mContext)
         rowContainer.removeAllViews()
-        for (i in mFolders.indices) {
-            val folder = mFolders[i]
+        for (i in folders.indices) {
+            val folder = folders[i]
             val folderItem = inflater.inflate(R.layout.pocket_folder_row, rowContainer, false)
             (folderItem.findViewById<View>(R.id.pocket_folder_row_folder_icon) as ImageView)
                 .setImageBitmap(folder.getIcon(mContext))
@@ -397,9 +403,9 @@ class PocketController(
             }
             val appContainer =
                 ViewCompat.requireViewById<LinearLayout>(folderItem, R.id.pocket_folder_row_app_container)
-            val folderSize = mFolders[i].shortcutApps.size
+            val folderSize = folders[i].shortcutApps.size
             for (j in 0 until folderSize) {
-                val app = mFolders[i].shortcutApps.get(j)
+                val app = folders[i].shortcutApps.get(j)
                 val appView = inflater.inflate(R.layout.pocket_app_view, appContainer, false) as ImageView
                 appView.setImageBitmap(app.getIcon(mContext))
                 appView.setOnClickListener { v: View? ->
@@ -427,7 +433,7 @@ class PocketController(
     private fun editFolder(row: Int) {
         FolderEditingBottomSheet.show(
             mContext,
-            mFolders[row],
+            folders[row],
             false,
             object : FolderEditingBottomSheet.Callback {
                 override fun onFolderSaved(
@@ -436,16 +442,16 @@ class PocketController(
                     iconDrawable: String,
                     reorderedApps: List<SwipeApp>
                 ) {
-                    mFolders[row].title = title
-                    mFolders[row].setDrawable(iconDrawable, iconPackage)
-                    mFolders[row].replaceApps(reorderedApps)
-                    DatabaseEditor.get().saveGestureFavorites(mFolders)
+                    folders[row].title = title
+                    folders[row].setDrawable(iconDrawable, iconPackage)
+                    folders[row].replaceApps(reorderedApps)
+                    DatabaseEditor.get().saveGestureFavorites(folders)
                     rebind()
                 }
 
                 override fun onFolderDeleted() {
-                    mFolders.removeAt(row)
-                    DatabaseEditor.get().saveGestureFavorites(mFolders)
+                    folders.removeAt(row)
+                    DatabaseEditor.get().saveGestureFavorites(folders)
                     rebind()
                 }
             })
@@ -466,7 +472,7 @@ class PocketController(
         mDockView = dockView
         mDropView = dropView
         mIdleView = idleView
-        mFolders = DatabaseEditor.get().gestureFavorites
+        folders = DatabaseEditor.get().gestureFavorites
         mIdleView.setOnClickListener { v: View? ->
             if (isExpanded) {
                 collapse()
