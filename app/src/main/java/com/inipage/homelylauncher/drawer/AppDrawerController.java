@@ -7,6 +7,9 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.DragEvent;
 import android.view.KeyEvent;
@@ -287,7 +290,7 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         if (mIsSearching) {
             return;
         }
-
+        mHost.requestAppDrawerFocus();
         mIsSearching = true;
         appRecyclerView.setItemAnimator(null);
         actionBar.setVisibility(VISIBLE);
@@ -296,7 +299,7 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         searchBox.requestFocus();
         searchPullLayout.setEnabled(false);
         showKeyboard();
-        onSearchChanged("", 0, 0, 0);
+        onSearchChanged(searchBox.getText(), 0, 0, 0);
     }
 
     private void showKeyboard() {
@@ -418,6 +421,9 @@ public class AppDrawerController implements BasePageController, FastScrollContro
 
     @OnTextChanged(value = R.id.search_box, callback = OnTextChanged.Callback.TEXT_CHANGED)
     public void onSearchChanged(CharSequence s, int start, int before, int count) {
+        if (!TextUtils.isEmpty(s) && !mIsSearching) {
+            enterSearch();
+        }
         storeSearchButton.setVisibility(mAdapter.performSearch(s.toString()) ? GONE : VISIBLE);
         mLayoutManager.setReverseLayout(true);
     }
@@ -433,7 +439,8 @@ public class AppDrawerController implements BasePageController, FastScrollContro
 
     private boolean launchFirstApp() {
         if (mAdapter.getItemCount() < 1) {
-            return false;
+            searchMarketClicked();
+            return true;
         }
         View child = appRecyclerView.getChildAt(0);
         ApplicationIcon app = mAdapter.getFirstApp();
@@ -524,5 +531,7 @@ public class AppDrawerController implements BasePageController, FastScrollContro
     public interface Host {
 
         void editFolderOrder();
+
+        void requestAppDrawerFocus();
     }
 }

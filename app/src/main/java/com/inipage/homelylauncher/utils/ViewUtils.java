@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.hardware.display.DisplayManager;
+import android.util.DisplayMetrics;
 import android.view.InputEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -22,6 +24,8 @@ import java.lang.reflect.Field;
 import javax.annotation.Nullable;
 
 public class ViewUtils {
+
+    private static Boolean IS_SQUARISH_DEVICE = null;
 
     public static View createFillerView(Context context, int newHeight) {
         View view = new View(context);
@@ -132,11 +136,16 @@ public class ViewUtils {
     }
 
     public static boolean isSquarishDevice(Context context) {
-        @Nullable final Activity activity = activityOf(context);
-        if (activity == null) return false;
-        float windowHeight = activity.getWindow().getDecorView().getHeight();
-        float aspectRatio = windowHeight / activity.getWindow().getDecorView().getWidth();
-        return aspectRatio < 1.1;
+        if (IS_SQUARISH_DEVICE != null) {
+            return IS_SQUARISH_DEVICE;
+        }
+        // This might be called before anything is laid out
+        // We *don't* want window values, since we want this to return the same
+        // value every time it's called
+        final DisplayMetrics metrics = context.getResources().getDisplayMetrics();
+        float screenHeight = metrics.heightPixels;
+        float screenWidth = metrics.widthPixels;
+        return (IS_SQUARISH_DEVICE = screenHeight / screenWidth < 1.1);
     }
 
     public static Drawable getDrawableFromAssetPNG(Context context, String assetId) {

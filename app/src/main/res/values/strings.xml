@@ -106,7 +106,7 @@
         ButterKnife © 2013 Jake Wharton under the Apache License.\n
         ProcessPhoenix © 2015 Jake Wharton under the Apache License.\n
         Otto © 2013 Square, Inc under the Apache License.\n
-        Weather data from MET Norway Licensed under Norwegian license for public data (NLOD) and Creative Commons 4.0 BY Internasjonal:
+        Weather data from MET Norway, licensed under Norwegian license for public data (NLOD) and Creative Commons 4.0 BY Internasjonal:
         Weather icons licensed under the MIT License (MIT). Copyright © 2015-2017 Yr.no.
 
         Apache License:\n
@@ -141,6 +141,7 @@
         OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
         SOFTWARE.
     </string>
+    <string name="weather_attribution_string">Weather data from MET Norway</string>
     <string name="permissions_needed_for_smartbar">Permissions Needed</string>
     <string name="smartbar_needs_permissions">To suggest apps in the bottom bar when you\'re on phone calls, in calendar events, or running low on battery, we\'d lke permission to view your phone and calendar state. We\'d also like permission to get your location to show your local weather.</string>
     <string name="okay_we_wont_ask">Okay, we won\'t ask again.</string>
@@ -174,8 +175,8 @@
     <string name="use_celcius_summary">Use celcius instead of farenheight for the weather temperature.</string>
     <string name="default_weather_app">Weather shortcut</string>
     <string name="default_weather_app_summary">App to launch when clicking on the current weather conditions.</string>
-    <string name="weather_format_string">%s - %s</string>
-    <string name="temp_format_string">%s H/%s L</string>
+    <string name="weather_format_string">%s %s</string>
+    <string name="temp_format_string">%s/%s</string>
     <string name="title_activity_onboarding">Welcome</string>
     <string name="section_format">Hello World from section: %1$d</string>
     <string name="manually_refreshing_weather">Refreshing weather forecast</string>
@@ -272,5 +273,6 @@
     <string name="choose_default_home_explainer">If you want, you can set this as your default launcher.</string>
     <string name="grant_home_app_button">Select default launcher</string>
     <string name="grant_location_permission_for_weather">Please grant us permission to use your location to fetch nearby weather.</string>
+    <string name="weather_title">Weather</string>
 </resources>
 

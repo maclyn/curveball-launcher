@@ -220,7 +220,6 @@ public abstract class GridViewHolder {
             return;
         }
         mHost.getGridContainer().removeView(mRootView);
-        mHost = null;
     }
 
     public FrameLayout getRootContainer() {

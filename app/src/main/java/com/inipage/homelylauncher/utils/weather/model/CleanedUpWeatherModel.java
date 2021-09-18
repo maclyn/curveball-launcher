@@ -19,42 +19,36 @@ import java.util.List;
  */
 public class CleanedUpWeatherModel {
 
-    public class HourlyModel {
-
-    }
-
-    public class DailyModel {
-
-    }
-
     // Values representing the current state
     private final String mCondition;
+    private final String mRawCondition;
     private final String mCurrentTemp;
+    private final float mRawTemp;
     private final String mHighTemp;
+    private final float mRawHighTemp;
     private final String mLowTemp;
+    private final float mRawLowTemp;
     private final String mConditionAssetId;
-
-    // Values representing an hourly forecast
-    private final List<HourlyModel> mHourlyModels;
-
-    // Values representing a daily forecast
-    private final List<DailyModel> mDailyModels;
 
     public CleanedUpWeatherModel(
         String resourceId,
         String currentTemp,
+        float rawTemp,
         String condition,
+        String rawCondition,
         String highTemp,
+        float rawHighTemp,
         String lowTemp,
-        List<HourlyModel> hourlyModels,
-        List<DailyModel> dailyModels) {
+        float rawLowTemp) {
         this.mConditionAssetId = resourceId;
         this.mCondition = condition;
+        this.mRawCondition = rawCondition;
         this.mCurrentTemp = currentTemp;
+        this.mRawTemp = rawTemp;
         this.mHighTemp = highTemp;
+        this.mRawHighTemp = rawHighTemp;
         this.mLowTemp = lowTemp;
-        mHourlyModels = hourlyModels;
-        mDailyModels = dailyModels;
+        this.mRawLowTemp = rawLowTemp;
     }
 
     public static CleanedUpWeatherModel parseFromLTSForecastModel(
@@ -92,32 +86,45 @@ public class CleanedUpWeatherModel {
         //  if low is lower, that's the min
         // find closest time; use that for condition & temp
         String condition = "";
+        String rawCondition = "";
         String conditionId = "";
         if (conditionEntry != null) {
             conditionId = conditionEntry.second.getSymbol().getCode();
-            condition = convertConditionToString(conditionEntry.second.getSymbol().getId());
+            rawCondition = conditionEntry.second.getSymbol().getId();
+            condition = convertConditionToString(rawCondition);
         }
+        float rawTemp = 0F;
         String temperatureValue = null;
         if (temperatureEntry != null) {
-            temperatureValue = getTempFromValue(
-                temperatureEntry.second.getTemperature().getValue(),
-                context);
+            rawTemp = temperatureEntry.second.getTemperature().getValue();
+            temperatureValue = getTempFromValue(rawTemp, context);
         }
+        float highTemp = 0F;
         String highValue = null;
         if (rangeEntry != null) {
-            highValue = getTempFromValue(rangeEntry.second.getMaxTemperature().getValue(), context);
+            highTemp = rangeEntry.second.getMaxTemperature().getValue();
+            highValue = getTempFromValue(highTemp, context);
         }
+        float lowTemp = 0F;
         String lowValue = null;
         if (rangeEntry != null) {
-            lowValue = getTempFromValue(rangeEntry.second.getMinTemperature().getValue(), context);
+            lowTemp = rangeEntry.second.getMinTemperature().getValue();
+            lowValue = getTempFromValue(lowTemp, context);
         }
 
         return new CleanedUpWeatherModel(
-            conditionId, temperatureValue, condition, highValue, lowValue, new ArrayList<>(),
-            new ArrayList<>());
+            conditionId,
+            temperatureValue,
+            rawTemp,
+            condition,
+            rawCondition,
+            highValue,
+            highTemp,
+            lowValue,
+            lowTemp);
     }
 
-    private static String convertConditionToString(@Nullable String condition) {
+    public static String convertConditionToString(@Nullable String condition) {
         if (condition == null) {
             return "Unknown";
         }
@@ -179,7 +186,7 @@ public class CleanedUpWeatherModel {
         return "Rainy";
     }
 
-    private static String getTempFromValue(float temp, Context context) {
+    public static String getTempFromValue(float temp, Context context) {
         if (isUsingCelsius(context)) {
             return Math.round(temp) + "°";
         } else {
@@ -211,5 +218,21 @@ public class CleanedUpWeatherModel {
 
     public String getCondition() {
         return mCondition;
+    }
+
+    public String getRawCondition() {
+        return mRawCondition;
+    }
+
+    public float getRawTemp() {
+        return mRawTemp;
+    }
+
+    public float getRawHighTemp() {
+        return mRawHighTemp;
+    }
+
+    public float getRawLowTemp() {
+        return mRawLowTemp;
     }
 }

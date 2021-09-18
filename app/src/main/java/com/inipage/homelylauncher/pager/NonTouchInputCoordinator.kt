@@ -54,7 +54,7 @@ class NonTouchInputCoordinator(private val host: Host, private val context: Acti
         SWITCH_RIGHT,
         SWITCH_LEFT,
         SWITCH_TO_HOME_SCREEN,
-        SWITCH_TO_APP_DRAWER
+        NO_OP
     }
 
     private val handler = Handler(Looper.getMainLooper(), this)
@@ -150,8 +150,8 @@ class NonTouchInputCoordinator(private val host: Host, private val context: Acti
                 DebugLogUtils.TAG_VIRTUAL_TRACKPAD,
                 "onKeyDown, isEventFromPhysicalKeyboard"
             )
+            runMessageImmediately(NonTouchInputMessage.NO_OP)
             if (!host.isOnAppDrawer()) {
-                runMessageImmediately(NonTouchInputMessage.SWITCH_TO_APP_DRAWER)
                 host.getPager().appDrawerController.feedKeyboardEvent(ev)
                 return true
             } else if (!host.getPager().appDrawerController.isSearching) {

@@ -360,10 +360,6 @@ public class HomeActivity extends AppCompatActivity implements
             case SWITCH_TO_HOME_SCREEN:
                 pagerView.setCurrentItem(1, true);
                 break;
-            case SWITCH_TO_APP_DRAWER:
-                mSyntheticScrolling = true;
-                pagerView.setCurrentItem(0, true);
-                break;
         }
     }
 
@@ -501,6 +497,15 @@ public class HomeActivity extends AppCompatActivity implements
     @Override
     public void editFolderOrder() {
         mPocketController.editFolderOrder();
+    }
+
+    @Override
+    public void requestAppDrawerFocus() {
+        if (pagerView.getCurrentItem() == 0) {
+            return;
+        }
+        mSyntheticScrolling = true;
+        pagerView.setCurrentItem(0, true);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
