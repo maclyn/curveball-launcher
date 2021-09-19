@@ -274,5 +274,8 @@
     <string name="grant_home_app_button">Select default launcher</string>
     <string name="grant_location_permission_for_weather">Please grant us permission to use your location to fetch nearby weather.</string>
     <string name="weather_title">Weather</string>
+    <string name="chance_of_rain">%d%% change of rain</string>
+    <string name="chance_of_snow">%d%% chance of snow</string>
+    <string name="chance_of_sleet">%d%% chance of sleet</string>
 </resources>
 

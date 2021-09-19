@@ -7,4 +7,8 @@ import org.simpleframework.xml.Root;
 public class PrecipitationModel {
     @Attribute
     float value;
+
+    public float getValue() {
+        return value;
+    }
 }

@@ -66,55 +66,63 @@ class NonTouchInputCoordinator(private val host: Host, private val context: Acti
     private var virtualTrackpadYStart = 0F
 
     fun dispatchGenericMotionEvent(ev: MotionEvent): Boolean {
+        if (!ViewUtils.isEventFromVirtualTrackball(ev)) {
+            return host.defaultDispatchGenericMotionEvent(ev)
+        }
+
         val pager = host.getPager()
-        if (ViewUtils.isEventFromVirtualTrackball(ev)) {
-            when (ev.actionMasked) {
-                MotionEvent.ACTION_DOWN -> {
-                    targetPointerId = ev.getPointerId(0)
-                    virtualTrackpadXStart = ev.rawX
-                    virtualTrackpadYStart = ev.rawY
-                }
-                MotionEvent.ACTION_UP -> {
-                    if (ev.getPointerId(0) != targetPointerId) {
-                        return false
-                    }
-                    val xDelta: Float = ev.rawX - virtualTrackpadXStart
-                    val yDelta: Float = ev.rawY - virtualTrackpadYStart
-                    if (abs(xDelta) < pagingSlop && abs(yDelta) < pagingSlop) {
-                        return false
-                    }
-                    val isVerticalScroll = abs(yDelta) > abs(xDelta)
-                    if (isVerticalScroll) {
-                        if (yDelta > 0 && !host.isOnAppDrawer()) {
-                            if (host.isPocketExpanded()) {
-                                queueMessage(NonTouchInputMessage.COLLAPSE_POCKET)
-                            } else {
-                                queueMessage(NonTouchInputMessage.EXPAND_STATUS_BAR)
-                            }
-                        } else if (!host.isOnAppDrawer()) {
-                            queueMessage(NonTouchInputMessage.EXPAND_POCKET)
-                        }
-                    } else {
-                        if (xDelta > 0) {
-                            if (!host.isOnAppDrawer()) {
-                                queueMessage(NonTouchInputMessage.SWITCH_LEFT)
-                            }
-                        } else {
-                            if (!host.isOnLastPage()) {
-                                queueMessage(NonTouchInputMessage.SWITCH_RIGHT)
-                            }
-                        }
-                    }
-                }
-            }
-            if (host.isOnAppDrawer()) {
-                if (!pager.appDrawerController.isSearching) {
-                    pager.appDrawerController.feedTrackballEvent(ev)
-                }
-            }
+        val decorViewManager = DecorViewManager.get(context)
+        val hasActiveOverlay = decorViewManager.hasOpenView()
+        if (hasActiveOverlay) {
+            decorViewManager.feedTrackballEvent(ev)
             return false
         }
-        return host.defaultDispatchGenericMotionEvent(ev)
+
+        when (ev.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                targetPointerId = ev.getPointerId(0)
+                virtualTrackpadXStart = ev.rawX
+                virtualTrackpadYStart = ev.rawY
+            }
+            MotionEvent.ACTION_UP -> {
+                if (ev.getPointerId(0) != targetPointerId) {
+                    return false
+                }
+                val xDelta: Float = ev.rawX - virtualTrackpadXStart
+                val yDelta: Float = ev.rawY - virtualTrackpadYStart
+                if (abs(xDelta) < pagingSlop && abs(yDelta) < pagingSlop) {
+                    return false
+                }
+                val isVerticalScroll = abs(yDelta) > abs(xDelta)
+                if (isVerticalScroll) {
+                    if (yDelta > 0 && !host.isOnAppDrawer()) {
+                        if (host.isPocketExpanded()) {
+                            queueMessage(NonTouchInputMessage.COLLAPSE_POCKET)
+                        } else {
+                            queueMessage(NonTouchInputMessage.EXPAND_STATUS_BAR)
+                        }
+                    } else if (!host.isOnAppDrawer()) {
+                        queueMessage(NonTouchInputMessage.EXPAND_POCKET)
+                    }
+                } else {
+                    if (xDelta > 0) {
+                        if (!host.isOnAppDrawer()) {
+                            queueMessage(NonTouchInputMessage.SWITCH_LEFT)
+                        }
+                    } else {
+                        if (!host.isOnLastPage()) {
+                            queueMessage(NonTouchInputMessage.SWITCH_RIGHT)
+                        }
+                    }
+                }
+            }
+        }
+        if (host.isOnAppDrawer()) {
+            if (!pager.appDrawerController.isSearching) {
+                pager.appDrawerController.feedTrackballEvent(ev)
+            }
+        }
+        return false
     }
 
     fun dispatchKeyEvent(ev: KeyEvent): Boolean {

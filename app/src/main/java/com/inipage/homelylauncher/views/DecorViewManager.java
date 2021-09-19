@@ -3,6 +3,7 @@ package com.inipage.homelylauncher.views;
 import android.animation.Animator;
 import android.app.Activity;
 import android.content.Context;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -64,6 +65,25 @@ public class DecorViewManager {
         final FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(width, height);
         layoutParams.setMargins(x, y, 0, 0);
         return attachViewImpl(view, layoutParams, callback);
+    }
+
+    public boolean hasOpenView() {
+        return !mViewKeyStack.isEmpty();
+    }
+
+    public void feedTrackballEvent(MotionEvent ev) {
+        if (mViewKeyStack.isEmpty()) {
+            return;
+        }
+        @Nullable final String topViewKey = mViewKeyStack.get(mViewKeyStack.size() - 1);
+        if (topViewKey == null) {
+            return;
+        }
+        @Nullable final View topView = mViewKeyToView.get(topViewKey);
+        if (topView == null) {
+            return;
+        }
+        topView.dispatchGenericMotionEvent(ev);
     }
 
     private String attachViewImpl(
@@ -235,7 +255,7 @@ public class DecorViewManager {
         if (mViewKeyToView.isEmpty()) {
             return false;
         }
-        List<String> keyCopy = mViewKeyToView.keySet().stream().collect(Collectors.toList());
+        List<String> keyCopy = new ArrayList<>(mViewKeyToView.keySet());
         for (String key : keyCopy) {
             final Callback listener = mViewKeyToCallback.get(key);
             listener.onDismissedByBackgroundTap(mViewKeyToView.get(key));

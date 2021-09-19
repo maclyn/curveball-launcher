@@ -188,10 +188,10 @@ public class CleanedUpWeatherModel {
 
     public static String getTempFromValue(float temp, Context context) {
         if (isUsingCelsius(context)) {
-            return Math.round(temp) + "°";
+            return Math.round(temp) + "°C";
         } else {
             temp = (temp * 9 / 5) + 32;
-            return Math.round(temp) + "°";
+            return Math.round(temp) + "°F";
         }
     }
 

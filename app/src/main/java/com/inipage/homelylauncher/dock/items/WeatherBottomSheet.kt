@@ -17,15 +17,23 @@ import com.inipage.homelylauncher.views.BottomSheetHelper
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.HashMap
+import kotlin.math.roundToInt
 
 class WeatherBottomSheet(val context: Context) : WeatherController.WeatherPresenter {
 
-    data class Entry(val date: Date, val rawConditions: Pair<String, String>, val temp: Float, val high: Float, val low: Float)
+    data class Entry(
+        val date: Date,
+        val rawConditions: Pair<String, String>,
+        val temp: Float,
+        val high: Float,
+        val low: Float,
+        val precipitation: Float?)
 
     private val hourFormat = SimpleDateFormat("h:mm aa", Locale.getDefault())
     private val dayOfWeekFormat = SimpleDateFormat("EEEE", Locale.getDefault())
 
     private val conditionMap = HashMap<Date, LinkedList<Pair<Pair<Date, Date>, Pair<String, String>>>>()
+    private val precipitationMap = HashMap<Date, LinkedList<Pair<Pair<Date, Date>, Float>>>()
     private val temperatureMap = HashMap<Date, LinkedList<Pair<Pair<Date, Date>, Float>>>()
     private val highMap = HashMap<Date, LinkedList<Pair<Pair<Date, Date>, Float>>>()
     private val lowMap = HashMap<Date, LinkedList<Pair<Pair<Date, Date>, Float>>>()
@@ -45,9 +53,14 @@ class WeatherBottomSheet(val context: Context) : WeatherController.WeatherPresen
                 putFieldInMap(conditionMap, it.from, it.to, Pair(it.location.symbol.id, it.location.symbol.code))
             }
         entries
-            .filter { it.from == it.to && it.location.temperature != null }
+            .filter { it.location?.temperature != null }
             .forEach {
                 putFieldInMap(temperatureMap, it.from, it.to, it.location.temperature.value)
+            }
+        entries
+            .filter { it.location?.precipitation != null }
+            .forEach {
+                putFieldInMap(precipitationMap, it.from, it.to, it.location.precipitation.value)
             }
         entries
             .filter { it.location?.minTemperature != null && it.location?.maxTemperature != null }
@@ -71,8 +84,9 @@ class WeatherBottomSheet(val context: Context) : WeatherController.WeatherPresen
             val high = getFieldFromMap(highMap, workingHourlyCalendar.time)
             val low = getFieldFromMap(lowMap, workingHourlyCalendar.time)
             val condition = getFieldFromMap(conditionMap, workingHourlyCalendar.time)
+            val precipitation = getFieldFromMap(precipitationMap, workingHourlyCalendar.time)
             if (condition != null && temp != null && high != null && low != null) {
-                val entry = Entry(workingHourlyCalendar.time, condition, temp, high, low)
+                val entry = Entry(workingHourlyCalendar.time, condition, temp, high, low, precipitation)
                 if (workingHourlyCalendar.time <= now) {
                     headerEntry = entry
                 } else {
@@ -96,7 +110,7 @@ class WeatherBottomSheet(val context: Context) : WeatherController.WeatherPresen
             val high = getFieldFromMap(highMap, dailyWorkingDate.time) ?: continue
             val low = getFieldFromMap(lowMap, dailyWorkingDate.time) ?: continue
             val condition = getFieldFromMap(conditionMap, dailyWorkingDate.time) ?: continue
-            dailyEntries.add(Entry(dailyWorkingDate.time, condition, temp, high, low))
+            dailyEntries.add(Entry(dailyWorkingDate.time, condition, temp, high, low, null))
         }
 
         val bottomSheetRootView =
@@ -131,6 +145,7 @@ class WeatherBottomSheet(val context: Context) : WeatherController.WeatherPresen
         ViewCompat.requireViewById<TextView>(itemView, R.id.weather_item_time).text =
             timeOverride ?: formatter.format(entry.date)
         // Condition/temp
+        val condition = entry.rawConditions.first
         ViewCompat.requireViewById<TextView>(itemView, R.id.weather_item_condition_and_temp).text =
             context.getString(
                 R.string.weather_format_string,
@@ -142,6 +157,17 @@ class WeatherBottomSheet(val context: Context) : WeatherController.WeatherPresen
                 R.string.temp_format_string,
                 CleanedUpWeatherModel.getTempFromValue(entry.low, context),
                 CleanedUpWeatherModel.getTempFromValue(entry.high, context))
+        // Rain, maybe
+        val precipitationTv = ViewCompat.requireViewById<TextView>(itemView, R.id.weather_item_precip)
+        val precipitationPercent = ((entry.precipitation ?: 0F) * 100).roundToInt()
+        val stringRes =
+            when {
+                condition.contains("Snow") -> R.string.chance_of_snow
+                condition.contains("Sleet") -> R.string.chance_of_sleet
+                else -> R.string.chance_of_rain
+            }
+        precipitationTv.text = context.getString(stringRes, precipitationPercent)
+        precipitationTv.visibility = if (precipitationPercent > 0) View.VISIBLE else View.GONE
 
         return itemView
     }
