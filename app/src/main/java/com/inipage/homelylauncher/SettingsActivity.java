@@ -5,12 +5,16 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
+import android.preference.CheckBoxPreference;
+import android.preference.Preference;
 import android.preference.PreferenceFragment;
+import android.preference.PreferenceManager;
 import android.util.Pair;
 import android.view.MenuItem;
 import android.view.View;
@@ -28,6 +32,7 @@ import com.inipage.homelylauncher.dock.HiddenRecentAppsBottomSheet;
 import com.inipage.homelylauncher.dock.items.HiddenCalendarsPickerBottomSheet;
 import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.persistence.DatabaseHelper;
+import com.inipage.homelylauncher.utils.Constants;
 import com.inipage.homelylauncher.utils.FileUtils;
 import com.inipage.homelylauncher.utils.LifecycleLogUtils;
 import com.inipage.homelylauncher.utils.ViewUtils;
@@ -167,6 +172,7 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
             bindPreference("manage_cals", ctx -> HiddenCalendarsPickerBottomSheet.show(ctx, null));
             bindPreference("manage_hidden_apps",
                HiddenRecentAppsBottomSheet.INSTANCE::showHiddenRecentAppsBottomSheet);
+            bindCheckboxPreference("celcius_pref", Constants.WEATHER_USE_CELCIUS_PREF);
 
             // Logging
             bindPreference("log_show", this::showLogs);
@@ -226,6 +232,24 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
         private void bindPreference(String name, PrefRunnable action) {
             findPreference(name).setOnPreferenceClickListener(pref -> {
                 action.run(pref.getContext());
+                return true;
+            });
+        }
+
+        private void bindCheckboxPreference(String name, String backingPreference) {
+            Preference pref = findPreference(name);
+            if (!(pref instanceof CheckBoxPreference)) {
+                return;
+            }
+            CheckBoxPreference checkBoxPreference = (CheckBoxPreference) pref;
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+            checkBoxPreference.setChecked(prefs.getBoolean(backingPreference, false));
+            checkBoxPreference.setOnPreferenceClickListener(preference -> {
+                if (!(preference instanceof CheckBoxPreference)) {
+                    return false;
+                }
+                prefs.edit().putBoolean(
+                    backingPreference, ((CheckBoxPreference) preference).isChecked()).apply();
                 return true;
             });
         }

@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -24,7 +25,7 @@ class WeatherBottomSheet(val context: Context) : WeatherController.WeatherPresen
     data class Entry(
         val date: Date,
         val rawConditions: Pair<String, String>,
-        val temp: Float,
+        val temp: Float?,
         val high: Float,
         val low: Float,
         val precipitation: Float?)
@@ -106,25 +107,34 @@ class WeatherBottomSheet(val context: Context) : WeatherController.WeatherPresen
         while (dayOffset < 7) {
             dailyWorkingDate.add(Calendar.DAY_OF_MONTH, 1)
             dayOffset += 1
-            val temp = getFieldFromMap(temperatureMap, dailyWorkingDate.time) ?: continue
+            val temp = getFieldFromMap(temperatureMap, dailyWorkingDate.time)
+            val precipitation = getFieldFromMapMostGeneral(precipitationMap, dailyWorkingDate.time)
             val high = getFieldFromMap(highMap, dailyWorkingDate.time) ?: continue
             val low = getFieldFromMap(lowMap, dailyWorkingDate.time) ?: continue
             val condition = getFieldFromMap(conditionMap, dailyWorkingDate.time) ?: continue
-            dailyEntries.add(Entry(dailyWorkingDate.time, condition, temp, high, low, null))
+            dailyEntries.add(Entry(dailyWorkingDate.time, condition, temp, high, low, precipitation))
         }
 
         val bottomSheetRootView =
             LayoutInflater.from(context).inflate(R.layout.weather_bottom_sheet_root_view, null);
-        val itemContainer =
-            ViewCompat.requireViewById<LinearLayout>(bottomSheetRootView, R.id.weather_item_container);
+        val nowContainer =
+            ViewCompat.requireViewById<FrameLayout>(bottomSheetRootView, R.id.now_container);
+        val hourlyContainer =
+            ViewCompat.requireViewById<LinearLayout>(bottomSheetRootView, R.id.hourly_container);
+        val dailyContainer =
+            ViewCompat.requireViewById<LinearLayout>(bottomSheetRootView, R.id.days_container);
         if (headerEntry != null) {
-            itemContainer.addView(mapEntryToView(headerEntry, itemContainer, "Now", hourFormat))
+            nowContainer.addView(mapEntryToView(headerEntry, nowContainer, "Now"))
         }
+        val padding =
+            context.resources.getDimension(R.dimen.weather_bottom_sheet_horizontal_padding) * 1.25
+        hourlyContainer.addView(ViewUtils.createFillerWidthView(context, padding.toInt()))
         hourlyEntries.forEach {
-            itemContainer.addView(mapEntryToView(it, itemContainer, null, hourFormat))
+            hourlyContainer.addView(mapHourlyEntryToView(it, hourlyContainer))
         }
+        hourlyContainer.addView(ViewUtils.createFillerWidthView(context, padding.toInt()))
         dailyEntries.forEach {
-            itemContainer.addView(mapEntryToView(it, itemContainer, null, dayOfWeekFormat))
+            dailyContainer.addView(mapEntryToView(it, dailyContainer, null))
         }
         val bottomSheetHelper = BottomSheetHelper()
             .setIsFixedHeight()
@@ -135,7 +145,37 @@ class WeatherBottomSheet(val context: Context) : WeatherController.WeatherPresen
     override fun requestLocationPermission() = Unit
     override fun onFetchFailure() = Unit
 
-    private fun mapEntryToView(entry: Entry, root: ViewGroup, timeOverride: String?, formatter: SimpleDateFormat): View {
+
+    private fun mapHourlyEntryToView(entry: Entry, root: ViewGroup): View {
+        val showingDepth = shouldShowDepthValue(entry.precipitation)
+        val itemView = LayoutInflater.from(context).inflate(
+            if (showingDepth)
+                R.layout.weather_entry_hourly_item
+            else
+                R.layout.weather_entry_hourly_item_condensed,
+            root,
+            false)
+
+        // Icon
+        ViewCompat.requireViewById<ImageView>(itemView, R.id.weather_hourly_item_icon).setImageDrawable(
+            ViewUtils.getDrawableFromAssetPNG(context, entry.rawConditions.second))
+        // Time
+        ViewCompat.requireViewById<TextView>(itemView, R.id.weather_hourly_item_time).text = hourFormat.format(entry.date)
+        // Temp.
+        val tempTv = ViewCompat.requireViewById<TextView>(itemView, R.id.weather_hourly_item_temp)
+        tempTv.text = CleanedUpWeatherModel.getTempFromValue(entry.temp ?: 0F, context)
+        // Rain, maybe
+        if (showingDepth) {
+            val precipitationTv =
+                ViewCompat.requireViewById<TextView>(itemView, R.id.weather_hourly_item_precip)
+            precipitationTv.text =
+                CleanedUpWeatherModel.getPrecipitationFromValue(entry.precipitation ?: 0F, context)
+        }
+
+        return itemView
+    }
+
+    private fun mapEntryToView(entry: Entry, root: ViewGroup, timeOverride: String?): View {
         val itemView = LayoutInflater.from(context).inflate(R.layout.weather_entry_item, root, false)
 
         // Icon
@@ -143,14 +183,19 @@ class WeatherBottomSheet(val context: Context) : WeatherController.WeatherPresen
             ViewUtils.getDrawableFromAssetPNG(context, entry.rawConditions.second))
         // Time
         ViewCompat.requireViewById<TextView>(itemView, R.id.weather_item_time).text =
-            timeOverride ?: formatter.format(entry.date)
+            timeOverride ?: dayOfWeekFormat.format(entry.date)
         // Condition/temp
         val condition = entry.rawConditions.first
-        ViewCompat.requireViewById<TextView>(itemView, R.id.weather_item_condition_and_temp).text =
+        val conditionTv = ViewCompat.requireViewById<TextView>(itemView, R.id.weather_item_condition_and_temp)
+        conditionTv.text =
             context.getString(
                 R.string.weather_format_string,
-                CleanedUpWeatherModel.getTempFromValue(entry.temp, context),
+                CleanedUpWeatherModel.getTempFromValue(entry.temp ?: 0F, context),
                 CleanedUpWeatherModel.convertConditionToString(entry.rawConditions.first))
+        if (entry.temp == null) {
+            conditionTv.text =
+                CleanedUpWeatherModel.convertConditionToString(entry.rawConditions.first)
+        }
         // High/low
         ViewCompat.requireViewById<TextView>(itemView, R.id.weather_item_high_low).text =
             context.getString(
@@ -159,15 +204,17 @@ class WeatherBottomSheet(val context: Context) : WeatherController.WeatherPresen
                 CleanedUpWeatherModel.getTempFromValue(entry.high, context))
         // Rain, maybe
         val precipitationTv = ViewCompat.requireViewById<TextView>(itemView, R.id.weather_item_precip)
-        val precipitationPercent = ((entry.precipitation ?: 0F) * 100).roundToInt()
+        val precipitationString =
+            CleanedUpWeatherModel.getPrecipitationFromValue(entry.precipitation ?: 0F, context)
         val stringRes =
             when {
-                condition.contains("Snow") -> R.string.chance_of_snow
-                condition.contains("Sleet") -> R.string.chance_of_sleet
-                else -> R.string.chance_of_rain
+                condition.contains("Snow") -> R.string.amount_of_snow
+                condition.contains("Sleet") -> R.string.amount_of_sleet
+                else -> R.string.amount_of_rain
             }
-        precipitationTv.text = context.getString(stringRes, precipitationPercent)
-        precipitationTv.visibility = if (precipitationPercent > 0) View.VISIBLE else View.GONE
+        precipitationTv.text = context.getString(stringRes, precipitationString)
+        precipitationTv.visibility =
+            if (shouldShowDepthValue(entry.precipitation)) View.VISIBLE else View.GONE
 
         return itemView
     }
@@ -216,12 +263,21 @@ class WeatherBottomSheet(val context: Context) : WeatherController.WeatherPresen
         return mapValue[0].second
     }
 
-    private fun <T: Any> getDateForFieldFromMap(
-        map: HashMap<Date, LinkedList<Pair<Pair<Date, Date>, T>>>, key: Date): Date? {
+    private fun <T: Any> getFieldFromMapMostGeneral(
+        map: HashMap<Date, LinkedList<Pair<Pair<Date, Date>, T>>>, key: Date): T? {
         val mapValue = map[key] ?: return null
         if (mapValue.isEmpty()) {
             return null
         }
-        return mapValue[0].first.first
+        return mapValue[mapValue.size - 1].second
+    }
+
+    private fun shouldShowDepthValue(value: Float?): Boolean {
+        if (value == null) return false
+        val usingCelcius = CleanedUpWeatherModel.isUsingCelsius(context)
+        if (usingCelcius) {
+            return value >= 0.1F
+        }
+        return value * 0.03937F >= 0.01F
     }
 }

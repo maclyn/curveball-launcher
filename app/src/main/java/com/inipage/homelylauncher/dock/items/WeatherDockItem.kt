@@ -2,6 +2,7 @@ package com.inipage.homelylauncher.dock.items
 
 import android.Manifest
 import android.content.Context
+import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.view.View
 import android.widget.Toast
@@ -17,20 +18,21 @@ import com.inipage.homelylauncher.utils.weather.model.LTSForecastModel
 
 class WeatherDockItem : DockControllerItem(), WeatherPresenter {
 
-    private var mContext: Context? = null
-    private var mCallback: LoadingCallback? = null
     private var mForecast: CleanedUpWeatherModel? = null
 
+    override fun onAttach() {
+        val context = context ?: return
+        WeatherController.requestWeather(context, this)
+    }
+
     override fun requestLocationPermission() {
-        if (mContext == null) {
-            return
-        }
+        val context = mHost?.context ?: return
         Toast.makeText(
-            mContext,
+            context,
             R.string.grant_location_permission_for_weather,
             Toast.LENGTH_LONG
         ).show()
-        val activity = ViewUtils.activityOf(mContext) ?: return
+        val activity = ViewUtils.activityOf(context) ?: return
         activity.requestPermissions(
             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
             HomeActivity.REQUEST_LOCATION_PERMISSION
@@ -38,49 +40,36 @@ class WeatherDockItem : DockControllerItem(), WeatherPresenter {
     }
 
     override fun onWeatherFound(weather: LTSForecastModel) {
-        mForecast = CleanedUpWeatherModel.parseFromLTSForecastModel(weather, mContext)
-        mCallback?.onLoaded()
-        mContext = null
-        mCallback = null
+        val context = mHost?.context ?: return
+        mForecast = CleanedUpWeatherModel.parseFromLTSForecastModel(weather, context)
+        mHost?.showHostedItem()
     }
 
-    override fun onFetchFailure() {
-        mContext = null
-        mCallback = null
-    }
+    override fun onFetchFailure() = Unit
 
-    override fun startLoading(context: Context, controllerHandle: LoadingCallback): Boolean {
-        mContext = context
-        mCallback = controllerHandle
-        return WeatherController.requestWeather(context, this)
-    }
-
-    override fun isActive(context: Context): Boolean {
-        return true
-    }
-
-    override fun getDrawable(context: Context?): Drawable? {
-        val assetId = mForecast?.assetId
-        if (context == null || assetId == null) {
-            return null;
-        }
+    override fun getDrawable(): Drawable? {
+        val assetId = mForecast?.assetId ?: return null
+        val context = mHost?.context ?: return null
         return ViewUtils.getDrawableFromAssetPNG(context, assetId)
     }
 
-    override fun getLabel(context: Context): String? {
+    override fun getLabel(): String? {
         return if (mForecast == null) null else mForecast?.currentTemp
     }
 
-    override fun getSecondaryLabel(context: Context): String? {
+    override fun getSecondaryLabel(): String? {
+        val context = mHost?.context ?: return null
         return if (mForecast == null) null else
             context.getString(R.string.temp_format_string, mForecast?.low, mForecast?.highTemp)
     }
 
-    override fun getTint(context: Context, tintCallback: TintCallback): Int {
+    override fun getTint(): Int {
+        val context = mHost?.context ?: return super.getTint()
         return context.getColor(R.color.dock_item_weather_color)
     }
 
-    override fun getAction(view: View, context: Context): Runnable {
+    override fun getAction(view: View): Runnable {
+        val context = mHost?.context ?: return Runnable {}
         return Runnable {
             val bottomSheet = WeatherBottomSheet(context)
             bottomSheet.show()
@@ -88,10 +77,9 @@ class WeatherDockItem : DockControllerItem(), WeatherPresenter {
     }
 
     override fun getSecondaryAction(
-        view: View?,
-        context: Context?,
-        handle: ItemCallback?
+        view: View?
     ): Runnable {
+        val context = mHost?.context ?: return Runnable {}
         return Runnable {
             WeatherController.invalidateCache(context);
             WeatherController.requestWeather(context, this);

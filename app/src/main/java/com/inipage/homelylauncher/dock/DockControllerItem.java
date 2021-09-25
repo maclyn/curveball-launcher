@@ -11,61 +11,70 @@ import androidx.annotation.Nullable;
 
 public abstract class DockControllerItem {
 
-    public interface ItemCallback {
-        void hideMe();
+    protected interface Host {
+
+        Context getContext();
+
+        void showHostedItem();
+
+        void hideHostedItem();
+
+        void tintLoaded(int color);
     }
 
-    public interface TintCallback {
-        void onTintLoaded(int tintColor);
+    protected Host mHost;
+
+    public void attach(Host host) {
+        mHost = host;
+        this.onAttach();
     }
 
-    public interface LoadingCallback {
-        void onLoaded();
+    public void onAttach() {}
+
+    public void detach() {
+        this.onDetach();
+        mHost = null;
     }
 
     /**
-     * @return True if loading has completed, false if loading is ongoing.
+     * Use to cleanup any resources. Useful for items that are listening for hide/show and
+     * need to unregister receivers, listeners, etc.
      */
-    public boolean startLoading(Context context, LoadingCallback controllerHandle) {
-        controllerHandle.onLoaded();
-        return true;
-    }
-
-    public abstract boolean isActive(Context context);
+    public void onDetach() {}
 
     public int getIcon() {
         return 0;
     }
 
     @Nullable
-    public Bitmap getBitmap(Context context) {
+    public Bitmap getBitmap() {
         return null;
     }
 
     @Nullable
-    public Drawable getDrawable(Context context) {
+    public Drawable getDrawable() {
         return null;
     }
 
     @Nullable
-    public String getLabel(Context context) {
+    public String getLabel() {
         return null;
     }
 
     @Nullable
-    public String getSecondaryLabel(Context context) {
+    public String getSecondaryLabel() {
         return null;
     }
 
     @ColorInt
-    public int getTint(Context context, TintCallback tintCallback) {
+    public int getTint() {
         return Color.WHITE;
     }
 
-    public abstract Runnable getAction(View view, Context context);
+    public abstract Runnable getAction(View dockItemView);
 
     @Nullable
-    public Runnable getSecondaryAction(View view, Context context, ItemCallback handle) {
+    public Runnable getSecondaryAction(View dockItemView) {
         return null;
     }
 
@@ -73,5 +82,13 @@ public abstract class DockControllerItem {
 
     public long getSubPriority() {
         return 0L;
+    }
+
+    @Nullable
+    protected Context getContext() {
+        if (mHost == null) {
+            return null;
+        }
+        return mHost.getContext();
     }
 }

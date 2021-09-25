@@ -2,32 +2,32 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="horizontal"
     android:layout_gravity="center_vertical"
-    android:layout_width="match_parent"
+    android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp">
+    android:layout_marginEnd="8dp">
 
     <!-- Icon and time -->
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="72dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_marginEnd="16dp">
+        android:layout_marginEnd="4dp"
+        android:gravity="center">
 
         <ImageView
-            android:id="@+id/weather_item_icon"
+            android:id="@+id/weather_hourly_item_icon"
+            android:src="@drawable/ic_baseline_home_24"
+            android:layout_gravity="center_horizontal"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginHorizontal="@dimen/weather_bottom_sheet_horizontal_padding"
-            android:layout_marginBottom="4dp"
-            android:src="@drawable/ic_baseline_home_24" />
+            android:layout_marginBottom="4dp"/>
 
         <TextView
-            android:id="@+id/weather_item_time"
+            android:id="@+id/weather_hourly_item_time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:text="3:00pm"
+            android:text="12:00pm"
             android:textColor="@color/primary_text_color"
             android:textSize="12sp" />
     </LinearLayout>
@@ -37,38 +37,27 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
-        android:orientation="vertical">
+        android:gravity="center"
+        android:orientation="vertical"
+        android:layout_marginEnd="8dp">
 
         <TextView
-            android:id="@+id/weather_item_condition_and_temp"
+            android:id="@+id/weather_hourly_item_temp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Cloudy, 68F"
+            android:text="68F"
             android:textColor="@color/primary_text_color"
             android:textSize="16sp" />
 
         <TextView
-            android:id="@+id/weather_item_high_low"
+            android:id="@+id/weather_hourly_item_precip"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="72F H/65F L"
+            android:drawableStart="@drawable/ic_round_umbrella_24"
+            android:text="0.3mm"
+            android:gravity="center_vertical"
             android:textColor="@color/primary_text_color"
-            android:textSize="14sp" />
+            android:textSize="12sp" />
     </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <TextView
-            android:id="@+id/weather_item_precip"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="@color/secondary_text_color"
-            android:layout_marginStart="16dp"
-            android:gravity="end"
-            android:textSize="14sp" />
-    </LinearLayout>
 </LinearLayout>

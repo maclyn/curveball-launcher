@@ -320,7 +320,7 @@ public class HomeActivity extends AppCompatActivity implements
     protected void onStart() {
         super.onStart();
         AppInfoCache.get().getAppWidgetHost().startListening();
-        mDockController.reloadDock();
+        mDockController.loadDock();
         if (!EventBus.getDefault().isRegistered(this)) {
             EventBus.getDefault().register(this);
         }
@@ -330,10 +330,10 @@ public class HomeActivity extends AppCompatActivity implements
     protected void onStop() {
         super.onStop();
         AppInfoCache.get().getAppWidgetHost().stopListening();
+        mDockController.destroyDock();
         if (!LayoutEditingSingleton.getInstance().isEditing()) {
             pagerView.setCurrentItem(1);
         }
-        // Maybe: DecorViewManager.get(this).detachAllViews();
         if (EventBus.getDefault().isRegistered(this)) {
             EventBus.getDefault().unregister(this);
         }
@@ -459,7 +459,7 @@ public class HomeActivity extends AppCompatActivity implements
                 mPager.getGridController(mPendingGridPageId).commitPendingWidgetAddition();
                 break;
             case REQUEST_LOCATION_PERMISSION:
-                mDockController.refreshDockItems();
+                mDockController.loadDock();
                 break;
         }
     }

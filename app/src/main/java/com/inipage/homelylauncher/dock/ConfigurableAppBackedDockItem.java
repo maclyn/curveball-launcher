@@ -3,7 +3,8 @@ package com.inipage.homelylauncher.dock;
 import android.content.Context;
 import android.view.View;
 
-import com.inipage.homelylauncher.dock.items.SynchDockControllerItem;
+import androidx.annotation.Nullable;
+
 import com.inipage.homelylauncher.model.DockItem;
 import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.utils.InstalledAppUtils;
@@ -13,7 +14,7 @@ import java.util.Map;
 /**
  * Base class for dock items that show some app (which can be configured) when clicked.
  */
-public abstract class ConfigurableAppBackedDockItem extends SynchDockControllerItem {
+public abstract class ConfigurableAppBackedDockItem extends DockControllerItem {
 
     private final DockItem mBackingItem;
 
@@ -28,7 +29,11 @@ public abstract class ConfigurableAppBackedDockItem extends SynchDockControllerI
     protected abstract int getDatabaseField();
 
     @Override
-    public Runnable getAction(View view, Context context) {
+    public Runnable getAction(View view) {
+        @Nullable final Context context = getContext();
+        if (context == null) {
+            return () -> {};
+        }
         return () -> {
             if (mBackingItem.hasValidComponent()) {
                 int[] out = new int[2];

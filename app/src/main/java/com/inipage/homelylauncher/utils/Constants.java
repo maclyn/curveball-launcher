@@ -6,7 +6,7 @@ public class Constants {
 
     public static final String CACHED_WEATHER_RESPONSE_JSON_PREFERENCE = "cached_weather_response_json_pref";
     public static final String CACHED_WEATHER_RESPONSE_EXPIRY_PREFERENCE = "cached_weather_response_expire_pref";
-    public static final String WEATHER_USE_CELCIUS_PREF = "celsius_pref";
+    public static final String WEATHER_USE_CELCIUS_PREF = "use_celsius_pref";
 
     public static final String DISABLED_CALENDARS_PREF = "disabled_calendars_pref";
     public static final String HAS_SHOWN_NEW_USER_EXPERIENCE = "new_user_pref";
@@ -27,10 +27,10 @@ public class Constants {
     public static final float DEFAULT_WIDTH_TO_HEIGHT_SCALAR = 1.5F;
 
     // Width-to-height scalar for smaller screens; widgets don't fit super great at this factor,
-    // but it squeezes an extra row on for a square screen
+    // but it squeezes an extra row on for a squished screen
     public static final float SQUAT_WIDTH_TO_HEIGHT_SCALAR = 1.15F;
 
+    // Values for input devices that get special treatment
     public static final String VIRTUAL_TITAN_POCKET_SCROLLPAD_INPUT_DEVICE_NAME = "mtk-pad";
-
     public static final String PHYSICAL_TITAN_POCKET_KEYBOARD_INPUT_DEVICE_NAME = "aw9523-key";
 }

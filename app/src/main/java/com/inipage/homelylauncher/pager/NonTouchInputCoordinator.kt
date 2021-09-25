@@ -127,6 +127,9 @@ class NonTouchInputCoordinator(private val host: Host, private val context: Acti
 
     fun dispatchKeyEvent(ev: KeyEvent): Boolean {
         DebugLogUtils.needle(DebugLogUtils.TAG_VIRTUAL_TRACKPAD, "dispatchKeyEvent", ev)
+        if (DecorViewManager.get(context).hasOpenView()) {
+            return host.defaultDispatchKeyEvent(ev)
+        }
 
         if (host.isOnAppDrawer() &&
             host.isAlphabeticalPickerOpen() &&
@@ -159,12 +162,14 @@ class NonTouchInputCoordinator(private val host: Host, private val context: Acti
                 "onKeyDown, isEventFromPhysicalKeyboard"
             )
             runMessageImmediately(NonTouchInputMessage.NO_OP)
-            if (!host.isOnAppDrawer()) {
-                host.getPager().appDrawerController.feedKeyboardEvent(ev)
-                return true
-            } else if (!host.getPager().appDrawerController.isSearching) {
-                host.getPager().appDrawerController.feedKeyboardEvent(ev)
-                return true
+            if (!DecorViewManager.get(context).hasOpenView()) {
+                if (!host.isOnAppDrawer()) {
+                    host.getPager().appDrawerController.feedKeyboardEvent(ev)
+                    return true
+                } else if (!host.getPager().appDrawerController.isSearching) {
+                    host.getPager().appDrawerController.feedKeyboardEvent(ev)
+                    return true
+                }
             }
             return host.defaultOnKeyDown(keyCode, ev)
         }

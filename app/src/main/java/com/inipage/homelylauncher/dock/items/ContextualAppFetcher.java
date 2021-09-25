@@ -24,6 +24,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Fetches apps from the UsageStatsService.
+ */
 public class ContextualAppFetcher {
 
     private Map<String, Boolean> mHiddenApps;

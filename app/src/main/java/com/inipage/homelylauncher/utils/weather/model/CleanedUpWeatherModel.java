@@ -188,14 +188,22 @@ public class CleanedUpWeatherModel {
 
     public static String getTempFromValue(float temp, Context context) {
         if (isUsingCelsius(context)) {
-            return Math.round(temp) + "°C";
-        } else {
-            temp = (temp * 9 / 5) + 32;
-            return Math.round(temp) + "°F";
+            return Math.round(temp) + "°";
         }
+        temp = (temp * 9 / 5) + 32;
+        return Math.round(temp) + "°";
     }
 
-    private static boolean isUsingCelsius(Context context) {
+    public static String getPrecipitationFromValue(float precipMm, Context context) {
+        final boolean isUsingCelcius = isUsingCelsius(context);
+        final float value = isUsingCelcius ? precipMm : precipMm * 0.03937F;
+        final String valueAsString =  isUsingCelcius ?
+          String.format("%.1f", value) :
+          String.format("%.2f", value);
+        return valueAsString + (isUsingCelcius ? "mm" : "in");
+    }
+
+    public static boolean isUsingCelsius(Context context) {
         return PreferenceManager.getDefaultSharedPreferences(context)
             .getBoolean(Constants.WEATHER_USE_CELCIUS_PREF, false);
     }

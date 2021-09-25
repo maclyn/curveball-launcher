@@ -8,6 +8,7 @@ import androidx.annotation.Nullable;
 
 import com.inipage.homelylauncher.caches.IconCacheSync;
 import com.inipage.homelylauncher.caches.IconColorCache;
+import com.inipage.homelylauncher.dock.DockControllerItem;
 import com.inipage.homelylauncher.dock.DockItemPriorities;
 import com.inipage.homelylauncher.model.ApplicationIcon;
 import com.inipage.homelylauncher.model.DockItem;
@@ -15,7 +16,10 @@ import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.utils.InstalledAppUtils;
 import com.inipage.homelylauncher.views.AppPopupMenu;
 
-public class RecentAppDockItem extends SynchDockControllerItem {
+/**
+ * Renders a recent app on the dock.
+ */
+public class RecentAppDockItem extends DockControllerItem {
 
     private final ContextualAppFetcher.SuggestionApp mSuggestionApp;
 
@@ -24,25 +28,39 @@ public class RecentAppDockItem extends SynchDockControllerItem {
     }
 
     @Override
-    public boolean isActive(Context context) {
-        return true;
+    public void onAttach() {
+        mHost.showHostedItem();
     }
 
     @Nullable
     @Override
-    public Bitmap getBitmap(Context context) {
+    public Bitmap getBitmap() {
+        @Nullable final Context context = getContext();
+        if (context == null) {
+            return null;
+        }
         return IconCacheSync.getInstance(context).getActivityIcon(
             mSuggestionApp.getPackageName(), mSuggestionApp.getActivityName());
     }
 
     @Override
-    public int getTint(Context context, TintCallback tintCallback) {
+    public int getTint() {
+        @Nullable final Host host = mHost;
+        if (host == null) {
+            return super.getTint();
+        }
+        @Nullable final Context context = getContext();
+        if (context == null) {
+            return super.getTint();
+        }
         return IconColorCache.getInstance().getColorForBitmap(
-            context, getBitmap(context), tintCallback::onTintLoaded);
+            context,
+            getBitmap(),
+            host::tintLoaded);
     }
 
     @Override
-    public Runnable getAction(View view, Context context) {
+    public Runnable getAction(View view) {
         return () -> {
             final int[] out = new int[2];
             view.getLocationOnScreen(out);
@@ -59,7 +77,15 @@ public class RecentAppDockItem extends SynchDockControllerItem {
 
     @Nullable
     @Override
-    public Runnable getSecondaryAction(View view, Context context, ItemCallback itemCallback) {
+    public Runnable getSecondaryAction(View view) {
+        @Nullable final Host host = mHost;
+        if (host == null) {
+            return null;
+        }
+        @Nullable final Context context = getContext();
+        if (context == null) {
+            return null;
+        }
         return () -> {
             ApplicationIcon applicationIcon = new ApplicationIcon(
                 mSuggestionApp.getPackageName(), mSuggestionApp.getActivityName(), context);
@@ -79,7 +105,7 @@ public class RecentAppDockItem extends SynchDockControllerItem {
                         DatabaseEditor.get().addDockPreference(
                             DockItem.createHiddenItem(
                                 applicationIcon.getPackageName(), applicationIcon.getActivityName()));
-                        itemCallback.hideMe();
+                        host.hideHostedItem();
                     }
 
                     @Override

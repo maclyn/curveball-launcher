@@ -1,6 +1,9 @@
 package com.inipage.homelylauncher.dock.items;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 
 import androidx.annotation.Nullable;
 
@@ -14,15 +17,58 @@ import java.util.Map;
 
 public class PowerMappedDockItem extends ConfigurableAppBackedDockItem {
 
-    private final int mPowerLevel;
-    private final boolean mIsLowPower;
-    private final boolean mIsCharging;
+    @Nullable private BroadcastReceiver mBroadcastReceiver;
 
-    public PowerMappedDockItem(Context context, Map<Integer, DockItem> items) {
+    private int mPowerLevel;
+    private boolean mIsLowPower;
+    private boolean mIsCharging;
+
+    public PowerMappedDockItem(Map<Integer, DockItem> items) {
         super(items);
+    }
+
+    @Override
+    public void onAttach() {
+        @Nullable final Context context = getContext();
+        if (context == null) {
+            return;
+        }
+        powerValuesChanged();
+        mBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                powerValuesChanged();
+            }
+        };
+        final IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_POWER_CONNECTED);
+        filter.addAction(Intent.ACTION_POWER_DISCONNECTED);
+        filter.addAction(Intent.ACTION_BATTERY_CHANGED);
+        context.registerReceiver(mBroadcastReceiver, filter);
+    }
+
+    private void powerValuesChanged() {
+        @Nullable final Context context = getContext();
+        if (context == null) {
+            return;
+        }
         mPowerLevel = BatteryUtils.getBatteryLevel(context);
         mIsLowPower = BatteryUtils.isLowCharge(context);
         mIsCharging = BatteryUtils.isCharging(context);
+        if (mIsLowPower || mIsCharging) {
+            mHost.showHostedItem();
+        } else {
+            mHost.hideHostedItem();
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        @Nullable final Context context = getContext();
+        if (context == null || mBroadcastReceiver == null) {
+            return;
+        }
+        context.unregisterReceiver(mBroadcastReceiver);
     }
 
     @Override
@@ -36,11 +82,6 @@ public class PowerMappedDockItem extends ConfigurableAppBackedDockItem {
     }
 
     @Override
-    public boolean isActive(Context context) {
-        return mIsLowPower || mIsCharging;
-    }
-
-    @Override
     public int getIcon() {
         return mIsLowPower ?
                R.drawable.dock_icon_battery_low :
@@ -49,19 +90,27 @@ public class PowerMappedDockItem extends ConfigurableAppBackedDockItem {
 
     @Nullable
     @Override
-    public String getLabel(Context context) {
+    public String getLabel() {
+        @Nullable final Context context = getContext();
+        if (context == null) {
+            return null;
+        }
         return context.getString(R.string.dock_icon_power, mPowerLevel);
     }
 
     @Override
-    public int getTint(Context context, TintCallback __) {
+    public int getTint() {
+        @Nullable final Context context = getContext();
+        if (context == null) {
+            return super.getTint();
+        }
         return context.getColor(R.color.dock_item_power_color);
     }
 
     @Override
     public long getBasePriority() {
         return mIsLowPower ?
-               DockItemPriorities.PRIORITY_POWER_EVENT_LOW.getPriority() :
-               DockItemPriorities.PRIORITY_POWER_EVENT_CHARGING.getPriority();
+           DockItemPriorities.PRIORITY_POWER_EVENT_LOW.getPriority() :
+           DockItemPriorities.PRIORITY_POWER_EVENT_CHARGING.getPriority();
     }
 }
