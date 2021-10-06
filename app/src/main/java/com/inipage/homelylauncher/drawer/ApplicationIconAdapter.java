@@ -1,6 +1,10 @@
 package com.inipage.homelylauncher.drawer;
 
 import android.app.Activity;
+import android.content.Context;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.TextAppearanceSpan;
 import android.util.Pair;
 import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
@@ -458,7 +462,16 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
         if (itemViewType == ITEM_VIEW_TYPE_TOP_HEADER) {
             final TopHeaderHolder headerHolder = (TopHeaderHolder) holder;
-            headerHolder.installCount.setText(String.valueOf(mApps.size()));
+            final Context context = headerHolder.installCount.getContext();
+            final SpannableString headerText =
+                new SpannableString(
+                    context.getResources().getString(R.string.header_app_count, mApps.size()));
+            headerText.setSpan(
+                new TextAppearanceSpan(context, R.style.BoldedText),
+                0,
+                String.valueOf(mApps.size()).length(),
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            headerHolder.installCount.setText(headerText);
             headerHolder.enterSearchButton.setOnClickListener(mDelegate::enterSearchMode);
             headerHolder.showOptionsMenu.setOnClickListener(mDelegate::showOptionsMenu);
             return;
@@ -607,11 +620,13 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 if (app.getScrollableField() != currentScrollableField) {
                     mElements.add(AdapterElement.createHeaderElement(app.getScrollableField()));
                     currentScrollableField = app.getScrollableField();
+
                 }
                 mElements.add(AdapterElement.createAppElement(app));
                 final String headerKey = String.valueOf(currentScrollableField);
                 if (mHeaderToCount.get(headerKey) == null) {
                     mHeaderToCount.put(headerKey, 0);
+
                 }
                 int newValue = mHeaderToCount.get(headerKey) + 1;
                 mHeaderToCount.put(headerKey, newValue);
@@ -667,7 +682,6 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     }
 
     public static class AppIconHolder extends AnimatableViewHolder {
-        final int[] tmp = new int[2];
         ApplicationIconLayout mainView;
         BitmapView icon;
         TextView title;
@@ -682,27 +696,11 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     public static class AnimatableViewHolder extends RecyclerView.ViewHolder {
 
-        private final int[] tmp = new int[2];
         View view;
 
         public AnimatableViewHolder(View view) {
             super(view);
             this.view = view;
-        }
-
-        public void applyAlpha(RecyclerView container) {
-            container.getLocationOnScreen(tmp);
-            final float containerTop = tmp[1];
-            view.getLocationOnScreen(tmp);
-            final float itemTop = tmp[1];
-            final float itemHeight = view.getHeight();
-            if (itemTop < containerTop) { // itemTop < containerTop --> falling off top
-                final float amountOffScreen = containerTop - itemTop;
-                view.setAlpha(1 - (amountOffScreen / itemHeight));
-            } else { // itemTop > containerTop --> falling off bottom
-                final float bottomOfContainer = containerTop + container.getHeight();
-                view.setAlpha((bottomOfContainer - itemTop) / itemHeight);
-            }
         }
     }
 }

@@ -277,5 +277,7 @@
     <string name="amount_of_rain">%s of rain</string>
     <string name="amount_of_snow">%s of snow</string>
     <string name="amount_of_sleet">%s of sleet</string>
+    <string name="header_app_count">%d apps</string>
+    <string name="item_doesnt_fit_here">This item doesn\'t fit here.</string>
 </resources>
 

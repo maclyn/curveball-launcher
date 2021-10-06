@@ -1,6 +1,8 @@
 package com.inipage.homelylauncher.drawer
 
+import android.app.UiModeManager
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.*
 import android.graphics.drawable.Drawable
 import android.os.Build
@@ -70,8 +72,8 @@ class AppHeaderView : View {
             invalidate()
         }
 
-    var horizontalPadding by Delegates.notNull<Int>()
-    lateinit var paint: Paint
+    private var horizontalPadding by Delegates.notNull<Int>()
+    private lateinit var paint: Paint
 
     constructor(context: Context) : super(context) {
         init(null, 0)

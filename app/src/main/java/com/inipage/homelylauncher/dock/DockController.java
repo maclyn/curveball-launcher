@@ -40,7 +40,7 @@ import static android.view.View.VISIBLE;
  */
 public class DockController {
 
-    private static final int MAX_ITEM_COUNT = 15;
+    private static final int MAX_ITEM_COUNT = 20;
 
     private final LinearLayout mContainer;
     private final ContextualAppFetcher mAppFetcher;

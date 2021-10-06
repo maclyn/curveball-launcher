@@ -53,7 +53,7 @@
     <dimen name="actuation_distance">120dp</dimen>
     <dimen name="app_row_horizontal_padding">8dp</dimen>
     <dimen name="fast_scroll_item_height">72dp</dimen>
-    <dimen name="fast_scroll_text_size">18sp</dimen>
+    <dimen name="fast_scroll_text_size">16sp</dimen>
     <dimen name="bottom_sheet_top_scrim_padding">24dp</dimen>
     <dimen name="app_icon_row_height">56dp</dimen>
 </resources>

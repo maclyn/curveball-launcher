@@ -4,7 +4,7 @@
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="@dimen/contextual_dock_external_padding">
+    android:padding="4dp">
 
     <LinearLayout
         android:id="@+id/dock_item_root_container"

@@ -12,8 +12,8 @@
         android:background="?attr/selectableItemBackground"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:letterCircleRadius="16dp"
+        app:letterCircleRadius="20dp"
         app:appIconRadius="24dp"
-        app:dotCircleRadius="1.5dp"
+        app:dotCircleRadius="2dp"
         app:circleColor="@color/app_row_letter_color" />
 </LinearLayout>

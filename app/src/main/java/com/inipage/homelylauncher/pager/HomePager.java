@@ -29,7 +29,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Adapter for a the core application ViewPager.
+ * Adapter for a the core application ViewPager. Contains an AppDrawerController and 1 or more
+ * GridPageControllers.
  */
 public class HomePager extends RecyclerView.Adapter<HomePager.PagerHolder> {
 
@@ -85,10 +86,11 @@ public class HomePager extends RecyclerView.Adapter<HomePager.PagerHolder> {
         for (int i = 0; i < mGridPages.size(); i++) {
             GridPage page = mGridPages.get(i);
             if (page.getItems().isEmpty() && i != 0) {
-                pagesToDrop.add(page);
-                controllersToDrop.add(mGridPageControllers.get(i));
+                final GridPageController controllerToRemove = mGridPageControllers.get(i);
+                controllersToDrop.add(controllerToRemove);
                 DatabaseEditor.get().dropPage(page.getID());
                 mGridPageIdToController.remove(page.getID());
+                pagesToDrop.add(page);
             }
         }
         if (controllersToDrop.isEmpty()) {

@@ -1,5 +1,23 @@
 package com.inipage.homelylauncher.grid;
 
+import static android.appwidget.AppWidgetProviderInfo.RESIZE_HORIZONTAL;
+import static android.appwidget.AppWidgetProviderInfo.RESIZE_NONE;
+import static android.appwidget.AppWidgetProviderInfo.RESIZE_VERTICAL;
+import static android.view.DragEvent.ACTION_DRAG_ENDED;
+import static android.view.DragEvent.ACTION_DRAG_ENTERED;
+import static android.view.DragEvent.ACTION_DRAG_EXITED;
+import static android.view.DragEvent.ACTION_DRAG_LOCATION;
+import static android.view.DragEvent.ACTION_DRAG_STARTED;
+import static android.view.DragEvent.ACTION_DROP;
+import static android.view.MotionEvent.ACTION_CANCEL;
+import static android.view.MotionEvent.ACTION_DOWN;
+import static android.view.MotionEvent.ACTION_MOVE;
+import static android.view.MotionEvent.ACTION_UP;
+import static com.inipage.homelylauncher.caches.PackageModifiedEvent.Modification.ADDED;
+import static com.inipage.homelylauncher.caches.PackageModifiedEvent.Modification.REMOVED;
+import static com.inipage.homelylauncher.utils.DebugLogUtils.TAG_DRAG_OFFSET;
+import static com.inipage.homelylauncher.utils.DebugLogUtils.TAG_ICON_CASCADE;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.WallpaperManager;
@@ -31,6 +49,7 @@ import com.inipage.homelylauncher.pager.BasePageController;
 import com.inipage.homelylauncher.pager.GesturePageLayout;
 import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.state.EditingEvent;
+import com.inipage.homelylauncher.state.GridDropFailedEvent;
 import com.inipage.homelylauncher.state.LayoutEditingSingleton;
 import com.inipage.homelylauncher.utils.AttributeApplier;
 import com.inipage.homelylauncher.utils.Constants;
@@ -43,6 +62,7 @@ import com.inipage.homelylauncher.views.DecorViewDragger.DragEvent;
 import com.inipage.homelylauncher.views.DecorViewManager;
 import com.inipage.homelylauncher.widgets.WidgetAddBottomSheet;
 
+import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
@@ -53,24 +73,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-
-import static android.appwidget.AppWidgetProviderInfo.RESIZE_HORIZONTAL;
-import static android.appwidget.AppWidgetProviderInfo.RESIZE_NONE;
-import static android.appwidget.AppWidgetProviderInfo.RESIZE_VERTICAL;
-import static android.view.DragEvent.ACTION_DRAG_ENDED;
-import static android.view.DragEvent.ACTION_DRAG_ENTERED;
-import static android.view.DragEvent.ACTION_DRAG_EXITED;
-import static android.view.DragEvent.ACTION_DRAG_LOCATION;
-import static android.view.DragEvent.ACTION_DRAG_STARTED;
-import static android.view.DragEvent.ACTION_DROP;
-import static android.view.MotionEvent.ACTION_CANCEL;
-import static android.view.MotionEvent.ACTION_DOWN;
-import static android.view.MotionEvent.ACTION_MOVE;
-import static android.view.MotionEvent.ACTION_UP;
-import static com.inipage.homelylauncher.caches.PackageModifiedEvent.Modification.ADDED;
-import static com.inipage.homelylauncher.caches.PackageModifiedEvent.Modification.REMOVED;
-import static com.inipage.homelylauncher.utils.DebugLogUtils.TAG_DRAG_OFFSET;
-import static com.inipage.homelylauncher.utils.DebugLogUtils.TAG_ICON_CASCADE;
 
 /**
  * The glue between the Views in the grid (GridViewHolder) and the underlying data
@@ -357,6 +359,23 @@ public class GridPageController implements BasePageController {
     }
     //endregion
 
+    /**
+     * Handles when you drag an item to a new location, but that location doesn't have space
+     * to fit the item.
+     */
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onGridDropFailed(GridDropFailedEvent event) {
+        final GridViewHolder holder = event.getGridViewHolder();
+        final GridItem item = holder.getItem();
+        if (!item.getPageId().equals(mPage.getID())) {
+            return;
+        }
+        mPage.getItems().add(item);
+        addItem(item);
+        commitPage();
+        onGridMakeupChanged();
+    }
+
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onPackageModifiedEvent(PackageModifiedEvent event) {
         if (event.getModification() == ADDED) {
@@ -430,13 +449,13 @@ public class GridPageController implements BasePageController {
     }
 
     @Override
-    public DecorViewDragger.DragAwareComponent getDragAwareComponent() {
+    public DecorViewDragger.TargetedDragAwareComponent getDragAwareComponent() {
         return mDragListener;
     }
 
     @Override
     public void onPause() {
-        mDragListener.clearDragTarget();
+        clearDragTarget();
     }
 
     public void clearDragTarget() {
@@ -558,7 +577,7 @@ public class GridPageController implements BasePageController {
         }
     }
 
-    private class DragListener implements DecorViewDragger.DragAwareComponent {
+    private class DragListener implements DecorViewDragger.TargetedDragAwareComponent {
 
         private final GridChoreographer mChoreographer;
         @Nullable
@@ -595,6 +614,7 @@ public class GridPageController implements BasePageController {
                     break;
                 case ACTION_DRAG_ENTERED:
                 case ACTION_DRAG_LOCATION:
+                    // Set last cell dragged over & last cell committed if not already set
                     if (!viewHolder.getItem().isSizeUnset() &&
                         mLastCellDraggedOver == null &&
                         mLastCellCommitted == null) {
@@ -603,19 +623,21 @@ public class GridPageController implements BasePageController {
                         mLastCellCommitted = new Point(mLastCellDraggedOver);
                     }
 
+                    // Figure out if the drag event is over a new point
                     final Point locationPoint = findPointFromDragEvent(event);
                     final int columnCell = locationPoint.x;
                     final int rowCell = locationPoint.y;
                     mAnimatedBackgroundGrid.highlightDragPosition(
                         columnCell, rowCell, gridItem.getWidth(), gridItem.getHeight());
-                    final boolean newPositionData =
+                    final boolean hasNewPositionData =
                         mLastCellDraggedOver == null ||
                             columnCell != mLastCellDraggedOver.x ||
                             rowCell != mLastCellDraggedOver.y;
-                    if (!newPositionData) {
+                    if (!hasNewPositionData) {
                         return;
                     }
 
+                    // Try and free up the space
                     log(TAG_ICON_CASCADE, "New position data found: " + columnCell + "x" + rowCell);
                     final boolean areaOccupied = mHolderMap.isAreaOccupied(
                         columnCell, rowCell, gridItem.getWidth(), gridItem.getHeight());
@@ -643,7 +665,7 @@ public class GridPageController implements BasePageController {
                 case ACTION_DROP:
                     final Point dropDragPoint = findPointFromDragEvent(event);
                     log(TAG_ICON_CASCADE, "Drag drop point=" + dropDragPoint);
-                    maybeCommitDragChanges(dropDragPoint.x, dropDragPoint.y, gridItem);
+                    maybeCommitDragChanges(dropDragPoint.x, dropDragPoint.y, viewHolder);
                     mChoreographer.queueSolve(new HashSet<>(), null);
                     mAnimatedBackgroundGrid.quitDragMode();
                     mLastCellDraggedOver = mLastCellCommitted = null;
@@ -657,19 +679,9 @@ public class GridPageController implements BasePageController {
                 case ACTION_DRAG_ENDED:
                     // We ALWAYS get this, even if we're not privy to the DROP event, so this is
                     // a safe place to do cleanup
-                    mChoreographer.clear();
-                    if (mLastCellDraggedOver != null) {
-                        // Try and commit it at the last cell position rather than drop
-                        // the dragged item entirely
-                        log(TAG_ICON_CASCADE, "Drag ended, but attempting add...");
-                        maybeCommitDragChanges(
-                            mLastCellDraggedOver.x,
-                            mLastCellDraggedOver.y,
-                            gridItem);
-                        mLastCellDraggedOver = null;
-                    }
-                    mAnimatedBackgroundGrid.quitDragMode();
                     mLastCellDraggedOver = mLastCellCommitted = null;
+                    mChoreographer.clear();
+                    mAnimatedBackgroundGrid.quitDragMode();
                     break;
             }
         }
@@ -714,27 +726,23 @@ public class GridPageController implements BasePageController {
             return new Point(columnCell, rowCell);
         }
 
-        private void maybeCommitDragChanges(int x, int y, GridItem gridItem) {
+        private void maybeCommitDragChanges(int x, int y, GridViewHolder holder) {
+            final GridItem gridItem = holder.getItem();
             if (mHolderMap.isAreaOccupied(x, y, gridItem.getWidth(), gridItem.getHeight())) {
                 Toast.makeText(
                     mContainer.getContext(),
-                    "This item doesn't fit here.",
+                    R.string.item_doesnt_fit_here,
                     Toast.LENGTH_SHORT).show();
-                if (!mPage.getID().equals(gridItem.getPageId())) {
-                    // We don't support returning the item from the starting drag position
-                    // if it's dragged between pages
-                    return;
-                }
-                // Continue by dropping back to the original place
+                EventBus.getDefault().post(new GridDropFailedEvent(holder));
             } else {
                 // Fix up item; x/y/pageId could all be wrong
                 gridItem.update(mPage.getID(), x, y);
+                mPage.getItems().add(gridItem);
+                addItem(gridItem);
+                commitPage();
+                onGridMakeupChanged();
+                validateGrid("Dropping item=" + gridItem);
             }
-            mPage.getItems().add(gridItem);
-            addItem(gridItem);
-            commitPage();
-            onGridMakeupChanged();
-            validateGrid("Dropping item=" + gridItem);
         }
 
         public void clearDragTarget() {
@@ -848,7 +856,6 @@ public class GridPageController implements BasePageController {
                 mHost.forwardSwipeUp(event, deltaY);
                 return;
             }
-
             if (ViewUtils.exceedsSlop(event, mStartX, mStartY, mContainer.getContext(), 1F)) {
                 DecorViewManager.get(mRootContainer.getContext()).detachAllViews();
                 LayoutEditingSingleton.getInstance().setEditing(true);

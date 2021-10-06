@@ -36,13 +36,13 @@ public class GridChoreographer {
 
     private enum ChangeState {
         /** Moving a little bit of the way to the destination to indicate a potential solution. */
-        HINTING(),
+        HINTING,
         /** Waiting to go the rest of the way until nothing else has changed. */
-        PAUSING(),
+        PAUSING,
         /** Moving from the hint to final position; at this point the change has actually been committed. */
-        COMMITTING(),
+        COMMITTING,
         /** Reverting from HINTING/PAUSING back to the original location. */
-        REVERTING()
+        REVERTING
     }
 
     private static class ChangeElement {

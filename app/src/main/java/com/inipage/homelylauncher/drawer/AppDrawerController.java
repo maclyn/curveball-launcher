@@ -7,9 +7,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.text.Editable;
 import android.text.TextUtils;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.DragEvent;
 import android.view.KeyEvent;
@@ -96,8 +94,8 @@ public class AppDrawerController implements BasePageController, FastScrollContro
     // indicates a visible search box but not per se text entered and search results displayed
     private boolean mIsSearching = false;
     private boolean mInDrag = false;
-    private final DecorViewDragger.DragAwareComponent mDragAwareComponent =
-        new DecorViewDragger.DragAwareComponent() {
+    private final DecorViewDragger.TargetedDragAwareComponent mDragAwareComponent =
+        new DecorViewDragger.TargetedDragAwareComponent() {
 
             @Override
             public View getDragAwareTargetView() {
@@ -189,32 +187,6 @@ public class AppDrawerController implements BasePageController, FastScrollContro
                 }
             }
         });
-        appRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-                final int firstItem = mLayoutManager.findFirstVisibleItemPosition();
-                final int lastItem = mLayoutManager.findLastVisibleItemPosition();
-                final int firstCompletelyVisibleItem =
-                    mLayoutManager.findFirstCompletelyVisibleItemPosition();
-                final int lastCompletelyVisibleItem =
-                    mLayoutManager.findLastCompletelyVisibleItemPosition();
-                for (int idx = firstItem; idx <= lastItem; idx++) {
-                    RecyclerView.ViewHolder holder =
-                        appRecyclerView.findViewHolderForAdapterPosition(idx);
-                    if (!(holder instanceof ApplicationIconAdapter.AnimatableViewHolder)) {
-                        continue;
-                    }
-                    ApplicationIconAdapter.AnimatableViewHolder iconHolder =
-                        (ApplicationIconAdapter.AnimatableViewHolder) holder;
-                    if (idx == firstItem && firstItem != firstCompletelyVisibleItem ||
-                        idx == lastItem && lastItem != lastCompletelyVisibleItem) {
-                        iconHolder.applyAlpha(recyclerView);
-                    } else {
-                        iconHolder.view.setAlpha(1F);
-                    }
-                }
-            }
-        });
         searchPullLayout.setOnRefreshListener(() -> {
             searchPullLayout.setRefreshing(false);
             if (!mIsSearching) {
@@ -277,7 +249,7 @@ public class AppDrawerController implements BasePageController, FastScrollContro
     }
 
     @Override
-    public DecorViewDragger.DragAwareComponent getDragAwareComponent() {
+    public DecorViewDragger.TargetedDragAwareComponent getDragAwareComponent() {
         return mDragAwareComponent;
     }
 

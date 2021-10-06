@@ -15,6 +15,7 @@ import com.inipage.homelylauncher.utils.ViewUtils;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.WeakHashMap;
 
@@ -39,13 +40,16 @@ import static android.view.View.VISIBLE;
  */
 public class DecorViewDragger {
 
+    public static final int DRAG_PRIORITY_HIGHEST = -100;
+    public static final int DRAG_PRIORITY_DEFAULT = 0;
+    public static final int DRAG_PRIORITY_LOWEST = 100;
+
     private static final WeakHashMap<Activity, DecorViewDragger> s_DRAGGER_MAP =
         new WeakHashMap<>();
-    public static int DRAG_PRIORITY_HIGHEST = -100;
-    public static int DRAG_PRIORITY_DEFAULT = 0;
-    public static int DRAG_PRIORITY_LOWEST = 100;
+
     private final WeakReference<Activity> mActivityRef;
-    private final List<DragAwareComponent> mRegisteredComponents = new ArrayList<>();
+    private final List<TargetedDragAwareComponent> mRegisteredComponents = new ArrayList<>();
+    private final List<BaseDragAwareComponent> mBackgroundComponents = new ArrayList<>();
     private boolean mInDrag;
     private boolean mDragComplete;
     private boolean mDragSuccessful;
@@ -56,7 +60,7 @@ public class DecorViewDragger {
     @Nullable
     private Object mLocalState;
     @Nullable
-    private DragAwareComponent mLastComponent;
+    private TargetedDragAwareComponent mLastComponent;
 
     private DecorViewDragger(Activity activity) {
         mActivityRef = new WeakReference<>(activity);
@@ -130,18 +134,18 @@ public class DecorViewDragger {
                 .get(mActivityRef.get())
                 .attachView(
                     dragView,
-                    new DecorViewManager.Callback() {
-                    },
+                    new DecorViewManager.Callback() {},
                     width,
                     height,
                     startX + mOffsetX,
                     startY + mOffsetY);
 
         // Post a _STARTED event to every component
-        for (DragAwareComponent component : mRegisteredComponents) {
+        for (TargetedDragAwareComponent component : mRegisteredComponents) {
             sendDragEvent(component, ACTION_DRAG_STARTED);
         }
-        @Nullable DragAwareComponent component = findRelevantComponent();
+        broadcastBackgroundDragEvent(ACTION_DRAG_STARTED);
+        @Nullable TargetedDragAwareComponent component = findRelevantComponent();
         if (component != null) {
             sendDragEvent(component, ACTION_DRAG_ENTERED);
             mLastComponent = component;
@@ -152,16 +156,28 @@ public class DecorViewDragger {
         DebugLogUtils.needle(DebugLogUtils.TAG_DECOR_DRAGGER, 1, getClass().getSimpleName(), vals);
     }
 
-    private void sendDragEvent(DragAwareComponent component, int action) {
+    private void sendDragEvent(TargetedDragAwareComponent component, int action) {
         component.onDrag(
             component.getDragAwareTargetView(),
             new DragEvent(mLocalState, action, mCurrentX, mCurrentY, mOffsetX, mOffsetY));
     }
 
+    private void broadcastBackgroundDragEvent(int action) {
+        for (BaseDragAwareComponent component : mBackgroundComponents) {
+            sendBackgroundDragEvent(component, action);
+        }
+    }
+
+    private void sendBackgroundDragEvent(BaseDragAwareComponent component, int action) {
+        component.onDrag(
+            null,
+            new DragEvent(mLocalState, action, mCurrentX, mCurrentY, mOffsetX, mOffsetY));
+    }
+
     @Nullable
-    private DragAwareComponent findRelevantComponent() {
+    private TargetedDragAwareComponent findRelevantComponent() {
         final int[] locationOut = new int[2];
-        for (DragAwareComponent component : mRegisteredComponents) {
+        for (TargetedDragAwareComponent component : mRegisteredComponents) {
             final View targetView = component.getDragAwareTargetView();
             if (targetView == null) {
                 continue;
@@ -222,7 +238,7 @@ public class DecorViewDragger {
             return;
         }
 
-        @Nullable final DragAwareComponent relevantComponent = findRelevantComponent();
+        @Nullable final TargetedDragAwareComponent relevantComponent = findRelevantComponent();
         if (relevantComponent != mLastComponent) {
             log("Found new target view mid-drag");
             if (mLastComponent != null) {
@@ -237,6 +253,7 @@ public class DecorViewDragger {
                 sendDragEvent(relevantComponent, ACTION_DRAG_LOCATION);
             }
         }
+        broadcastBackgroundDragEvent(ACTION_DRAG_LOCATION);
 
         if (mDragComplete) {
             DecorViewManager.get(mActivityRef.get()).removeView(mDragKey);
@@ -249,9 +266,10 @@ public class DecorViewDragger {
             }
 
             // Post an _ENDED event to every component
-            for (DragAwareComponent component : mRegisteredComponents) {
+            for (TargetedDragAwareComponent component : mRegisteredComponents) {
                 sendDragEvent(component, ACTION_DRAG_ENDED);
             }
+            broadcastBackgroundDragEvent(ACTION_DRAG_ENDED);
             mInDrag = false;
         } else {
             DecorViewManager.get(mActivityRef.get()).updateViewPosition(
@@ -279,10 +297,10 @@ public class DecorViewDragger {
      *                           considered defined behavior; the newly registered component will at
      *                           least receive a DRAG_STARTED in this case.
      */
-    public synchronized void registerDragAwareComponent(DragAwareComponent dragAwareComponent) {
+    public synchronized void registerDragAwareComponent(TargetedDragAwareComponent dragAwareComponent) {
         log("Adding listener");
         mRegisteredComponents.add(dragAwareComponent);
-        mRegisteredComponents.sort((c1, c2) -> c1.getPriority() - c2.getPriority());
+        mRegisteredComponents.sort(Comparator.comparingInt(TargetedDragAwareComponent::getPriority));
         if (mInDrag) {
             sendDragEvent(dragAwareComponent, ACTION_DRAG_STARTED);
         }
@@ -293,25 +311,48 @@ public class DecorViewDragger {
      * @param dragAwareComponent The component to unregister. Note that removal during a drag
      *                           operation is undefined behavior.
      */
-    public synchronized void unregisterDragAwareComponent(DragAwareComponent dragAwareComponent) {
+    public synchronized void unregisterDragAwareComponent(TargetedDragAwareComponent dragAwareComponent) {
         log("Removing listener");
         mRegisteredComponents.remove(dragAwareComponent);
         recalculate();
     }
 
-    public interface DragAwareComponent {
+    /**
+     * @param dragAwareComponent Register a compnonent to receive all DRAG_STARTED, DRAG_LOCATION,
+     *                           and DRAG_ENDED events. This is useful for determining where a drag
+     *                           event is happening on screen, for things such as knowing when to
+     *                           switch screen pages.
+     */
+    public synchronized void registerBackgroundDragAwareComponent(BaseDragAwareComponent dragAwareComponent) {
+        log("Adding background listener");
+        mBackgroundComponents.add(dragAwareComponent);
+        if (mInDrag) {
+            sendBackgroundDragEvent(dragAwareComponent, ACTION_DRAG_STARTED);
+        }
+        recalculate();
+    }
 
-        /**
-         * @return The view that's supposed to receive these drags.
-         */
-        @Nullable
-        View getDragAwareTargetView();
+    public synchronized void unregisterBackgroundDragAwareComponent(BaseDragAwareComponent dragAwareComponent) {
+        log("Removing background listener");
+        mBackgroundComponents.remove(dragAwareComponent);
+    }
+
+    public interface BaseDragAwareComponent {
 
         /**
          * @param v     The target view.
          * @param event The "DragEvent".
          */
         void onDrag(View v, DragEvent event);
+    }
+
+    public interface TargetedDragAwareComponent extends BaseDragAwareComponent {
+
+        /**
+         * @return The view that's supposed to receive these drags.
+         */
+        @Nullable
+        View getDragAwareTargetView();
 
         /**
          * @return The priority of this drag-aware view. Higher numbers represent lower priorities.

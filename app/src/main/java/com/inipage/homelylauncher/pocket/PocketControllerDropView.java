@@ -30,7 +30,7 @@ import java.util.List;
 
 import static com.inipage.homelylauncher.utils.AttributeApplier.intValue;
 
-public class PocketControllerDropView extends View implements DecorViewDragger.DragAwareComponent {
+public class PocketControllerDropView extends View implements DecorViewDragger.TargetedDragAwareComponent {
 
     private final static int SELECTED_IDX_UNSET = -1;
     private final Paint mPaint;

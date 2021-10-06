@@ -23,6 +23,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
 import android.util.Pair;
 import android.view.DragEvent;
 import android.view.KeyEvent;
@@ -45,6 +46,7 @@ import com.inipage.homelylauncher.dock.DockController;
 import com.inipage.homelylauncher.dock.ForwardingContainer;
 import com.inipage.homelylauncher.drawer.HideAppEvent;
 import com.inipage.homelylauncher.grid.GridPageController;
+import com.inipage.homelylauncher.grid.GridViewHolder;
 import com.inipage.homelylauncher.model.ApplicationIcon;
 import com.inipage.homelylauncher.pager.BasePageController;
 import com.inipage.homelylauncher.pager.HomePager;
@@ -56,6 +58,7 @@ import com.inipage.homelylauncher.pocket.PocketController;
 import com.inipage.homelylauncher.pocket.PocketControllerDropView;
 import com.inipage.homelylauncher.pocket.PocketOpenArrowView;
 import com.inipage.homelylauncher.state.EditingEvent;
+import com.inipage.homelylauncher.state.GridDropFailedEvent;
 import com.inipage.homelylauncher.state.LayoutEditingSingleton;
 import com.inipage.homelylauncher.state.PagesChangedEvent;
 import com.inipage.homelylauncher.utils.AttributeApplier;
@@ -92,7 +95,7 @@ public class HomeActivity extends AppCompatActivity implements
     // TODO: Fix this
     private static final boolean DISABLE_WALLPAPER_OFFSET_CHANGING = true;
 
-    @SizeValAttribute(20)
+    @SizeValAttribute(16)
     int distanceFromEdgeToSwitchPages;
     @SizeDimenAttribute(R.dimen.actuation_distance)
     int actuationDistance;
@@ -196,6 +199,64 @@ public class HomeActivity extends AppCompatActivity implements
             }
         }
     };
+    private final DecorViewDragger.TargetedDragAwareComponent mFallbackDragAwareComponent =
+        new DecorViewDragger.TargetedDragAwareComponent() {
+            @androidx.annotation.Nullable
+            @Override
+            public View getDragAwareTargetView() {
+                return backgroundTint;
+            }
+
+            @Override
+            public void onDrag(View v, DecorViewDragger.DragEvent event) {
+                if (event.getAction() != DragEvent.ACTION_DROP) {
+                    return;
+                }
+                if (!(event.getLocalState() instanceof GridViewHolder)) {
+                    return;
+                }
+                EventBus.getDefault().post(
+                    new GridDropFailedEvent((GridViewHolder) event.getLocalState()));
+            }
+
+            @Override
+            public int getPriority() {
+                return DecorViewDragger.DRAG_PRIORITY_LOWEST;
+            }
+        };
+    private final DecorViewDragger.BaseDragAwareComponent mBackgroundDragAwareComponent =
+        new DecorViewDragger.BaseDragAwareComponent() {
+
+            private final SwitchPageHandler mSwitchPageHandler = new SwitchPageHandler();
+
+            @Override
+            public void onDrag(View v, DecorViewDragger.DragEvent event) {
+                switch (event.getAction()) {
+                    case DragEvent.ACTION_DRAG_STARTED:
+                        if (isOnAppDrawer()) {
+                            switchPageRight();
+                        }
+                        break;
+                    case ACTION_DRAG_ENTERED:
+                    case ACTION_DRAG_LOCATION:
+                        final int switchPosition =
+                            rootView.getWidth() - distanceFromEdgeToSwitchPages;
+                        if (event.getRawX() < distanceFromEdgeToSwitchPages) {
+                            mSwitchPageHandler.queueLeftSwitch();
+                        } else if (event.getRawX() > switchPosition) {
+                            @Nullable
+                            final GridPageController currentPage = getSelectedGridPage();
+                            if (currentPage != null && !currentPage.isEmptyPage() && !mSyntheticScrolling) {
+                                mSwitchPageHandler.queueRightSwitch();
+                            }
+                        }
+                        break;
+                    case ACTION_DRAG_ENDED:
+                        mSwitchPageHandler.clearMessages();
+                        break;
+                }
+            }
+        };
     private DockController mDockController;
     private PocketController mPocketController;
     private View.OnLayoutChangeListener mFirstLayoutListener;
@@ -251,50 +312,9 @@ public class HomeActivity extends AppCompatActivity implements
             }
             return insets.consumeSystemWindowInsets();
         });
-        DecorViewDragger.get(this)
-            .registerDragAwareComponent(new DecorViewDragger.DragAwareComponent() {
-
-                private final SwitchPageHandler mSwitchPageHandler = new SwitchPageHandler();
-
-                @Nullable
-                @Override
-                public View getDragAwareTargetView() {
-                    return rootView;
-                }
-
-                @Override
-                public void onDrag(View v, DecorViewDragger.DragEvent event) {
-                    switch (event.getAction()) {
-                        case DragEvent.ACTION_DRAG_STARTED:
-                            if (isOnAppDrawer()) {
-                                switchPageRight();
-                            }
-                            break;
-                        case ACTION_DRAG_ENTERED:
-                        case ACTION_DRAG_LOCATION:
-                            if (event.getRawX() < distanceFromEdgeToSwitchPages) {
-                                mSwitchPageHandler.queueLeftSwitch();
-                            } else if (event.getRawX() >
-                                rootView.getWidth() - distanceFromEdgeToSwitchPages) {
-                                @Nullable
-                                final GridPageController currentPage = getSelectedGridPage();
-                                if (currentPage != null && !currentPage.isEmptyPage()) {
-                                    mSwitchPageHandler.queueRightSwitch();
-                                }
-                            }
-                            break;
-                        case ACTION_DRAG_EXITED:
-                        case ACTION_DRAG_ENDED:
-                            mSwitchPageHandler.clearMessages();
-                            break;
-                    }
-                }
-
-                @Override
-                public int getPriority() {
-                    return DecorViewDragger.DRAG_PRIORITY_LOWEST;
-                }
-            });
+        DecorViewDragger
+            .get(this)
+            .registerBackgroundDragAwareComponent(mBackgroundDragAwareComponent);
 
         mDockController = new DockController(dockView);
         mPocketController = new PocketController(
@@ -306,6 +326,14 @@ public class HomeActivity extends AppCompatActivity implements
             pocketIdleView);
         forwardingContainer.setForwardingListener(mPocketController);
         pocketContainer.setForwardingListener(mPocketController);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        DecorViewDragger
+            .get(this)
+            .unregisterBackgroundDragAwareComponent(mBackgroundDragAwareComponent);
     }
 
     @Override
@@ -488,10 +516,22 @@ public class HomeActivity extends AppCompatActivity implements
     }
 
     private void switchPageLeft() {
-        if (isOnAppDrawer()) {
+        if (isOnFirstHomeScreen() || isOnAppDrawer()) {
             return;
         }
+        mSyntheticScrolling = true;
         pagerView.setCurrentItem(pagerView.getCurrentItem() - 1, true);
+    }
+
+    private void switchPageRight() {
+        final int currentPage = pagerView.getCurrentItem();
+        if (isOnLastPage()) {
+            mPager.spawnNewPage();
+            updateWallpaperOffsetSteps();
+        } else {
+            mSyntheticScrolling = true;
+            pagerView.setCurrentItem(currentPage + 1, true);
+        }
     }
 
     @Override
@@ -511,6 +551,7 @@ public class HomeActivity extends AppCompatActivity implements
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onPagesChangedEvent(PagesChangedEvent event) {
         pagerIndicatorView.setup(event.getNewPageCount());
+        mSyntheticScrolling = true;
         pagerView.setCurrentItem(event.getNewPageCount(), true);
     }
 
@@ -660,16 +701,6 @@ public class HomeActivity extends AppCompatActivity implements
             TAG_WALLPAPER_OFFSET,
             "Update wallpaper offset:",
             String.valueOf(mPager.getWallpaperOffset(currentItem, marginalOffset)));
-    }
-
-    private void switchPageRight() {
-        final int currentPage = pagerView.getCurrentItem();
-        if (isOnLastPage()) {
-            mPager.spawnNewPage();
-            updateWallpaperOffsetSteps();
-        } else {
-            pagerView.setCurrentItem(currentPage + 1, true);
-        }
     }
 
     private void updateBackgroundAlpha(float newAlpha) {

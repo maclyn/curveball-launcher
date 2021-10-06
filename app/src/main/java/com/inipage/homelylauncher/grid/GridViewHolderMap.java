@@ -260,10 +260,10 @@ public class GridViewHolderMap {
             return null;
         }
         ChangeDirection preferredDirection = lastTargetCell != null ?
-                                             ChangeDirection.fromDelta(
-                                                 targetCell.x - lastTargetCell.x,
-                                                 targetCell.y - lastTargetCell.y) :
-                                             ChangeDirection.RIGHT;
+            ChangeDirection.fromDelta(
+                targetCell.x - lastTargetCell.x,
+                targetCell.y - lastTargetCell.y) :
+            ChangeDirection.RIGHT;
         DebugLogUtils.needle(
             TAG_ICON_CASCADE,
             "Preferred direction = " + preferredDirection.name());

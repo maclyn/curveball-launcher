@@ -127,9 +127,6 @@ class NonTouchInputCoordinator(private val host: Host, private val context: Acti
 
     fun dispatchKeyEvent(ev: KeyEvent): Boolean {
         DebugLogUtils.needle(DebugLogUtils.TAG_VIRTUAL_TRACKPAD, "dispatchKeyEvent", ev)
-        if (DecorViewManager.get(context).hasOpenView()) {
-            return host.defaultDispatchKeyEvent(ev)
-        }
 
         if (host.isOnAppDrawer() &&
             host.isAlphabeticalPickerOpen() &&
@@ -141,6 +138,9 @@ class NonTouchInputCoordinator(private val host: Host, private val context: Acti
             )
             host.getPager().appDrawerController.feedKeyboardEvent(ev)
             return false
+        }
+        if (DecorViewManager.get(context).hasOpenView()) {
+            return host.defaultDispatchKeyEvent(ev)
         }
         return host.defaultDispatchKeyEvent(ev)
     }
