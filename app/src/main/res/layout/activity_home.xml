@@ -26,6 +26,7 @@
         android:layout_alignParentBottom="true" />
 
     <View
+        android:id="@+id/top_scrim_gradient"
         android:background="@drawable/top_scrim_background_gradient"
         android:layout_width="match_parent"
         android:layout_height="240dp"
@@ -33,11 +34,11 @@
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/pager_view"
-        android:nestedScrollingEnabled="true"
-        android:layout_below="@+id/top_scrim"
-        android:layout_above="@+id/bottom_scrim"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:layout_above="@+id/bottom_scrim"
+        android:layout_below="@+id/top_scrim"
+        android:nestedScrollingEnabled="true" />
 
     <com.inipage.homelylauncher.dock.ForwardingContainer
         android:id="@+id/pocket_view_container"
@@ -53,20 +54,13 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/total_dock_height">
 
-        <HorizontalScrollView
-            android:id="@+id/dock_container_scrollview"
-            android:scrollbars="none"
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/dock_container"
             android:layout_width="match_parent"
             android:layout_height="@dimen/contextual_dock_height"
-            android:layout_alignParentBottom="true">
-
-            <LinearLayout
-                android:id="@+id/dock_container"
-                android:orientation="horizontal"
-                android:layout_height="@dimen/contextual_dock_height"
-                android:layout_width="wrap_content"
-                android:gravity="center_vertical" />
-        </HorizontalScrollView>
+            android:scrollbars="none"
+            android:gravity="center_vertical"
+            android:layout_alignParentBottom="true" />
 
         <com.inipage.homelylauncher.pocket.PocketControllerDropView
             android:id="@+id/pocket_drop_view"

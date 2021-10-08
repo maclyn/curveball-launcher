@@ -56,9 +56,9 @@ public class PowerMappedDockItem extends ConfigurableAppBackedDockItem {
         mIsLowPower = BatteryUtils.isLowCharge(context);
         mIsCharging = BatteryUtils.isCharging(context);
         if (mIsLowPower || mIsCharging) {
-            mHost.showHostedItem();
+            showSelf();
         } else {
-            mHost.hideHostedItem();
+            hideSelf();
         }
     }
 

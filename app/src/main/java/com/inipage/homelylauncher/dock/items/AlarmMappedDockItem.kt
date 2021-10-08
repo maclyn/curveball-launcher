@@ -7,28 +7,20 @@ import com.inipage.homelylauncher.R
 import android.app.PendingIntent.CanceledException
 import android.view.View
 import com.inipage.homelylauncher.dock.DockItemPriorities
+import kotlin.math.abs
 
 /**
  * Renders an alarm in the dock.
  */
 class AlarmMappedDockItem : DockControllerItem() {
 
-    private var mHasAlarm = false
-    private var mNextAlarmTimeMs: Long = 0
-    private var mNextAlarmIntent: PendingIntent? = null
-    private var mNextAlarmTime: String? = null
-    private var mNextAlarmTimeAMPM: String? = null
+    private var alarmHandle: AlarmUtils.AlarmHandle? = null
 
     override fun onAttach() {
-        val host = mHost ?: return
-        val context = host.context ?: return
-        mHasAlarm = AlarmUtils.hasAlarm(context)
-        mNextAlarmTimeMs = AlarmUtils.getNextAlarmMs(context)
-        mNextAlarmTime = AlarmUtils.getNextAlarmTime(context)
-        mNextAlarmTimeAMPM = AlarmUtils.getNextAlarmTimeAMPM(context)
-        mNextAlarmIntent = AlarmUtils.getAlarmIntent(context)
-        if (mHasAlarm) {
-            host.showHostedItem()
+        context ?: return
+        alarmHandle = AlarmUtils.getAlarmHandle(context)
+        if (alarmHandle?.hasAlarm() == true) {
+            showSelf()
         }
     }
 
@@ -37,11 +29,11 @@ class AlarmMappedDockItem : DockControllerItem() {
     }
 
     override fun getLabel(): String? {
-        return mNextAlarmTime
+        return alarmHandle?.nextAlarmTime
     }
 
     override fun getSecondaryLabel(): String? {
-        return mNextAlarmTimeAMPM
+        return alarmHandle?.nextAlarmTimeAmPm
     }
 
     override fun getTint(): Int {
@@ -52,7 +44,7 @@ class AlarmMappedDockItem : DockControllerItem() {
     override fun getAction(view: View): Runnable {
         return Runnable {
             try {
-                mNextAlarmIntent?.send()
+                alarmHandle?.nextAlarmIntent?.send()
             } catch (ignored: CanceledException) {}
         }
     }
@@ -62,6 +54,6 @@ class AlarmMappedDockItem : DockControllerItem() {
     }
 
     override fun getSubPriority(): Long {
-        return Math.abs(System.currentTimeMillis() - mNextAlarmTimeMs)
+        return abs(System.currentTimeMillis() - (alarmHandle?.nextAlarmTimeMs ?: 0L))
     }
 }

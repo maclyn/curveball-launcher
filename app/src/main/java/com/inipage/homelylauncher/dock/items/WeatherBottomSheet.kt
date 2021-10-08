@@ -40,7 +40,7 @@ class WeatherBottomSheet(val context: Context) : WeatherController.WeatherPresen
     private val lowMap = HashMap<Date, LinkedList<Pair<Pair<Date, Date>, Float>>>()
 
     fun show() {
-        WeatherController.requestWeather(context, this)
+        WeatherController.requestWeather(context, false,this)
     }
 
     override fun onWeatherFound(weather: LTSForecastModel?) {
@@ -141,10 +141,6 @@ class WeatherBottomSheet(val context: Context) : WeatherController.WeatherPresen
             .setContentView(bottomSheetRootView)
         bottomSheetHelper.show(context, context.getString(R.string.weather_title))
     }
-
-    override fun requestLocationPermission() = Unit
-    override fun onFetchFailure() = Unit
-
 
     private fun mapHourlyEntryToView(entry: Entry, root: ViewGroup): View {
         val showingDepth = shouldShowDepthValue(entry.precipitation)

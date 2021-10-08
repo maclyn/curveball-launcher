@@ -243,4 +243,12 @@ public class CleanedUpWeatherModel {
     public float getRawLowTemp() {
         return mRawLowTemp;
     }
+
+    public static CleanedUpWeatherModel deserialize(String serialization) {
+        return Constants.DEFAULT_GSON.fromJson(serialization, CleanedUpWeatherModel.class);
+    }
+
+    public String serialize() {
+        return Constants.DEFAULT_GSON.toJson(this);
+    }
 }

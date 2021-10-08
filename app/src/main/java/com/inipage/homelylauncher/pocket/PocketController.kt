@@ -23,29 +23,39 @@ import com.google.common.collect.ImmutableList
 import com.inipage.homelylauncher.utils.*
 import java.util.*
 import java.util.stream.Collectors
+import kotlin.math.abs
 
 /**
  * Renders a pocket of folders at the bottom of the homescreen. This pocket animates in with an
  * expand animation that's handled by [how?]. It also connects to
  */
 class PocketController(
-    context: Context,
-    host: Host,
-    container: ForwardingContainer,
-    dockView: View,
-    dropView: PocketControllerDropView,
-    idleView: PocketOpenArrowView
+    private val context: Context,
+    private val host: Host,
+    private val container: ForwardingContainer,
+    private val dockView: View,
+    private val dropView: PocketControllerDropView,
+    private val idleView: PocketOpenArrowView
 ) : PocketControllerDropView.Host, ForwardingContainer.ForwardingListener {
-    private val mContext: Context
-    private val mHost: Host
-    private val mContainer: ForwardingContainer
-    private val mDockView: View
-    private val mDropView: PocketControllerDropView
-    private val mIdleView: PocketOpenArrowView
+
+    interface Host {
+        fun onPartiallyExpandedPocket(percent: Float)
+        fun onPocketExpanded()
+        fun onPocketCollapsed()
+        fun clearActiveDragTarget()
+    }
+
+    private val scaleDelta = 0.1F
+    private val animationDuration = 200L
+
     private val scrollView: ScrollView
     private val rowContainer: LinearLayout
     private val topScrim: View
     private val bottomScrim: View
+
+    companion object {
+        const val SCALE_DELTA = 0.1F
+    }
 
     @SizeDimenAttribute(R.dimen.actuation_distance)
     var actuationDistance = 0
@@ -54,23 +64,16 @@ class PocketController(
     @SizeValAttribute(8F)
     var betweenItemMargin = 0
 
-    val scaleDelta = 0.1F
-    val animationDuration = 200L
-
-    companion object {
-        val SCALE_DELTA = 0.1F
-    }
-
     private var isSwiping = false
-    var isExpanded = false
-        private set
     private var velocityTracker: VelocityTracker? = null
     private var folders: MutableList<SwipeFolder>
+    var isExpanded = false
+        private set
 
     fun applyScrims(topScrimSize: Int, bottomScrimSize: Int) {
         ViewUtils.setHeight(topScrim, topScrimSize)
         ViewUtils.setHeight(bottomScrim, bottomScrimSize)
-        val activity = ViewUtils.activityOf(mContext) ?: return
+        val activity = ViewUtils.activityOf(context) ?: return
         activity.window.decorView.addOnLayoutChangeListener(object : View.OnLayoutChangeListener {
             override fun onLayoutChange(
                 v: View?,
@@ -130,7 +133,7 @@ class PocketController(
         animator.addUpdateListener { animation: ValueAnimator -> setPercentExpanded(animation.animatedValue as Float) }
         animator.addListener(object : Animator.AnimatorListener {
             override fun onAnimationStart(animation: Animator) {
-                mContainer.visibility = View.VISIBLE
+                container.visibility = View.VISIBLE
             }
             override fun onAnimationEnd(animation: Animator) {
                 commitExpand()
@@ -148,7 +151,7 @@ class PocketController(
 
     fun editFolderOrder() {
         ReorderFolderBottomSheet.show(
-            mContext,
+            context,
             folders
         ) { reorderedFolders: MutableList<SwipeFolder> ->
             folders = reorderedFolders
@@ -177,8 +180,8 @@ class PocketController(
         if (!isSwiping) {
             isSwiping = true
             velocityTracker = VelocityTracker.obtain()
-            mContainer.visibility = View.VISIBLE
-            mContainer.isFocusableInTouchMode = true
+            container.visibility = View.VISIBLE
+            container.isFocusableInTouchMode = true
         }
         velocityTracker?.addMovement(event)
         when (event.action) {
@@ -195,7 +198,7 @@ class PocketController(
                     commitExpand()
                     return
                 }
-                val context = mContainer.context
+                val context = container.context
                 velocityTracker?.computeCurrentVelocity(
                     1000,  // px/s
                     ViewConfiguration.get(context).scaledMaximumFlingVelocity.toFloat()
@@ -203,15 +206,14 @@ class PocketController(
                 val speed = velocityTracker?.yVelocity ?: 5F
                 // Though deltaY will be > 0, speed is negative in an upwards flings
                 val flingIsExpand = speed < 0
-                val startPoint = mContainer.translationY
+                val startPoint = container.translationY
                 val startVelocityScalar = Math.max(
-                    Math.abs(speed),
+                    abs(speed),
                     context.resources.getDimension(R.dimen.min_dot_start_velocity_dp_s)
                 )
                 val startVelocity = startVelocityScalar * if (flingIsExpand) 1 else -1
                 val minValue = 0f
-                val maxValue: Float
-                maxValue = if (flingIsExpand) {
+                val maxValue: Float = if (flingIsExpand) {
                     startPoint
                 } else {
                     actuationDistance.toFloat()
@@ -219,7 +221,7 @@ class PocketController(
                 val flingAnimation = FlingAnimation(
                     this, object : FloatPropertyCompat<PocketController?>("translationY") {
                         override fun getValue(`object`: PocketController?): Float {
-                            return mContainer.translationY
+                            return container.translationY
                         }
 
                         override fun setValue(`object`: PocketController?, value: Float) {
@@ -285,59 +287,59 @@ class PocketController(
     }
 
     private fun setPercentExpanded(percent: Float) {
-        mContainer.alpha = percent
-        mContainer.translationY = actuationDistance - percent * actuationDistance
-        mContainer.scaleX = 1 - (1 - percent) * scaleDelta
-        mContainer.scaleY = 1 - (1 - percent) * scaleDelta
-        mIdleView.rotation = percent
-        mHost.onPartiallyExpandedPocket(percent)
+        container.alpha = percent
+        container.translationY = actuationDistance - percent * actuationDistance
+        container.scaleX = 1 - (1 - percent) * scaleDelta
+        container.scaleY = 1 - (1 - percent) * scaleDelta
+        idleView.rotation = percent
+        host.onPartiallyExpandedPocket(percent)
     }
 
     private fun commitCollapse() {
         setPercentExpanded(0f)
-        mContainer.visibility = View.GONE
-        mContainer.isFocusableInTouchMode = false
+        container.visibility = View.GONE
+        container.isFocusableInTouchMode = false
         isSwiping = false
         isExpanded = isSwiping
-        mHost.onPocketCollapsed()
+        host.onPocketCollapsed()
         scrollView.scrollTo(0, 0)
     }
 
     private fun commitExpand() {
         setPercentExpanded(1f)
-        mContainer.visibility = View.VISIBLE
-        mContainer.isFocusableInTouchMode = true
+        container.visibility = View.VISIBLE
+        container.isFocusableInTouchMode = true
         isExpanded = true
         isSwiping = false
-        mHost.onPocketExpanded()
+        host.onPocketExpanded()
     }
 
     override fun onDragStarted() {
-        mDockView.animate().alpha(0f).start()
-        mIdleView.animate().alpha(0f).start()
-        mDropView.alpha = 0f
-        mDropView.visibility = View.VISIBLE
-        mDropView
+        dockView.animate().alpha(0f).start()
+        idleView.animate().alpha(0f).start()
+        dropView.alpha = 0f
+        dropView.visibility = View.VISIBLE
+        dropView
             .animate()
             .alpha(1f)
             .setListener(ViewUtils.onEndListener {
-                mDockView.alpha = 0f
-                mIdleView.alpha = 0f
-                mDropView.alpha = 1f
+                dockView.alpha = 0f
+                idleView.alpha = 0f
+                dropView.alpha = 1f
             })
             .start()
     }
 
     override fun onDragEnded() {
-        mDockView.animate().alpha(1f).start()
-        mIdleView.animate().alpha(1f).start()
-        mDropView
+        dockView.animate().alpha(1f).start()
+        idleView.animate().alpha(1f).start()
+        dropView
             .animate()
             .alpha(0f)
             .setListener(ViewUtils.onEndListener {
-                mDockView.alpha = 1f
-                mIdleView.alpha = 1f
-                mDropView.visibility = View.GONE
+                dockView.alpha = 1f
+                idleView.alpha = 1f
+                dropView.visibility = View.GONE
             })
             .start()
     }
@@ -345,7 +347,7 @@ class PocketController(
     override fun onAppAddedToFolder(folderIdx: Int, app: ApplicationIcon) {
         folders[folderIdx].addApp(Pair(app.packageName, app.activityName))
         DatabaseEditor.get().saveGestureFavorites(folders)
-        mHost.clearActiveDragTarget()
+        host.clearActiveDragTarget()
         rebind()
     }
 
@@ -359,7 +361,7 @@ class PocketController(
             )
         )
         FolderEditingBottomSheet.show(
-            mContext,
+            context,
             newFolder,
             true,
             object : FolderEditingBottomSheet.Callback {
@@ -386,14 +388,14 @@ class PocketController(
     }
 
     private fun rebind() {
-        mDropView.attachHost(this)
-        val inflater = LayoutInflater.from(mContext)
+        dropView.attachHost(this)
+        val inflater = LayoutInflater.from(context)
         rowContainer.removeAllViews()
         for (i in folders.indices) {
             val folder = folders[i]
             val folderItem = inflater.inflate(R.layout.pocket_folder_row, rowContainer, false)
             (folderItem.findViewById<View>(R.id.pocket_folder_row_folder_icon) as ImageView)
-                .setImageBitmap(folder.getIcon(mContext))
+                .setImageBitmap(folder.getIcon(context))
             (folderItem.findViewById<View>(R.id.pocket_folder_row_folder_title) as TextView).text =
                 folder.title
             folderItem.setOnLongClickListener { v: View? ->
@@ -407,7 +409,7 @@ class PocketController(
             for (j in 0 until folderSize) {
                 val app = folders[i].shortcutApps.get(j)
                 val appView = inflater.inflate(R.layout.pocket_app_view, appContainer, false) as ImageView
-                appView.setImageBitmap(app.getIcon(mContext))
+                appView.setImageBitmap(app.getIcon(context))
                 appView.setOnClickListener { v: View? ->
                     InstalledAppUtils.launchApp(
                         v, app.component.first, app.component.second
@@ -419,7 +421,7 @@ class PocketController(
                 params.gravity = Gravity.CENTER_VERTICAL
                 appContainer.addView(appView, params)
                 if (j != folderSize - 1) {
-                    appContainer.addView(ViewUtils.createFillerView(mContext, betweenItemMargin))
+                    appContainer.addView(ViewUtils.createFillerView(context, betweenItemMargin))
                 }
             }
             val params = LinearLayout.LayoutParams(
@@ -432,7 +434,7 @@ class PocketController(
 
     private fun editFolder(row: Int) {
         FolderEditingBottomSheet.show(
-            mContext,
+            context,
             folders[row],
             false,
             object : FolderEditingBottomSheet.Callback {
@@ -457,30 +459,17 @@ class PocketController(
             })
     }
 
-    interface Host {
-        fun onPartiallyExpandedPocket(percent: Float)
-        fun onPocketExpanded()
-        fun onPocketCollapsed()
-        fun clearActiveDragTarget()
-    }
-
     init {
         AttributeApplier.applyDensity(this, context)
-        mContext = context
-        mHost = host
-        mContainer = container
-        mDockView = dockView
-        mDropView = dropView
-        mIdleView = idleView
         folders = DatabaseEditor.get().gestureFavorites
-        mIdleView.setOnClickListener { v: View? ->
+        idleView.setOnClickListener { v: View? ->
             if (isExpanded) {
                 collapse()
             } else {
                 expand()
             }
         }
-        val view = LayoutInflater.from(context).inflate(R.layout.pocket_container_view, mContainer, true)
+        val view = LayoutInflater.from(context).inflate(R.layout.pocket_container_view, container, true)
         rowContainer = ViewCompat.requireViewById(view, R.id.pocket_container_view_row_container)
         scrollView = ViewCompat.requireViewById(view, R.id.pocket_container_view_scroll_view)
         topScrim = ViewCompat.requireViewById(view, R.id.pocket_top_scrim)

@@ -1,6 +1,7 @@
 package com.inipage.homelylauncher.utils;
 
 import android.Manifest;
+import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
@@ -124,7 +125,9 @@ public class CalendarUtils {
     public static void launchEvent(Context context, int eventId) {
         final Uri uri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId);
         Intent intent = new Intent(Intent.ACTION_VIEW).setData(uri);
-        context.startActivity(intent);
+        try {
+            context.startActivity(intent);
+        } catch (ActivityNotFoundException ignored) {}
     }
 
     public static List<Calendar> getCalendars(Context context) {

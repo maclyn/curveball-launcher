@@ -45,6 +45,7 @@ public class AppInfoCache {
     private final Context mContext;
     private final AppWidgetHost mAppWidgetHost;
     private final Map<String, List<ShortcutWrapper>> mPackageToShortcutInfos;
+    private final Map<String, List<ApplicationIconHideable>> mPackageToApps;
     private Map<String, Map<String, AppWidgetProviderInfo>> mPackageToClassToAppWidgetProvider;
     private List<ApplicationIconHideable> mInstalledApps;
     private final LauncherApps.Callback mCallback = new LauncherApps.Callback() {
@@ -57,6 +58,8 @@ public class AppInfoCache {
                             !applicationIconHideable.getPackageName()
                                 .equals(packageName))
                 .collect(Collectors.toList());
+            mPackageToApps.remove(packageName);
+            mPackageToShortcutInfos.remove(packageName);
             mPackageToClassToAppWidgetProvider.remove(packageName);
             IconCacheSync.getInstance(mContext).clearCacheForPackage(packageName);
             AppLabelCache.getInstance(mContext).clearCacheForPackage(packageName);
@@ -66,8 +69,11 @@ public class AppInfoCache {
         // Called when an app is installed
         @Override
         public void onPackageAdded(String packageName, UserHandle user) {
-            mInstalledApps.addAll(getActivitiesForPackage(packageName));
+            List<ApplicationIconHideable> activitiesForPackage =
+                getActivitiesForPackage(packageName);
+            mInstalledApps.addAll(activitiesForPackage);
             mInstalledApps.sort(FastScrollable.getComparator());
+            mPackageToApps.put(packageName, activitiesForPackage);
             final AppWidgetManager appWidgetManager = getAppWidgetManager();
             for (AppWidgetProviderInfo awpi : appWidgetManager.getInstalledProviders()) {
                 final String providerPackageName = awpi.provider.getPackageName();
@@ -82,13 +88,16 @@ public class AppInfoCache {
         // Called when an app is upgraded or disabled/enabled
         @Override
         public void onPackageChanged(String packageName, UserHandle user) {
+            List<ApplicationIconHideable> activitiesForPackage =
+                getActivitiesForPackage(packageName);
             mInstalledApps = mInstalledApps.stream()
                 .filter(applicationIconHideable ->
                             !applicationIconHideable.getPackageName()
                                 .equals(packageName))
                 .collect(Collectors.toList());
-            mInstalledApps.addAll(getActivitiesForPackage(packageName));
+            mInstalledApps.addAll(activitiesForPackage);
             mInstalledApps.sort(FastScrollable.getComparator());
+            mPackageToApps.put(packageName, activitiesForPackage);
             mPackageToClassToAppWidgetProvider.remove(packageName);
             final AppWidgetManager appWidgetManager = getAppWidgetManager();
             for (AppWidgetProviderInfo awpi : appWidgetManager.getInstalledProviders()) {
@@ -115,10 +124,7 @@ public class AppInfoCache {
         // Called when a group of packages are removed, but might return later
         // (e.g. SD card removed)
         @Override
-        public void onPackagesUnavailable(
-            String[] packageNames,
-            UserHandle user,
-            boolean replacing) {
+        public void onPackagesUnavailable(String[] packageNames, UserHandle user, boolean replacing) {
             log("Packages unavailable = " + Arrays.toString(packageNames));
             reloadAppsAndWidgets();
             EventBus.getDefault().post(new PackagesBulkModifiedEvent(
@@ -142,9 +148,7 @@ public class AppInfoCache {
         // Called when an app is installed, removed, or upgraded, and has shortcuts
         @Override
         public void onShortcutsChanged(
-            @NonNull String packageName,
-            @NonNull List<ShortcutInfo> shortcuts,
-            @NonNull UserHandle user) {
+                @NonNull String packageName, @NonNull List<ShortcutInfo> shortcuts, @NonNull UserHandle user) {
             log("onShortcutsChanged for " + packageName);
             // We have to manually query here; shortcuts will only have "key information" if
             // we do otherwise
@@ -166,20 +170,22 @@ public class AppInfoCache {
     private AppInfoCache(Context context) {
         mContext = context;
         mAppWidgetHost = new AppWidgetHost(context, APP_HOST_ID);
+        mPackageToShortcutInfos = new HashMap<>();
+        mPackageToApps = new HashMap<>();
+
         final LauncherApps launcherApps =
             (LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE);
         launcherApps.registerCallback(mCallback);
         reloadAppsAndWidgets();
         // Shortcuts only need to be fetched here, since changes come through the
         // onShortcutInfo updated callbacks
-        mPackageToShortcutInfos = new HashMap<>();
         if (!launcherApps.hasShortcutHostPermission()) {
             return;
         }
         LauncherApps.ShortcutQuery query = new LauncherApps.ShortcutQuery();
         query.setQueryFlags(
             LauncherApps.ShortcutQuery.FLAG_MATCH_DYNAMIC |
-                LauncherApps.ShortcutQuery.FLAG_MATCH_MANIFEST);
+            LauncherApps.ShortcutQuery.FLAG_MATCH_MANIFEST);
         final List<ShortcutInfo> infos = launcherApps.getShortcuts(query, myUserHandle());
         for (ShortcutInfo info : infos) {
             if (!mPackageToShortcutInfos.containsKey(info.getPackage())) {
@@ -213,17 +219,25 @@ public class AppInfoCache {
             DatabaseEditor.get().getHiddenAppsAsMap(true);
         final List<ApplicationIconHideable> result = new ArrayList<>();
         for (LauncherActivityInfo app : launcherApps) {
-            result.add(
-                new ApplicationIconHideable(
-                    app,
-                    mContext,
-                    hiddenAppsMap.containsKey(
-                        new Pair<>(
-                            app.getComponentName().getPackageName(),
-                            app.getComponentName().getClassName()))));
+            final String appPackageName = app.getComponentName().getPackageName();
+            final ApplicationIconHideable applicationIconHideable = new ApplicationIconHideable(
+                app,
+                mContext,
+                hiddenAppsMap.containsKey(
+                    new Pair<>(
+                        appPackageName,
+                        app.getComponentName().getClassName())));
+            result.add(applicationIconHideable);
+
+            if (mPackageToApps.containsKey(appPackageName)) {
+                mPackageToApps.get(appPackageName).add(applicationIconHideable);
+            } else {
+                List<ApplicationIconHideable> activities = new ArrayList<>();
+                activities.add(applicationIconHideable);
+                mPackageToApps.put(appPackageName, activities);
+            }
         }
-        result.sort((lhs, rhs) ->
-                        FastScrollable.getComparator().compare(lhs, rhs));
+        result.sort((lhs, rhs) -> FastScrollable.getComparator().compare(lhs, rhs));
         return result;
     }
 
@@ -275,6 +289,13 @@ public class AppInfoCache {
     }
 
     public List<ApplicationIconHideable> getActivitiesForPackage(String packageName) {
+        return getInstalledAppsImpl(packageName);
+    }
+
+    public List<ApplicationIconHideable> getActivitiesForPackageFast(String packageName) {
+        if (mPackageToApps.containsKey(packageName)) {
+            return mPackageToApps.get(packageName);
+        }
         return getInstalledAppsImpl(packageName);
     }
 

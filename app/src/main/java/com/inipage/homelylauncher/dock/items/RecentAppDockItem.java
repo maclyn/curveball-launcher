@@ -2,6 +2,7 @@ package com.inipage.homelylauncher.dock.items;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.view.View;
 
 import androidx.annotation.Nullable;
@@ -22,6 +23,7 @@ import com.inipage.homelylauncher.views.AppPopupMenu;
 public class RecentAppDockItem extends DockControllerItem {
 
     private final ContextualAppFetcher.SuggestionApp mSuggestionApp;
+    private int mTintColor = Color.WHITE;
 
     public RecentAppDockItem(ContextualAppFetcher.SuggestionApp suggestionApp) {
         mSuggestionApp = suggestionApp;
@@ -29,7 +31,7 @@ public class RecentAppDockItem extends DockControllerItem {
 
     @Override
     public void onAttach() {
-        mHost.showHostedItem();
+        showSelf();
     }
 
     @Nullable
@@ -45,18 +47,20 @@ public class RecentAppDockItem extends DockControllerItem {
 
     @Override
     public int getTint() {
-        @Nullable final Host host = mHost;
-        if (host == null) {
-            return super.getTint();
+        if (mTintColor != Color.WHITE) {
+            return mTintColor;
         }
         @Nullable final Context context = getContext();
         if (context == null) {
-            return super.getTint();
+            return mTintColor;
         }
         return IconColorCache.getInstance().getColorForBitmap(
             context,
             getBitmap(),
-            host::tintLoaded);
+            color -> {
+                mTintColor = color;
+                tintLoaded(color);
+            });
     }
 
     @Override
@@ -78,10 +82,6 @@ public class RecentAppDockItem extends DockControllerItem {
     @Nullable
     @Override
     public Runnable getSecondaryAction(View view) {
-        @Nullable final Host host = mHost;
-        if (host == null) {
-            return null;
-        }
         @Nullable final Context context = getContext();
         if (context == null) {
             return null;
@@ -105,7 +105,7 @@ public class RecentAppDockItem extends DockControllerItem {
                         DatabaseEditor.get().addDockPreference(
                             DockItem.createHiddenItem(
                                 applicationIcon.getPackageName(), applicationIcon.getActivityName()));
-                        host.hideHostedItem();
+                        hideSelf();
                     }
 
                     @Override

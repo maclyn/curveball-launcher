@@ -22,11 +22,11 @@ class WeatherDockItem : DockControllerItem(), WeatherPresenter {
 
     override fun onAttach() {
         val context = context ?: return
-        WeatherController.requestWeather(context, this)
+        WeatherController.requestWeather(context, true,this)
     }
 
     override fun requestLocationPermission() {
-        val context = mHost?.context ?: return
+        context ?: return
         Toast.makeText(
             context,
             R.string.grant_location_permission_for_weather,
@@ -38,18 +38,16 @@ class WeatherDockItem : DockControllerItem(), WeatherPresenter {
             HomeActivity.REQUEST_LOCATION_PERMISSION
         )
     }
-
-    override fun onWeatherFound(weather: LTSForecastModel) {
-        val context = mHost?.context ?: return
-        mForecast = CleanedUpWeatherModel.parseFromLTSForecastModel(weather, context)
-        mHost?.showHostedItem()
+    
+    override fun onWeatherFoundFast(model: CleanedUpWeatherModel?) {
+        model ?: return
+        mForecast = model
+        showSelf()
     }
-
-    override fun onFetchFailure() = Unit
 
     override fun getDrawable(): Drawable? {
         val assetId = mForecast?.assetId ?: return null
-        val context = mHost?.context ?: return null
+        context ?: return null
         return ViewUtils.getDrawableFromAssetPNG(context, assetId)
     }
 
@@ -58,18 +56,18 @@ class WeatherDockItem : DockControllerItem(), WeatherPresenter {
     }
 
     override fun getSecondaryLabel(): String? {
-        val context = mHost?.context ?: return null
+        val context = context ?: return null
         return if (mForecast == null) null else
             context.getString(R.string.temp_format_string, mForecast?.low, mForecast?.highTemp)
     }
 
     override fun getTint(): Int {
-        val context = mHost?.context ?: return super.getTint()
+        val context = context ?: return super.getTint()
         return context.getColor(R.color.dock_item_weather_color)
     }
 
     override fun getAction(view: View): Runnable {
-        val context = mHost?.context ?: return Runnable {}
+        val context = context ?: return Runnable {}
         return Runnable {
             val bottomSheet = WeatherBottomSheet(context)
             bottomSheet.show()
@@ -79,10 +77,10 @@ class WeatherDockItem : DockControllerItem(), WeatherPresenter {
     override fun getSecondaryAction(
         view: View?
     ): Runnable {
-        val context = mHost?.context ?: return Runnable {}
+        val context = context ?: return Runnable {}
         return Runnable {
             WeatherController.invalidateCache(context);
-            WeatherController.requestWeather(context, this);
+            WeatherController.requestWeather(context, true,this);
         }
     }
 

@@ -36,6 +36,7 @@ import android.widget.LinearLayout;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 import androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback;
 
@@ -103,6 +104,8 @@ public class HomeActivity extends AppCompatActivity implements
     ViewGroup rootView;
     @BindView(R.id.background_tint)
     View backgroundTint;
+    @BindView(R.id.top_scrim_gradient)
+    View scrimGradient;
     @BindView(R.id.pocket_view_container)
     ForwardingContainer pocketContainer;
     @BindView(R.id.bottom_indicator)
@@ -115,10 +118,8 @@ public class HomeActivity extends AppCompatActivity implements
     View topScrim;
     @BindView(R.id.bottom_scrim)
     View bottomScrim;
-    @BindView(R.id.dock_container_scrollview)
-    HorizontalScrollView dockViewScrollView;
     @BindView(R.id.dock_container)
-    LinearLayout dockView;
+    RecyclerView dockView;
     @BindView(R.id.forwarding_container)
     ForwardingContainer forwardingContainer;
     @BindView(R.id.pager_view)
@@ -349,6 +350,22 @@ public class HomeActivity extends AppCompatActivity implements
         super.onStart();
         AppInfoCache.get().getAppWidgetHost().startListening();
         mDockController.loadDock();
+
+        // Animate everything in a little, so the dock animation in doesn't feel so jarring
+        scrimGradient.setAlpha(0);
+        pagerIndicatorView.setAlpha(0);
+        pagerView.setAlpha(0F);
+        pagerView.setScaleX(0.9F);
+        pagerView.setScaleY(0.9F);
+
+        scrimGradient.animate().alpha(1F).start();
+        pagerIndicatorView.animate().alpha(1F).start();
+        pagerView.animate()
+            .alpha(1F)
+            .scaleX(1F)
+            .scaleY(1F)
+            .start();
+
         if (!EventBus.getDefault().isRegistered(this)) {
             EventBus.getDefault().register(this);
         }
@@ -511,7 +528,7 @@ public class HomeActivity extends AppCompatActivity implements
                 LayoutEditingSingleton.getInstance().setEditing(false);
                 return;
             }
-            dockViewScrollView.smoothScrollTo(0, 0);
+            dockView.scrollTo(0, 0);
         }
     }
 
@@ -573,12 +590,12 @@ public class HomeActivity extends AppCompatActivity implements
         DebugLogUtils.needle(TAG_POCKET_ANIMATION, "onPartiallyExpandedPocket " + percent);
 
         forwardingContainer.setVisibility(VISIBLE);
-        dockViewScrollView.setAlpha(1 - percent);
+        dockView.setAlpha(1 - percent);
         pagerIndicatorView.setAlpha(1 - percent);
         pocketIdleView.setAlpha(1 - percent);
         pagerView.setAlpha(1 - percent);
-        pagerView.setScaleX(1 - (percent * PocketController.Companion.getSCALE_DELTA()));
-        pagerView.setScaleY(1 - (percent * PocketController.Companion.getSCALE_DELTA()));
+        pagerView.setScaleX(1 - (percent * PocketController.SCALE_DELTA));
+        pagerView.setScaleY(1 - (percent * PocketController.SCALE_DELTA));
         pagerView.setTranslationY(-actuationDistance * percent);
 
         updateBackgroundAlpha(percent);
@@ -589,12 +606,12 @@ public class HomeActivity extends AppCompatActivity implements
         DebugLogUtils.needle(TAG_POCKET_ANIMATION, "onPocketExpanded");
 
         forwardingContainer.setVisibility(GONE);
-        dockViewScrollView.setAlpha(0);
+        dockView.setAlpha(0);
         pagerIndicatorView.setAlpha(0);
         pocketIdleView.setAlpha(0);
         pagerView.setAlpha(0);
-        pagerView.setScaleX(1 - PocketController.Companion.getSCALE_DELTA());
-        pagerView.setScaleY(1 - PocketController.Companion.getSCALE_DELTA());
+        pagerView.setScaleX(1 - PocketController.SCALE_DELTA);
+        pagerView.setScaleY(1 - PocketController.SCALE_DELTA);
         pagerView.setTranslationY(-actuationDistance);
         updateBackgroundAlpha(1);
     }
@@ -604,7 +621,7 @@ public class HomeActivity extends AppCompatActivity implements
         DebugLogUtils.needle(TAG_POCKET_ANIMATION, "onPocketCollapsed");
 
         forwardingContainer.setVisibility(VISIBLE);
-        dockViewScrollView.setAlpha(1);
+        dockView.setAlpha(1);
         pagerIndicatorView.setAlpha(1);
         pocketIdleView.setAlpha(1);
         pagerView.setAlpha(1);

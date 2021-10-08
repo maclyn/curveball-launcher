@@ -10,18 +10,20 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class CalendarMappedDockItem : DockControllerItem() {
+
     private val eventDateFormatter = SimpleDateFormat("h:mm aa", Locale.getDefault())
-
     private var event: CalendarUtils.Event? = null
-
 
     override fun onAttach() {
         val context = context
-        var event = CalendarUtils.findRelevantEvent(context)
+        val event = CalendarUtils.findRelevantEvent(context)
         if (event != null && event.allDay && event.start - event.end > ONE_DAY_MS) {
-            event = null
+            return
         }
         this.event = event
+        if (this.event != null) {
+            showSelf()
+        }
     }
 
     override fun getIcon(): Int {
@@ -47,8 +49,7 @@ class CalendarMappedDockItem : DockControllerItem() {
     }
 
     override fun getAction(view: View): Runnable {
-        val host = mHost ?: return Runnable {}
-        val context = host.context ?: return Runnable {}
+        context ?: return Runnable {}
         return Runnable {
             CalendarUtils.launchEvent(
                 context,
@@ -58,15 +59,14 @@ class CalendarMappedDockItem : DockControllerItem() {
     }
 
     override fun getSecondaryAction(view: View): Runnable {
-        val host = mHost ?: return Runnable {}
-        val context = context ?: return Runnable {}
+        context ?: return Runnable {}
         return Runnable {
             HiddenCalendarsPickerBottomSheet.show(context) {
                 if (
                     event != null &&
                     PrefsHelper.getDisabledCalendars(context).containsKey(event!!.calendarId)
                 ) {
-                    host.hideHostedItem()
+                    hideSelf()
                 }
             }
         }

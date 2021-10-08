@@ -48,9 +48,9 @@ public class PhoneMappedDockItem extends ConfigurableAppBackedDockItem {
             return;
         }
         if (PhoneUtils.isInCall(context)) {
-            mHost.showHostedItem();
+            showSelf();
         } else {
-            mHost.hideHostedItem();
+            hideSelf();
         }
     }
 

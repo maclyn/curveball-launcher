@@ -18,6 +18,7 @@ import androidx.core.content.ContextCompat;
 
 import com.inipage.homelylauncher.utils.Constants;
 import com.inipage.homelylauncher.utils.DebugLogUtils;
+import com.inipage.homelylauncher.utils.weather.model.CleanedUpWeatherModel;
 import com.inipage.homelylauncher.utils.weather.model.LTSForecastModel;
 
 import org.jetbrains.annotations.NotNull;
@@ -43,11 +44,13 @@ import java.util.Locale;
 public class WeatherController {
 
     public interface WeatherPresenter {
-        void requestLocationPermission();
+        default void requestLocationPermission() {}
 
-        void onWeatherFound(LTSForecastModel weather);
+        default void onWeatherFound(LTSForecastModel weather) {}
 
-        void onFetchFailure();
+        default void onWeatherFoundFast(CleanedUpWeatherModel model) {}
+
+        default void onFetchFailure() {}
     }
 
     private static final String TAG = "WeatherController";
@@ -55,37 +58,43 @@ public class WeatherController {
     private static final SimpleDateFormat RFC_1123_PARSER =
         new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
 
-    public static boolean requestWeather(Context context, WeatherPresenter presenter)
-    {
+    public static boolean requestWeather(
+            Context context, boolean preferFastModel, WeatherPresenter presenter) {
         if (DEBUG_WEATHER) {
-            refreshWeather(context, presenter);
+            refreshWeather(context, preferFastModel, presenter);
             return false;
         }
 
         final SharedPreferences reader = PreferenceManager.getDefaultSharedPreferences(context);
-        @Nullable String cachedJSON =
+        @Nullable String fullJSON =
             reader.getString(Constants.CACHED_WEATHER_RESPONSE_JSON_PREFERENCE, null);
+        @Nullable String liteJSON =
+            reader.getString(Constants.CACHED_WEATHER_RESPONSE_LITE_JSON_PREFERENCE, null);
         @Nullable String cachedExpiration =
             reader.getString(Constants.CACHED_WEATHER_RESPONSE_EXPIRY_PREFERENCE, null);
-        if (cachedExpiration == null || cachedJSON == null) {
+        if (cachedExpiration == null || liteJSON == null || fullJSON == null) {
             DebugLogUtils.needle(TAG_WEATHER_LOADING, "No cached weather data; refreshing");
-            refreshWeather(context, presenter);
+            refreshWeather(context, preferFastModel, presenter);
             return false;
         }
-
         try {
-            final LTSForecastModel weatherResponse = LTSForecastModel.deserialize(reader.getString(
-                Constants.CACHED_WEATHER_RESPONSE_JSON_PREFERENCE, null));
             @Nullable final Date expiryDate = RFC_1123_PARSER.parse(cachedExpiration);
             if (expiryDate != null && expiryDate.getTime() > System.currentTimeMillis()) {
                 DebugLogUtils.needle(TAG_WEATHER_LOADING, "Displaying cached weather...");
-                presenter.onWeatherFound(weatherResponse);
+                if (preferFastModel) {
+                    final CleanedUpWeatherModel cleanedUpWeatherModel =
+                        CleanedUpWeatherModel.deserialize(liteJSON);
+                    presenter.onWeatherFoundFast(cleanedUpWeatherModel);
+                } else {
+                    final LTSForecastModel weatherResponse = LTSForecastModel.deserialize(fullJSON);
+                    presenter.onWeatherFound(weatherResponse);
+                }
                 return true;
             }
         } catch (Exception ignored) {}
 
         DebugLogUtils.needle(TAG_WEATHER_LOADING, "Weather data is stale or wrong; refreshing");
-        refreshWeather(context, presenter);
+        refreshWeather(context, preferFastModel, presenter);
         return false;
     }
 
@@ -94,11 +103,15 @@ public class WeatherController {
         final SharedPreferences.Editor writer =
             PreferenceManager.getDefaultSharedPreferences(context).edit();
         writer.remove(Constants.CACHED_WEATHER_RESPONSE_JSON_PREFERENCE);
+        writer.remove(Constants.CACHED_WEATHER_RESPONSE_LITE_JSON_PREFERENCE);
         writer.remove(Constants.CACHED_WEATHER_RESPONSE_EXPIRY_PREFERENCE);
-        writer.commit();
+        writer.apply();
     }
 
-    private static void refreshWeather(final Context context, final WeatherPresenter presenter) {
+    private static void refreshWeather(
+            final Context context,
+            final boolean preferFastWeather,
+            final WeatherPresenter presenter) {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) !=
             PackageManager.PERMISSION_GRANTED) {
             presenter.requestLocationPermission();
@@ -119,12 +132,12 @@ public class WeatherController {
 
         Location lastLocation = lm.getLastKnownLocation(provider);
         if (lastLocation != null) {
-            fetchWeatherForLocation(context, presenter, lastLocation);
+            fetchWeatherForLocation(context, preferFastWeather, presenter, lastLocation);
         } else {
             lm.requestSingleUpdate(criteria, new LocationListener() {
                 @Override
                 public void onLocationChanged(Location location) {
-                    fetchWeatherForLocation(context, presenter, location);
+                    fetchWeatherForLocation(context, preferFastWeather, presenter, location);
                 }
 
                 @Override
@@ -144,6 +157,7 @@ public class WeatherController {
 
     private static void fetchWeatherForLocation(
         final Context context,
+        final boolean preferFastWeather,
         final WeatherPresenter presenter,
         Location location)
     {
@@ -161,8 +175,7 @@ public class WeatherController {
         WeatherApiFactory
             .getInstance()
             .getWeatherLTS(lat, lon)
-            .enqueue(new Callback<LTSForecastModel>()
-        {
+            .enqueue(new Callback<LTSForecastModel>() {
             @Override
             public void onResponse(
                 @NotNull Call<LTSForecastModel> call,
@@ -174,6 +187,11 @@ public class WeatherController {
                         DebugLogUtils.needle(TAG_WEATHER_LOADING, "Null response");
                         presenter.onFetchFailure();
                         return;
+                    }
+                    @Nullable final CleanedUpWeatherModel cleanedUpWeatherModel =
+                        CleanedUpWeatherModel.parseFromLTSForecastModel(model, context);
+                    if (preferFastWeather) {
+                        presenter.onWeatherFoundFast(cleanedUpWeatherModel);
                     } else {
                         presenter.onWeatherFound(model);
                     }
@@ -186,6 +204,9 @@ public class WeatherController {
                         writer.putString(
                             Constants.CACHED_WEATHER_RESPONSE_JSON_PREFERENCE,
                             model.serialize());
+                        writer.putString(
+                            Constants.CACHED_WEATHER_RESPONSE_LITE_JSON_PREFERENCE,
+                            cleanedUpWeatherModel.serialize());
                         writer.putString(
                             Constants.CACHED_WEATHER_RESPONSE_EXPIRY_PREFERENCE,
                             expiryHeaders.get(0));

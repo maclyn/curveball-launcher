@@ -7,7 +7,9 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 
 import com.google.common.collect.ImmutableList;
+import com.inipage.homelylauncher.caches.AppInfoCache;
 import com.inipage.homelylauncher.dock.DockControllerItem;
+import com.inipage.homelylauncher.model.ApplicationIconHideable;
 import com.inipage.homelylauncher.model.DockItem;
 import com.inipage.homelylauncher.model.GridItem;
 import com.inipage.homelylauncher.model.GridPage;
@@ -143,28 +145,23 @@ public class ContextualAppFetcher {
             }
         }
 
-        PackageManager pm = context.getPackageManager();
         for (Map.Entry<String, Long> entry : useTimeMap.entrySet()) {
             if (packagesSeen.containsKey(entry.getKey())) {
                 continue;
             }
 
-            final Intent launchIntent = pm.getLaunchIntentForPackage(entry.getKey());
-            if (launchIntent == null || launchIntent.getComponent() == null) {
+            final List<ApplicationIconHideable> apps =
+                AppInfoCache.get().getActivitiesForPackageFast(entry.getKey());
+            if (apps.isEmpty()) {
                 continue;
             }
 
-            if (mHiddenApps.containsKey(
-                launchIntent.getComponent().getPackageName() +
-                    "|" +
-                    launchIntent.getComponent().getClassName())) {
+            final ApplicationIconHideable targetApp = apps.get(0);
+            if (mHiddenApps.containsKey(targetApp.getPackageName() + "|" + targetApp.getActivityName())) {
                 continue;
             }
             recentApps.add(
-                new SuggestionApp(
-                    launchIntent.getPackage(),
-                    launchIntent.getComponent().getClassName(),
-                    entry.getValue()));
+                new SuggestionApp(targetApp.getPackageName(), targetApp.getActivityName(), entry.getValue()));
         }
         recentApps.sort((lhs, rhs) -> (int) (rhs.getDurationUsed() - lhs.getDurationUsed()));
         recentApps.forEach(suggestionApp -> updateWorkingSet(

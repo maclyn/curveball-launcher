@@ -67,7 +67,7 @@ public class BylineController implements WeatherController.WeatherPresenter {
         float fontSizeHeight = fontMetrics.descent - fontMetrics.ascent;
         mIconSize = fontSizeHeight / 1.3F;
         render();
-        WeatherController.requestWeather(mContext, this);
+        WeatherController.requestWeather(mContext, false, this);
     }
 
     public void render() {
@@ -119,11 +119,12 @@ public class BylineController implements WeatherController.WeatherPresenter {
         // Alarm
         int alarmIndex = -1;
         int alarmIndexEnd = -1;
-        if (AlarmUtils.hasAlarm(mContext)) {
+        AlarmUtils.AlarmHandle alarmHandle = AlarmUtils.getAlarmHandle(mContext);
+        if (alarmHandle.hasAlarm()) {
             bylineBuilder.append("You have an X ");
             alarmIndex = bylineBuilder.length() - 2;
             bylineBuilder.append("alarm set for ");
-            bylineBuilder.append(AlarmUtils.getNextAlarmTime(mContext));
+            bylineBuilder.append(alarmHandle.getNextAlarmTime());
             alarmIndexEnd = bylineBuilder.length();
             bylineBuilder.append(". ");
         }
@@ -152,7 +153,7 @@ public class BylineController implements WeatherController.WeatherPresenter {
                 spannableString,
                 () -> {
                     try {
-                        PendingIntent alarmIntent = AlarmUtils.getAlarmIntent(mContext);
+                        PendingIntent alarmIntent = alarmHandle.getNextAlarmIntent();
                         if (alarmIntent != null) {
                             alarmIntent.send();
                         }

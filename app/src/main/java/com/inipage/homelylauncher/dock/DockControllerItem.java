@@ -22,7 +22,8 @@ public abstract class DockControllerItem {
         void tintLoaded(int color);
     }
 
-    protected Host mHost;
+    private Host mHost;
+    private boolean mIsLoaded;
 
     public void attach(Host host) {
         mHost = host;
@@ -41,6 +42,33 @@ public abstract class DockControllerItem {
      * need to unregister receivers, listeners, etc.
      */
     public void onDetach() {}
+
+    protected void showSelf() {
+        if (mHost == null || mIsLoaded) {
+            return;
+        }
+        mIsLoaded = true;
+        mHost.showHostedItem();
+    }
+
+    protected void hideSelf() {
+        if (mHost == null || !mIsLoaded) {
+            return;
+        }
+        mIsLoaded = false;
+        mHost.hideHostedItem();
+    }
+
+    protected void tintLoaded(int color) {
+        if (mHost == null || !mIsLoaded) {
+            return;
+        }
+        mHost.tintLoaded(color);
+    }
+
+    public boolean isLoaded() {
+        return mIsLoaded;
+    }
 
     public int getIcon() {
         return 0;
