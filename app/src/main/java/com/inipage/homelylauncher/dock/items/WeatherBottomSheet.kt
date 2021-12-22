@@ -30,6 +30,9 @@ class WeatherBottomSheet(val context: Context) : WeatherController.WeatherPresen
         val low: Float,
         val precipitation: Float?)
 
+    // One week is the most we try to fill with putFieldInMap()
+    private val maxDistanceBetweenDates = 1000 * 60 * 60 * 24 * 7
+
     private val hourFormat = SimpleDateFormat("h:mm aa", Locale.getDefault())
     private val dayOfWeekFormat = SimpleDateFormat("EEEE", Locale.getDefault())
 
@@ -220,6 +223,14 @@ class WeatherBottomSheet(val context: Context) : WeatherController.WeatherPresen
         from: Date,
         to: Date,
         value: T) {
+        if (from == to || from.after(to)) {
+            return
+        }
+        if (to.time - from.time > maxDistanceBetweenDates) {
+            return
+        }
+
+
         // Working objects
         val toCalendar = GregorianCalendar()
         toCalendar.time = to

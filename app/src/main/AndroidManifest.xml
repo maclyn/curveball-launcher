@@ -35,12 +35,11 @@
             android:label="@string/title_activity_legacy"
             android:launchMode="singleTop"
             android:excludeFromRecents="true"
-            android:screenOrientation="portrait"
             android:theme="@style/HomeTheme"
             android:exported="true"
             android:windowSoftInputMode="stateHidden|adjustPan"
-            tools:targetApi="n"
-            tools:ignore="LockedOrientationActivity">
+            android:configChanges="orientation"
+            tools:targetApi="n">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

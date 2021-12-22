@@ -16,6 +16,7 @@ import android.app.WallpaperManager;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.Build;
@@ -272,6 +273,9 @@ public class HomeActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_home);
         ButterKnife.bind(this, this.findViewById(R.id.rootView));
         AttributeApplier.applyDensity(this, this);
+        setRequestedOrientation(ViewUtils.isTablet(this) ?
+            ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED :
+            ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
 
         mPager = new HomePager(this, rootView);
         mNonTouchInputCoordinator = new NonTouchInputCoordinator(this, this);

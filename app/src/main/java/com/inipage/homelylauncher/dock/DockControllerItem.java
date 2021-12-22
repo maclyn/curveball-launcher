@@ -43,7 +43,7 @@ public abstract class DockControllerItem {
      */
     public void onDetach() {}
 
-    protected void showSelf() {
+    protected synchronized void showSelf() {
         if (mHost == null || mIsLoaded) {
             return;
         }
@@ -51,7 +51,7 @@ public abstract class DockControllerItem {
         mHost.showHostedItem();
     }
 
-    protected void hideSelf() {
+    protected synchronized void hideSelf() {
         if (mHost == null || !mIsLoaded) {
             return;
         }

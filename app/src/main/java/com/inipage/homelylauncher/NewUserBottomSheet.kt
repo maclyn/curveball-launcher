@@ -53,6 +53,10 @@ class NewUserBottomSheet(val context: Context) {
         } catch (ignored: ActivityNotFoundException) {}
     }
 
+    private fun tweakThings() {
+
+    }
+
     @RequiresApi(Build.VERSION_CODES.Q)
     private fun showAppUsagePrompt() {
         val activity = ViewUtils.activityOf(context) ?: return

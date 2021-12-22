@@ -47,7 +47,7 @@ class WeatherDockItem : DockControllerItem(), WeatherPresenter {
 
     override fun getDrawable(): Drawable? {
         val assetId = mForecast?.assetId ?: return null
-        context ?: return null
+        val context = context ?: return null
         return ViewUtils.getDrawableFromAssetPNG(context, assetId)
     }
 
@@ -84,7 +84,5 @@ class WeatherDockItem : DockControllerItem(), WeatherPresenter {
         }
     }
 
-    override fun getBasePriority(): Long {
-        return DockItemPriorities.PRIORITY_WEATHER.priority.toLong()
-    }
+    override fun getBasePriority(): Long = DockItemPriorities.PRIORITY_WEATHER.priority.toLong()
 }

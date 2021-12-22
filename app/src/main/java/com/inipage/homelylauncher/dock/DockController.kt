@@ -75,7 +75,8 @@ class DockController(val container: RecyclerView) {
                     return@sorted (right.basePriority - left.basePriority).toInt()
                 }
                 (right.subPriority - left.subPriority).toInt()
-            }.collect(Collectors.toList())
+            }
+            .collect(Collectors.toList())
     }
 
     private fun destroyDockImpl() {

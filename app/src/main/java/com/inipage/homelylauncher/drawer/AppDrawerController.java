@@ -27,6 +27,7 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -72,10 +73,14 @@ import static android.view.View.VISIBLE;
  */
 public class AppDrawerController implements BasePageController, FastScrollController.Host {
 
+    private static final int GRID_LAYOUT_COLUMN_COUNT = 4;
+
     private final Host mHost;
     private final Context mContext;
     private final FastScrollController mScrollController;
-    private final LinearLayoutManager mLayoutManager;
+    private final boolean mUsingGridLayoutByDefault;
+    private final GridLayoutManager mGridLayoutManager;
+    private final LinearLayoutManager mLinearLayoutManager;
     @BindView(R.id.all_apps_root_view)
     View rootView;
     @BindView(R.id.all_apps_layout)
@@ -150,17 +155,23 @@ public class AppDrawerController implements BasePageController, FastScrollContro
 
         @Override
         public int getFirstIndexOnScreen() {
-            return mLayoutManager.findFirstVisibleItemPosition();
+            return mUsingGridLayoutByDefault && !mIsSearching ?
+                   mGridLayoutManager.findFirstVisibleItemPosition() :
+                   mLinearLayoutManager.findFirstVisibleItemPosition();
         }
 
         @Override
         public int getLastIndexOnScreen() {
-            return mLayoutManager.findLastVisibleItemPosition();
+            return mUsingGridLayoutByDefault && !mIsSearching ?
+                   mGridLayoutManager.findLastVisibleItemPosition() :
+                   mLinearLayoutManager.findLastVisibleItemPosition();
         }
 
         @Override
         public int getTotalCount() {
-            return mLayoutManager.getItemCount();
+            return mUsingGridLayoutByDefault && !mIsSearching ?
+                   mGridLayoutManager.getItemCount() :
+                   mLinearLayoutManager.getItemCount();
         }
     };
 
@@ -177,8 +188,15 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         DrawableCompat.setTint(
             searchBox.getBackground(),
             ContextCompat.getColor(mContext, R.color.primary_text_color));
-        mLayoutManager = new LinearLayoutManager(mContext, RecyclerView.VERTICAL, false);
-        appRecyclerView.setLayoutManager(mLayoutManager);
+        mGridLayoutManager = new GridLayoutManager(
+            mContext, GRID_LAYOUT_COLUMN_COUNT, RecyclerView.VERTICAL, false);
+        mLinearLayoutManager = new LinearLayoutManager(mContext, RecyclerView.VERTICAL, false);
+        mUsingGridLayoutByDefault = ViewUtils.isTablet(mContext);
+        if (mUsingGridLayoutByDefault) {
+            appRecyclerView.setLayoutManager(mGridLayoutManager);
+        } else {
+            appRecyclerView.setLayoutManager(mLinearLayoutManager);
+        }
         appRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
@@ -206,7 +224,10 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         if (mIsSearching) {
             quitSearch();
         }
-        mAdapter = new ApplicationIconAdapter(mAdapterDelegate, ViewUtils.activityOf(mContext));
+        mAdapter = new ApplicationIconAdapter(
+            mAdapterDelegate,
+            ViewUtils.activityOf(mContext),
+            mUsingGridLayoutByDefault ? GRID_LAYOUT_COLUMN_COUNT : 1);
         mAdapter.setHasStableIds(true);
         appRecyclerView.setAdapter(mAdapter);
     }
@@ -223,7 +244,10 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         mIsSearching = false;
         actionBar.setVisibility(GONE);
         storeSearchButton.setVisibility(GONE);
-        mLayoutManager.setReverseLayout(false);
+        mLinearLayoutManager.setReverseLayout(false);
+        if (mUsingGridLayoutByDefault) {
+            appRecyclerView.setLayoutManager(mGridLayoutManager);
+        }
         searchPullLayout.setEnabled(true);
         mAdapter.leaveSearch();
         appRecyclerView.post(() -> appRecyclerView.setItemAnimator(new DefaultItemAnimator()));
@@ -265,6 +289,9 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         mHost.requestAppDrawerFocus();
         mIsSearching = true;
         appRecyclerView.setItemAnimator(null);
+        if (mUsingGridLayoutByDefault) {
+            appRecyclerView.setLayoutManager(mLinearLayoutManager);
+        }
         actionBar.setVisibility(VISIBLE);
         searchBox.setFocusable(true);
         searchBox.setFocusableInTouchMode(true);
@@ -397,7 +424,7 @@ public class AppDrawerController implements BasePageController, FastScrollContro
             enterSearch();
         }
         storeSearchButton.setVisibility(mAdapter.performSearch(s.toString()) ? GONE : VISIBLE);
-        mLayoutManager.setReverseLayout(true);
+        mLinearLayoutManager.setReverseLayout(true);
     }
 
     @OnEditorAction(R.id.search_box)
