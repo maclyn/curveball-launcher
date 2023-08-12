@@ -53,6 +53,7 @@ object ViewUtils {
             return false
         }
         val dist = Math.hypot(event.rawX - startX, event.rawY - startY)
+        val ctx = ctx ?: return false
         return dist > ViewConfiguration.get(ctx).scaledTouchSlop * slopFactor
     }
 
