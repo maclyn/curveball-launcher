@@ -45,13 +45,13 @@ class DockController(val container: RecyclerView) {
         destroyDockImpl()
         backgroundExecutor.submit {
             loadDockItemsImpl()
-            foregroundHandler.post { attachDockItemsToView() }
         }
     }
 
     fun destroyDock() {
         destroyDockImpl()
     }
+
 
     private fun loadDockItemsImpl() {
         // Setup the dock controller supporting fields
@@ -77,6 +77,8 @@ class DockController(val container: RecyclerView) {
             .stream()
             .sorted { left, right -> (right.basePriority - left.basePriority).toInt() }
             .collect(Collectors.toList())
+
+        foregroundHandler.post { attachDockItemsToView() }
     }
 
     private fun destroyDockImpl() {
@@ -89,11 +91,33 @@ class DockController(val container: RecyclerView) {
     }
 
     private fun attachDockItemsToView() {
+        container.adapter = DockAdapter(container.context, activeDockItems)
+        activeDockItems.forEachIndexed { index, item ->
+            item.attach(object : DockControllerItem.Host {
+
+                override fun getContext() = container.context
+
+                override fun showHostedItem() = adapter?.notifyItemChanged(index) ?: Unit
+
+                override fun hideHostedItem() = adapter?.notifyItemChanged(index) ?: Unit
+
+                override fun tintLoaded(color: Int) = adapter?.notifyItemChanged(index) ?: Unit
+            })
+        }
+        container.translationY = container.height.toFloat()
+        container.alpha = 0f
+        container.animate()
+            .translationY(0f)
+            .alpha(1f)
+            .withStartAction { container.visibility = View.VISIBLE }
+            .start()
+    }
+
+    init {
         val context = container.context
         val betweenItemSpacePx = context.resources.getDimensionPixelSize(R.dimen.contextual_dock_internal_padding)
         container.layoutManager =
             LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
-        container.adapter = DockAdapter(context, activeDockItems)
         container.addItemDecoration(object : RecyclerView.ItemDecoration() {
             override fun getItemOffsets(
                 outRect: Rect,
@@ -115,24 +139,5 @@ class DockController(val container: RecyclerView) {
                     0)
             }
         })
-        activeDockItems.forEachIndexed { index, item ->
-            item.attach(object : DockControllerItem.Host {
-
-                override fun getContext() = container.context
-
-                override fun showHostedItem() = adapter?.notifyItemChanged(index) ?: Unit
-
-                override fun hideHostedItem() = adapter?.notifyItemChanged(index) ?: Unit
-
-                override fun tintLoaded(color: Int) = adapter?.notifyItemChanged(index) ?: Unit
-            })
-        }
-        container.translationY = container.height.toFloat()
-        container.alpha = 0f
-        container.animate()
-            .translationY(0f)
-            .alpha(1f)
-            .withStartAction { container.visibility = View.VISIBLE }
-            .start()
     }
 }

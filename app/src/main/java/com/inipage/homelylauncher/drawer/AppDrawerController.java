@@ -330,8 +330,7 @@ public class AppDrawerController implements BasePageController, FastScrollContro
             })
             .addItem(R.drawable.ic_settings_48, R.string.more_settings, () -> {
                 final Intent settingsActivity = new Intent(mContext, SettingsActivity.class);
-                settingsActivity.setFlags(
-                    Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                settingsActivity.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 ViewUtils.activityOf(mContext).startActivity(settingsActivity);
             });
         if (BuildConfig.DEBUG) {

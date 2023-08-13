@@ -30,7 +30,6 @@ public class PhoneMappedDockItem extends ConfigurableAppBackedDockItem {
         if (context == null) {
             return;
         }
-        onCallStatusChanged();
         mBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -40,6 +39,7 @@ public class PhoneMappedDockItem extends ConfigurableAppBackedDockItem {
         final IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_NEW_OUTGOING_CALL);
         context.registerReceiver(mBroadcastReceiver, filter);
+        onCallStatusChanged();
     }
 
     private void onCallStatusChanged() {
