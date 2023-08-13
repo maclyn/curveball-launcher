@@ -1,18 +1,19 @@
 package com.inipage.homelylauncher.utils;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
 import java.util.UUID;
 
 public class LifecycleLogUtils {
@@ -20,14 +21,12 @@ public class LifecycleLogUtils {
     private static final String TAG = "LifecycleLogUtils";
     private static final Charset CHARSET = StandardCharsets.UTF_8;
     // 256KB
-    private static final long FILE_TOO_BIG_TO_DISPLAY_BYTES = (long) (0.25 * 1024 * 1024);
-    @SuppressLint("ConstantLocale")
-    private static final SimpleDateFormat DATE_FORMATTER =
-        new SimpleDateFormat("hh:mm:ss:SS aa (EEE, d MMM yyyy)", Locale.getDefault());
+    private static final long FILE_TOO_BIG_TO_DISPLAY_BYTES = (long) (0.25 * 1024 * 1024); // 250KB
+
+    private static final long FILE_NEEDS_TO_BE_WIPED_BYTES = (long) (4 * 1024 * 1024); // 4MB
 
     private static String SESSION_ID;
     private static File LOG_FILE;
-    private static FileInputStream LOG_FILE_INPUT_STREAM;
     private static FileOutputStream LOG_FILE_OUTPUT_STREAM;
 
     public static String getLogfilePath(Context context) {
@@ -40,7 +39,6 @@ public class LifecycleLogUtils {
             SESSION_ID = UUID.randomUUID().toString();
             LOG_FILE = new File(getLogfilePath(context));
             LOG_FILE_OUTPUT_STREAM = new FileOutputStream(LOG_FILE, true);
-            LOG_FILE_INPUT_STREAM = new FileInputStream(LOG_FILE);
             logEvent(LogType.LOG, "Session started");
         } catch (Exception fileIoEx) {
             throw new RuntimeException("Log file cannot be opened!");
@@ -54,6 +52,10 @@ public class LifecycleLogUtils {
      * @param message A String representation of the event.
      */
     public static void logEvent(LogType level, String message) {
+        if (LOG_FILE.length() > FILE_NEEDS_TO_BE_WIPED_BYTES) {
+            clearLog();
+        }
+
         try {
             final String result = level.name() +
                 "|" +
@@ -96,20 +98,17 @@ public class LifecycleLogUtils {
             if (size > FILE_TOO_BIG_TO_DISPLAY_BYTES) {
                 return "Long file. Try exporting to read.";
             }
-        } catch (Exception ignored) {}
-
-        StringBuilder result = new StringBuilder();
-        byte[] buf = new byte[1024];
-        int read = 0;
-        int off = 0;
-        try {
-            while ((read = LOG_FILE_INPUT_STREAM.read(buf, off, 1024)) >= 0) {
-                result.append(new String(buf, CHARSET));
+            StringBuilder result = new StringBuilder();
+            byte[] buf = new byte[1024];
+            FileInputStream logFileInputStream = new FileInputStream(LOG_FILE);
+            try (logFileInputStream) {
+                while ((logFileInputStream.read(buf, 0, 1024)) >= 0) {
+                    result.append(new String(buf, CHARSET));
+                }
+                return result.toString();
             }
-            LOG_FILE_INPUT_STREAM = new FileInputStream(LOG_FILE);
-            return result.toString();
-        } catch (Exception e) {
-            return "Log cannot be read!";
+        } catch (IOException ioException) {
+            return ioException.getLocalizedMessage();
         }
     }
 

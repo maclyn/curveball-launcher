@@ -239,8 +239,7 @@
     <string name="hidden_apps_bottom_sheet_title">Hidden apps</string>
     <string name="hidden_dock_item_bottom_sheet_title">Hidden apps in dock</string>
     <string name="dock_show_in_call">in an ongoing call</string>
-    <string name="dock_show_in_low_power">while low on battery</string>
-    <string name="dock_show_in_charging">while charging</string>
+    <string name="dock_show_power_state">while battery is low or charging</string>
     <string name="dock_item_alarm_upcoming">Alarm coming up soon</string>
     <string name="dock_icon_launch_desc">Launch item</string>
     <string name="dismiss_action_content_desc">Dismiss bubble</string>

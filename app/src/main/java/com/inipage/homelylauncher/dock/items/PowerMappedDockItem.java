@@ -33,7 +33,6 @@ public class PowerMappedDockItem extends ConfigurableAppBackedDockItem {
         if (context == null) {
             return;
         }
-        powerValuesChanged();
         mBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -45,21 +44,7 @@ public class PowerMappedDockItem extends ConfigurableAppBackedDockItem {
         filter.addAction(Intent.ACTION_POWER_DISCONNECTED);
         filter.addAction(Intent.ACTION_BATTERY_CHANGED);
         context.registerReceiver(mBroadcastReceiver, filter);
-    }
-
-    private void powerValuesChanged() {
-        @Nullable final Context context = getContext();
-        if (context == null) {
-            return;
-        }
-        mPowerLevel = BatteryUtils.getBatteryLevel(context);
-        mIsLowPower = BatteryUtils.isLowCharge(context, mPowerLevel);
-        mIsCharging = BatteryUtils.isCharging(context);
-        if (mIsLowPower || mIsCharging) {
-            showSelf();
-        } else {
-            hideSelf();
-        }
+        powerValuesChanged();
     }
 
     @Override
@@ -78,14 +63,14 @@ public class PowerMappedDockItem extends ConfigurableAppBackedDockItem {
 
     @Override
     protected int getBottomSheetMessage() {
-        return mIsLowPower ? R.string.dock_show_in_low_power : R.string.dock_show_in_charging;
+        return R.string.dock_show_power_state;
     }
 
     @Override
     public int getIcon() {
-        return mIsLowPower ?
-               R.drawable.dock_icon_battery_low :
-               R.drawable.dock_icon_battery_charging;
+        return mIsCharging ?
+               R.drawable.dock_icon_battery_charging :
+               R.drawable.dock_icon_battery_low;
     }
 
     @Nullable
@@ -112,5 +97,20 @@ public class PowerMappedDockItem extends ConfigurableAppBackedDockItem {
         return mIsLowPower ?
            DockItemPriorities.PRIORITY_POWER_EVENT_LOW.getPriority() :
            DockItemPriorities.PRIORITY_POWER_EVENT_CHARGING.getPriority();
+    }
+
+    private void powerValuesChanged() {
+        @Nullable final Context context = getContext();
+        if (context == null) {
+            return;
+        }
+        mPowerLevel = BatteryUtils.getBatteryLevel(context);
+        mIsLowPower = BatteryUtils.isLowCharge(context, mPowerLevel);
+        mIsCharging = BatteryUtils.isCharging(context);
+        if (mIsLowPower || mIsCharging) {
+            showSelf();
+        } else {
+            hideSelf();
+        }
     }
 }
