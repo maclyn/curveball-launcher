@@ -10,9 +10,9 @@ import androidx.annotation.Nullable;
 
 public class BatteryUtils {
 
-    public static boolean isLowCharge(Context context) {
+    public static boolean isLowCharge(Context context, int batteryLevel) {
         final PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-        return pm.isPowerSaveMode();
+        return pm.isPowerSaveMode() || batteryLevel < 20;
     }
 
     public static boolean isCharging(Context context) {

@@ -53,7 +53,7 @@ public class PowerMappedDockItem extends ConfigurableAppBackedDockItem {
             return;
         }
         mPowerLevel = BatteryUtils.getBatteryLevel(context);
-        mIsLowPower = BatteryUtils.isLowCharge(context);
+        mIsLowPower = BatteryUtils.isLowCharge(context, mPowerLevel);
         mIsCharging = BatteryUtils.isCharging(context);
         if (mIsLowPower || mIsCharging) {
             showSelf();

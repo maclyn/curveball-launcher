@@ -124,7 +124,8 @@ public class CalendarUtils {
 
     public static void launchEvent(Context context, int eventId) {
         final Uri uri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId);
-        Intent intent = new Intent(Intent.ACTION_VIEW).setData(uri);
+        Intent intent =
+            new Intent(Intent.ACTION_VIEW).setData(uri).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         try {
             context.startActivity(intent);
         } catch (ActivityNotFoundException ignored) {}

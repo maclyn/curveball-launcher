@@ -77,7 +77,8 @@ public class ContextualAppFetcher {
         final List<DockControllerItem> suggestions = new ArrayList<>();
         final Map<String, Boolean> packagesSeen = new HashMap<>();
 
-        @SuppressWarnings("ResourceType") final UsageStatsManager usm =
+        @SuppressWarnings("ResourceType")
+        final UsageStatsManager usm =
             (UsageStatsManager) context.getSystemService(Context.USAGE_STATS_SERVICE);
         if (usm == null) {
             return ImmutableList.of();
@@ -168,7 +169,7 @@ public class ContextualAppFetcher {
             suggestions,
             packagesSeen,
             suggestionApp));
-        return suggestions;
+        return suggestions.subList(0, suggestions.size() > 15 ? 14 : suggestions.size());
     }
 
     private void updateWorkingSet(

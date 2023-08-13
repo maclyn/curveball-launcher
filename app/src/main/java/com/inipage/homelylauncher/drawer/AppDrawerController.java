@@ -371,14 +371,18 @@ public class AppDrawerController implements BasePageController, FastScrollContro
                 });
             bottomSheetHelper.addItem(R.drawable.ic_reorder_white_48dp, R.string.run_preset_splice_test, () -> {
                 ClipboardManager cm = (ClipboardManager) mContext.getSystemService(Context.CLIPBOARD_SERVICE);
-                String clipContents = String.valueOf(cm.getPrimaryClip().getItemAt(0).getText());
-                String[] pkgs = clipContents.split("\n");
-                for (int i = 0; i < pkgs.length; i++) {
-                    if (i == pkgs.length - 1) {
+                @Nullable ClipData clipData = cm.getPrimaryClip();
+                if (clipData == null || clipData.getItemCount() < 1) {
+                    return;
+                }
+                String clipContents = String.valueOf(clipData.getItemAt(0).getText());
+                String[] packages = clipContents.split("\n");
+                for (int i = 0; i < packages.length; i++) {
+                    if (i == packages.length - 1) {
                         Log.d("AppDrawerController", "Set a breakpoint here");
                     }
                     mAdapter.spliceInPackageChanges(
-                        pkgs[i], AppInfoCache.get().getActivitiesForPackage(pkgs[i]));
+                        packages[i], AppInfoCache.get().getActivitiesForPackage(packages[i]));
                 }
             });
             bottomSheetHelper.addItem(R.drawable.ic_visibility_white_48dp, R.string.show_new_user_bottom_sheet, () -> {

@@ -16,30 +16,9 @@ import com.inipage.homelylauncher.utils.ViewUtils
 /**
  * Renders dock items with padding on the left and right.
  */
-class DockAdapter(context: Context) : RecyclerView.Adapter<DockAdapter.DockItemViewHolder>() {
+class DockAdapter(context: Context, val items: List<DockControllerItem>) : RecyclerView.Adapter<DockAdapter.DockItemViewHolder>() {
 
-    private val items: MutableList<DockControllerItem> = ArrayList()
     private val isSquarish: Boolean = ViewUtils.isSquarishDevice(context)
-
-    fun reset() {
-        val count = items.size
-        items.clear()
-        notifyItemRangeRemoved(0, count)
-    }
-
-    fun itemLoaded(idx: Int, loadedItem: DockControllerItem) {
-        items.add(idx, loadedItem)
-        notifyItemInserted(idx)
-    }
-
-    fun itemHidden(idx: Int) {
-        items.removeAt(idx)
-        notifyItemRemoved(idx)
-    }
-
-    fun tintLoaded(idx: Int) {
-        notifyItemChanged(idx)
-    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DockItemViewHolder =
         DockItemViewHolder(
@@ -48,6 +27,11 @@ class DockAdapter(context: Context) : RecyclerView.Adapter<DockAdapter.DockItemV
 
     override fun onBindViewHolder(holder: DockItemViewHolder, position: Int) {
         val item = items[position]
+
+        holder.containerView.visibility = if (item.isLoaded) View.VISIBLE else View.GONE
+        if (!item.isLoaded) {
+            return
+        }
 
         // Setup background color
         holder.containerView.background.colorFilter = PorterDuffColorFilter(
