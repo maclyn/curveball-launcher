@@ -45,17 +45,11 @@ class PocketController(
         fun clearActiveDragTarget()
     }
 
-    private val scaleDelta = 0.1F
-    private val animationDuration = 200L
-
-    private val scrollView: ScrollView
-    private val rowContainer: LinearLayout
-    private val topScrim: View
-    private val bottomScrim: View
-
-    companion object {
-        const val SCALE_DELTA = 0.1F
-    }
+    private val view = LayoutInflater.from(context).inflate(R.layout.pocket_container_view, container, true)
+    private val scrollView: ScrollView = ViewCompat.requireViewById(view, R.id.pocket_container_view_scroll_view)
+    private val rowContainer: LinearLayout = ViewCompat.requireViewById(view, R.id.pocket_container_view_row_container)
+    private val topScrim: View = ViewCompat.requireViewById(view, R.id.pocket_top_scrim)
+    private val bottomScrim: View = ViewCompat.requireViewById(view, R.id.pocket_bottom_scrim)
 
     @SizeDimenAttribute(R.dimen.actuation_distance)
     var actuationDistance = 0
@@ -66,7 +60,7 @@ class PocketController(
 
     private var isSwiping = false
     private var velocityTracker: VelocityTracker? = null
-    private var folders: MutableList<SwipeFolder>
+    private var folders: MutableList<SwipeFolder> = DatabaseEditor.get().gestureFavorites
     var isExpanded = false
         private set
 
@@ -94,8 +88,8 @@ class PocketController(
                 scrollViewParams.height =
                     when {
                         aspectRatio < 1.1 -> (windowHeight * 0.85).toInt()
-                        aspectRatio < 1.5 -> (windowHeight * 0.66).toInt()
-                        else -> windowHeight / 2
+                        aspectRatio < 1.5 -> (windowHeight * 0.80).toInt()
+                        else -> (windowHeight * 0.75).toInt()
                     }
                 scrollView.layoutParams = scrollViewParams
                 activity.window.decorView.removeOnLayoutChangeListener(this)
@@ -461,19 +455,18 @@ class PocketController(
 
     init {
         AttributeApplier.applyDensity(this, context)
-        folders = DatabaseEditor.get().gestureFavorites
-        idleView.setOnClickListener { v: View? ->
+        idleView.setOnClickListener {
             if (isExpanded) {
                 collapse()
             } else {
                 expand()
             }
         }
-        val view = LayoutInflater.from(context).inflate(R.layout.pocket_container_view, container, true)
-        rowContainer = ViewCompat.requireViewById(view, R.id.pocket_container_view_row_container)
-        scrollView = ViewCompat.requireViewById(view, R.id.pocket_container_view_scroll_view)
-        topScrim = ViewCompat.requireViewById(view, R.id.pocket_top_scrim)
-        bottomScrim = ViewCompat.requireViewById(view, R.id.pocket_bottom_scrim)
         rebind()
+    }
+
+    companion object {
+        const val scaleDelta = 0.1F
+        private const val animationDuration = 200L
     }
 }

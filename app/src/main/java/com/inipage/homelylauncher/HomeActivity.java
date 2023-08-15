@@ -598,8 +598,8 @@ public class HomeActivity extends AppCompatActivity implements
         pagerIndicatorView.setAlpha(1 - percent);
         pocketIdleView.setAlpha(1 - percent);
         pagerView.setAlpha(1 - percent);
-        pagerView.setScaleX(1 - (percent * PocketController.SCALE_DELTA));
-        pagerView.setScaleY(1 - (percent * PocketController.SCALE_DELTA));
+        pagerView.setScaleX(1 - (percent * PocketController.scaleDelta));
+        pagerView.setScaleY(1 - (percent * PocketController.scaleDelta));
         pagerView.setTranslationY(-actuationDistance * percent);
 
         updateBackgroundAlpha(percent);
@@ -614,8 +614,8 @@ public class HomeActivity extends AppCompatActivity implements
         pagerIndicatorView.setAlpha(0);
         pocketIdleView.setAlpha(0);
         pagerView.setAlpha(0);
-        pagerView.setScaleX(1 - PocketController.SCALE_DELTA);
-        pagerView.setScaleY(1 - PocketController.SCALE_DELTA);
+        pagerView.setScaleX(1 - PocketController.scaleDelta);
+        pagerView.setScaleY(1 - PocketController.scaleDelta);
         pagerView.setTranslationY(-actuationDistance);
         updateBackgroundAlpha(1);
     }

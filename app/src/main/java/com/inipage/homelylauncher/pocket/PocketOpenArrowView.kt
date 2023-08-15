@@ -20,21 +20,34 @@ class PocketOpenArrowView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
-    private val mPaint: Paint
-    private val mArrowDrawable: RotateDrawable
-    private var mExpandedPercent: Float
+
+    private val arrowDrawable: RotateDrawable = RotateDrawable().apply {
+        drawable =
+            ContextCompat.getDrawable(getContext(), R.drawable.arrow_up)
+                ?.constantState?.newDrawable()?.mutate()?.apply {
+            alpha = 180
+        }
+        fromDegrees = 0F
+        toDegrees = 180F
+        isPivotXRelative = true
+        isPivotYRelative = true
+        pivotX = 0.5F
+        pivotY = 0.5F
+    }
+
+    private var expandedPercent: Float = 0F
 
     override fun setRotation(rotation: Float) {
-        mExpandedPercent = rotation
+        expandedPercent = rotation
         invalidate()
     }
 
     override fun onDraw(canvas: Canvas) {
         val center = width / 2
         val viewHeight = height
-        mArrowDrawable.setBounds(center - viewHeight / 2, 0, center + viewHeight / 2, viewHeight)
-        mArrowDrawable.level = (mExpandedPercent * 10000).toInt()
-        mArrowDrawable.draw(canvas)
+        arrowDrawable.setBounds(center - viewHeight / 2, 0, center + viewHeight / 2, viewHeight)
+        arrowDrawable.level = (expandedPercent * 10000).toInt()
+        arrowDrawable.draw(canvas)
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -47,20 +60,5 @@ class PocketOpenArrowView @JvmOverloads constructor(
 
     init {
         AttributeApplier.applyDensity(this, context)
-        mPaint = Paint()
-        mPaint.color = Color.WHITE
-        mPaint.style = Paint.Style.FILL
-        mPaint.alpha = 180
-        val arrowDrawable = ContextCompat.getDrawable(getContext(), R.drawable.arrow_up)
-        arrowDrawable!!.alpha = 180
-        mArrowDrawable = RotateDrawable()
-        mArrowDrawable.drawable = arrowDrawable
-        mArrowDrawable.fromDegrees = 0f
-        mArrowDrawable.toDegrees = 180f
-        mArrowDrawable.isPivotXRelative = true
-        mArrowDrawable.isPivotYRelative = true
-        mArrowDrawable.pivotY = 0.5f
-        mArrowDrawable.pivotX = 0.5f
-        mExpandedPercent = 0f
     }
 }
