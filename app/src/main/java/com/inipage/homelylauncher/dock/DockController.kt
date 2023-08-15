@@ -110,6 +110,7 @@ class DockController(val container: RecyclerView) {
             .translationY(0f)
             .alpha(1f)
             .withStartAction { container.visibility = View.VISIBLE }
+            .setDuration(175L)
             .start()
     }
 

@@ -17,6 +17,9 @@ import com.inipage.homelylauncher.utils.ViewUtils;
 
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Confusingly, this is a *container* for views holding applications. Yikes.
+ */
 public class ApplicationIconLayout extends LinearLayout {
 
     private static final int MESSAGE_LONG_PRESS = 1;

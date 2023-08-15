@@ -1,5 +1,6 @@
 package com.inipage.homelylauncher.drawer;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.text.SpannableString;
@@ -58,13 +59,9 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     public interface Delegate {
 
-        void enterSearchMode(View v);
-
         void enterFastScrollMode(View v);
 
         void scrollToIndex(int idx);
-
-        void showOptionsMenu(View v);
 
         int getFirstIndexOnScreen();
 
@@ -277,6 +274,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
      * @param query The search.
      * @return Whether the search returns results.
      */
+    @SuppressLint("NotifyDataSetChanged")
     public synchronized boolean performSearch(String query) {
         mMode = Mode.SEARCH_RESULTS;
         if (rebuild(query)) {
@@ -285,6 +283,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         return !mElements.isEmpty();
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     public synchronized void leaveSearch() {
         if (mMode != Mode.SEARCH_RESULTS) {
             return;
@@ -531,8 +530,6 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 String.valueOf(mApps.size()).length(),
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             headerHolder.installCount.setText(headerText);
-            headerHolder.enterSearchButton.setOnClickListener(mDelegate::enterSearchMode);
-            headerHolder.showOptionsMenu.setOnClickListener(mDelegate::showOptionsMenu);
             return;
         }
         if (itemViewType == ITEM_VIEW_TYPE_LETTER_HEADER) {
@@ -559,7 +556,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         viewHolder.mainView.setClickable(true);
         viewHolder.mainView.setAlpha(1F);
         viewHolder.mainView.setOnClickListener(
-            v -> InstalledAppUtils.launchApp(v, ai.getPackageName(), ai.getActivityName()));
+            v -> InstalledAppUtils.launchApp(viewHolder.icon, ai.getPackageName(), ai.getActivityName()));
         viewHolder.mainView.attachListener(new ApplicationIconLayout.Listener() {
 
             @Override
@@ -753,14 +750,10 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     public static class TopHeaderHolder extends AnimatableViewHolder {
         TextView installCount;
-        View enterSearchButton;
-        View showOptionsMenu;
 
         public TopHeaderHolder(View view) {
             super(view);
             this.installCount = ViewCompat.requireViewById(view, R.id.installed_apps_count);
-            this.enterSearchButton = ViewCompat.requireViewById(view, R.id.search_box_button);
-            this.showOptionsMenu = ViewCompat.requireViewById(view, R.id.bottom_sheet_settings_button);
         }
     }
 

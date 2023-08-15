@@ -12,6 +12,12 @@
     <dimen name="log_text_size">4sp</dimen>
     <dimen name="scale_button_size">36dp</dimen>
 
+    <!-- App drawer values -->
+    <dimen name="app_drawer_app_icon_size">48dp</dimen>
+    <dimen name="app_drawer_app_vertical_padding">4dp</dimen>
+    <dimen name="app_drawer_app_expected_height">56dp</dimen>
+    <dimen name="app_drawer_floating_button_height">48dp</dimen>
+
     <!-- Dock values -->
     <dimen name="total_dock_height">72dp</dimen>
     <dimen name="contextual_dock_height">48dp</dimen>

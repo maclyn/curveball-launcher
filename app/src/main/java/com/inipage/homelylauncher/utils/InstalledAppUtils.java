@@ -1,5 +1,6 @@
 package com.inipage.homelylauncher.utils;
 
+import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.ComponentName;
 import android.content.Context;
@@ -11,6 +12,8 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
 import android.widget.Toast;
+
+import androidx.annotation.Nullable;
 
 import com.inipage.homelylauncher.R;
 
@@ -53,8 +56,15 @@ public class InstalledAppUtils {
     }
 
     public static void launchApp(View anchor, String packageName, String activityName) {
-        final ActivityOptions options = ActivityOptions.makeScaleUpAnimation(
-            anchor, 0, 0, anchor.getWidth(), anchor.getHeight());
+        final ActivityOptions options =
+            ActivityOptions.makeScaleUpAnimation(
+                anchor,
+                anchor.getWidth() / 2, // + posX filled in from anchor
+                anchor.getHeight() / 2, // + posY filled in from anchor
+                0, // start from 0 size point
+                0);
+        // There isn't an obvious way to speed this up, which is is unfortunate because it feels
+        // pokey to me
         launchApp(anchor.getContext(), packageName, activityName, options.toBundle());
     }
 
@@ -62,7 +72,7 @@ public class InstalledAppUtils {
         Context context,
         String packageName,
         String activityName,
-        @androidx.annotation.Nullable Bundle b) {
+        @Nullable Bundle b) {
         try {
             final Intent launchIntent = new Intent();
             launchIntent.setComponent(new ComponentName(packageName, activityName));

@@ -6,13 +6,13 @@
     android:background="?selectableItemBackground"
     android:gravity="center_vertical"
     android:orientation="horizontal"
-    android:paddingVertical="4dp">
+    android:paddingVertical="@dimen/app_drawer_app_vertical_padding">
 
     <com.inipage.homelylauncher.drawer.BitmapView
         android:id="@+id/app_icon_image"
         android:layout_marginStart="8dp"
-        android:layout_width="48dp"
-        android:layout_height="48dp" />
+        android:layout_width="@dimen/app_drawer_app_icon_size"
+        android:layout_height="@dimen/app_drawer_app_icon_size" />
 
     <TextView
         android:id="@+id/app_icon_label"

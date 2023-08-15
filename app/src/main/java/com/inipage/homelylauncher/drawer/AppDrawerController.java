@@ -85,6 +85,12 @@ public class AppDrawerController implements BasePageController, FastScrollContro
     View rootView;
     @BindView(R.id.all_apps_layout)
     RecyclerView appRecyclerView;
+    @BindView(R.id.search_box_button)
+    View searchBoxButton;
+    @BindView(R.id.bottom_sheet_settings_button)
+    View bottomSheetSettingsButton;
+    @BindView(R.id.scroll_to_top_button)
+    View scrollToTopButton;
     @BindView(R.id.store_search_button)
     Button storeSearchButton;
     @BindView(R.id.app_drawer_action_bar)
@@ -133,19 +139,10 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         };
 
     private final ApplicationIconAdapter.Delegate mAdapterDelegate = new ApplicationIconAdapter.Delegate() {
-        @Override
-        public void enterSearchMode(View v) {
-            enterSearch();
-        }
 
         @Override
         public void enterFastScrollMode(View v) {
             mScrollController.enterFastScroll();
-        }
-
-        @Override
-        public void showOptionsMenu(View v) {
-            showOptionsBottomSheet(v);
         }
 
         @Override
@@ -198,10 +195,48 @@ public class AppDrawerController implements BasePageController, FastScrollContro
             appRecyclerView.setLayoutManager(mLinearLayoutManager);
         }
         appRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+
+            private final float appDrawerItemHeight =
+                mContext.getResources().getDimension(R.dimen.app_drawer_app_expected_height);
+            private final float floatingButtonHeight =
+                mContext.getResources().getDimension(R.dimen.app_drawer_floating_button_height);
+
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
                     rootView.getParent().requestDisallowInterceptTouchEvent(true);
+                }
+            }
+
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                if (isSearching()) {
+                    return;
+                }
+
+                // Adjust alpha and offset of the menu and scroll to top buttons
+                float totalHeightToFullyHide = appDrawerItemHeight * 2;
+                int offsetY = recyclerView.computeVerticalScrollOffset();
+                if (offsetY <= 0) { // At top
+                    scrollToTopButton.setVisibility(GONE);
+                    bottomSheetSettingsButton.setVisibility(VISIBLE);
+                    bottomSheetSettingsButton.setTranslationY(0);
+                    bottomSheetSettingsButton.setAlpha(1F);
+                } else if (offsetY > totalHeightToFullyHide) { // Scrolled a little
+                    scrollToTopButton.setVisibility(VISIBLE);
+                    scrollToTopButton.setTranslationY(0);
+                    scrollToTopButton.setAlpha(1F);
+                    bottomSheetSettingsButton.setVisibility(GONE);
+                } else {
+                    float amountDone = offsetY / totalHeightToFullyHide;
+                    // comes up from bottom
+                    scrollToTopButton.setVisibility(VISIBLE);
+                    scrollToTopButton.setTranslationY((1 - amountDone) * floatingButtonHeight);
+                    scrollToTopButton.setAlpha(amountDone);
+                    // scrolls off to top
+                    bottomSheetSettingsButton.setVisibility(VISIBLE);
+                    bottomSheetSettingsButton.setTranslationY(-(amountDone * floatingButtonHeight));
+                    bottomSheetSettingsButton.setAlpha(1 - amountDone);
                 }
             }
         });
@@ -210,6 +245,15 @@ public class AppDrawerController implements BasePageController, FastScrollContro
             if (!mIsSearching) {
                 enterSearch();
             }
+        });
+        searchBoxButton.setOnClickListener(v -> {
+            if (!mIsSearching) {
+                enterSearch();
+            }
+        });
+        bottomSheetSettingsButton.setOnClickListener(this::showOptionsBottomSheet);
+        scrollToTopButton.setOnClickListener(v -> {
+            appRecyclerView.smoothScrollToPosition(0);
         });
         setSearchDrawable();
         reloadAppList();
@@ -244,6 +288,9 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         mIsSearching = false;
         actionBar.setVisibility(GONE);
         storeSearchButton.setVisibility(GONE);
+        searchBoxButton.setVisibility(VISIBLE);
+        scrollToTopButton.setVisibility(VISIBLE);
+        bottomSheetSettingsButton.setVisibility(VISIBLE);
         mLinearLayoutManager.setReverseLayout(false);
         if (mUsingGridLayoutByDefault) {
             appRecyclerView.setLayoutManager(mGridLayoutManager);
@@ -293,6 +340,9 @@ public class AppDrawerController implements BasePageController, FastScrollContro
             appRecyclerView.setLayoutManager(mLinearLayoutManager);
         }
         actionBar.setVisibility(VISIBLE);
+        searchBoxButton.setVisibility(GONE);
+        scrollToTopButton.setVisibility(GONE);
+        bottomSheetSettingsButton.setVisibility(GONE);
         searchBox.setFocusable(true);
         searchBox.setFocusableInTouchMode(true);
         searchBox.requestFocus();
@@ -445,6 +495,10 @@ public class AppDrawerController implements BasePageController, FastScrollContro
             return true;
         }
         View child = appRecyclerView.getChildAt(0);
+        RecyclerView.ViewHolder vh = appRecyclerView.getChildViewHolder(appRecyclerView.getChildAt(0));
+        if (vh instanceof ApplicationIconAdapter.AppIconHolder) {
+            child = ((ApplicationIconAdapter.AppIconHolder) vh).icon;
+        }
         ApplicationIcon app = mAdapter.getFirstApp();
         InstalledAppUtils.launchApp(child, app.getPackageName(), app.getActivityName());
         return true;

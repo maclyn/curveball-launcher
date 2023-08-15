@@ -37,10 +37,7 @@ public class AppViewHolder extends GridViewHolder {
         mLabelView.setText(AppLabelCache.getInstance(context).getLabel(
             gridItem.getPackageName(), gridItem.getActivityName()));
         gridIcon.setOnClickListener(v ->
-                                        InstalledAppUtils.launchApp(
-                                            v,
-                                            gridItem.getPackageName(),
-                                            gridItem.getActivityName()));
+            InstalledAppUtils.launchApp(v, gridItem.getPackageName(), gridItem.getActivityName()));
         mRootView.addView(
             gridIcon,
             0,

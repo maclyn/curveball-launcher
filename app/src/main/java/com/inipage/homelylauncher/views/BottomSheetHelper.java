@@ -176,7 +176,7 @@ public class BottomSheetHelper {
         rootView.setTranslationY(
             mFixedToScreenHeightPercent ?
                 Math.min(rootView.getMeasuredHeight(), maxContentHeight) :
-                rootView.getLayoutParams().height);
+                rootView.getMeasuredHeight());
         rootView
             .animate()
             .translationY(0)
