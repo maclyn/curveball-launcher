@@ -95,6 +95,10 @@ public class AppDrawerController implements BasePageController, FastScrollContro
     Button storeSearchButton;
     @BindView(R.id.app_drawer_action_bar)
     View actionBar;
+
+    @BindView(R.id.app_drawer_actions_container)
+    View actionsContainer;
+
     @BindView(R.id.search_box)
     EditText searchBox;
     @BindView(R.id.search_pull_layout)
@@ -540,6 +544,7 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         appRecyclerView.animate().alpha(isEntering ? 0F : 1F).setDuration(200).start();
         appRecyclerView.animate().scaleX(isEntering ? 0.9F : 1F).setDuration(200).start();
         appRecyclerView.animate().scaleY(isEntering ? 0.9F : 1F).setDuration(200).start();
+        actionsContainer.animate().alpha(isEntering ? 0F : 1F).setDuration(200).start();
     }
 
     @NonNull
