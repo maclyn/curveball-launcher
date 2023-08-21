@@ -7,12 +7,12 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.res.Configuration
 import android.graphics.Rect
-import android.util.DisplayMetrics
 import android.graphics.drawable.Drawable
 import android.view.*
 import androidx.core.content.ContextCompat
 import com.inipage.homelylauncher.R
 import java.io.IOException
+import java.lang.IllegalArgumentException
 
 object ViewUtils {
     private var IS_SQUARISH_DEVICE: Boolean? = null
@@ -65,7 +65,7 @@ object ViewUtils {
 
     @JvmStatic
     fun windowBounds(context: Context?): Rect {
-        val activity = activityOf(context)
+        val activity = requireActivityOf(context)
             ?: return Rect()
         val decorView = activity.window.decorView
         val out = IntArray(2)
@@ -84,15 +84,15 @@ object ViewUtils {
 
     // From privately exported android.material.contextutils
     @JvmStatic
-    fun activityOf(context: Context?): Activity? {
-        var context = context
-        while (context is ContextWrapper) {
-            if (context is Activity) {
-                return context
+    fun requireActivityOf(context: Context?): Activity {
+        var ctx = context
+        while (ctx is ContextWrapper) {
+            if (ctx is Activity) {
+                return ctx
             }
-            context = context.baseContext
+            ctx = ctx.baseContext
         }
-        return null
+        throw IllegalArgumentException("Context passed that doesn't walk up to Activity!")
     }
 
     fun onEndListener(r: Runnable): Animator.AnimatorListener {

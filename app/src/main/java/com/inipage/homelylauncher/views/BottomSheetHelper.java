@@ -73,7 +73,7 @@ public class BottomSheetHelper {
         ((TextView) rootView.findViewById(R.id.bottom_sheet_title)).setText(title);
 
 
-        @Nullable final Activity activity = ViewUtils.activityOf(context);
+        @Nullable final Activity activity = ViewUtils.requireActivityOf(context);
         rootView.setLayoutParams(
             new FrameLayout.LayoutParams(
                 MATCH_PARENT, WRAP_CONTENT, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL));

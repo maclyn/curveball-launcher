@@ -4,8 +4,11 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
+
+import com.inipage.homelylauncher.utils.LifecycleLogUtils;
 
 /**
  * Raw database management.
@@ -13,6 +16,7 @@ import androidx.annotation.Nullable;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     // Database basics
+    static final String TAG = "DatabaseHelper";
     static final String DATABASE_NAME = "database.db";
     static final int DATABASE_VERSION = 15;
 
@@ -56,8 +60,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     static final String COLUMN_DATA_STRING_1 = "ds1";
     static final String COLUMN_DATA_STRING_2 = "ds2";
     static final String COLUMN_DATA_INT_1 = "di1";
+
+    // Vertical grid item
+    // Re-uses: HEIGHT, WIDTH, ITEM_IT, GRID_ITEM_TYPE, POSITION_X, POSITION_Y, DATA_STRING_1, DATA_STRING_2, DATA_INT_1
+    static final String TABLE_VERTICAL_GRID_ITEM = "vertical_grid_item_table";
+
     static final String[] TABLES = new String[]{
-        TABLE_GRID_PAGE, TABLE_GRID_ITEM, TABLE_HIDDEN_APPS, TABLE_ROWS, TABLE_DOCK
+        TABLE_GRID_PAGE,
+        TABLE_GRID_ITEM,
+        TABLE_VERTICAL_GRID_ITEM,
+        TABLE_HIDDEN_APPS,
+        TABLE_ROWS,
+        TABLE_DOCK
     };
     private static final String ROWS_TABLE_CREATE = "create table "
         + TABLE_ROWS +
@@ -98,13 +112,27 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         + COLUMN_DATA_STRING_1 + " text, "
         + COLUMN_DATA_STRING_2 + " text, "
         + COLUMN_DATA_INT_1 + " integer);";
+    private static final String VERTICAL_GRID_ITEM_TABLE_CREATE = "CREATE TABLE "
+        + TABLE_VERTICAL_GRID_ITEM
+        + "(" + COLUMN_ID + " INTEGER PRIMARY KEY autoincrement,"
+        + COLUMN_ITEM_ID + " text not null, "
+        + COLUMN_POSITION_X + " integer not null, "
+        + COLUMN_POSITION_Y + " integer not null, "
+        + COLUMN_HEIGHT + " integer not null, "
+        + COLUMN_WIDTH + " integer not null, "
+        + COLUMN_GRID_ITEM_TYPE + " integer not null, "
+        + COLUMN_DATA_STRING_1 + " text, "
+        + COLUMN_DATA_STRING_2 + " text, "
+        + COLUMN_DATA_INT_1 + " integer);";
+
     private static final String[] CREATION_BLOCKS = {
         GRID_PAGE_TABLE_CREATE,
         GRID_ITEM_TABLE_CREATE,
+        VERTICAL_GRID_ITEM_TABLE_CREATE,
         HIDDEN_APPS_TABLE_CREATE,
         ROWS_TABLE_CREATE,
         DOCK_TABLE_CREATE,
-        };
+    };
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -121,6 +149,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // 15 -> 16 migration
+        if (newVersion == 16 && oldVersion == 15) {
+            LifecycleLogUtils.logEvent(LifecycleLogUtils.LogType.LOG, TAG + " upgrading from 15 to 16");
+            db.execSQL(VERTICAL_GRID_ITEM_TABLE_CREATE);
+            return;
+        }
+
+        // Anything else, start from scratch
+        LifecycleLogUtils.logEvent(LifecycleLogUtils.LogType.ERROR, TAG + " upgrading unexpected path");
         for (String table : TABLES) {
             try {
                 db.execSQL("DROP TABLE " + table);

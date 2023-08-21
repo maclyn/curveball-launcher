@@ -4,10 +4,8 @@ import android.animation.Animator
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.view.Gravity
-import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.AnimationSet
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -18,7 +16,6 @@ import com.inipage.homelylauncher.views.DecorViewManager
 import com.inipage.homelylauncher.views.ProvidesOverallDimensions
 import java.util.*
 import kotlin.collections.HashMap
-import kotlin.collections.HashSet
 
 class FastScrollController(private val host: Host) {
 
@@ -59,7 +56,7 @@ class FastScrollController(private val host: Host) {
 
         host.onFastScrollStateChange(true)
         val context = host.getHostContext()
-        val activity = ViewUtils.activityOf(context) ?: return
+        val activity = ViewUtils.requireActivityOf(context) ?: return
         val root = ScrollView(context)
         if (activity is ProvidesOverallDimensions) {
             root.setPadding(

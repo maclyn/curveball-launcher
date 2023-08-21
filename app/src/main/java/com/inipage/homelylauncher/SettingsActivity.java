@@ -202,14 +202,14 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
                 ProcessPhoenix.triggerRebirth(context);
             });
             bindPreference("import_database", context -> {
-                final Activity parent = ViewUtils.activityOf(context);
+                final Activity parent = ViewUtils.requireActivityOf(context);
                 final Intent exportIntent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 exportIntent.setType("*/*");
                 exportIntent.addCategory(Intent.CATEGORY_OPENABLE);
                 parent.startActivityForResult(exportIntent, IMPORT_DATABASE_REQUEST_CODE);
             });
             bindPreference("export_database", context -> {
-                final Activity parent = ViewUtils.activityOf(context);
+                final Activity parent = ViewUtils.requireActivityOf(context);
                 final Intent exportIntent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
                 exportIntent.setType("*/*");
                 exportIntent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -277,7 +277,7 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
         }
 
         private void exportLogs(Context context) {
-            final Activity parent = ViewUtils.activityOf(context);
+            final Activity parent = ViewUtils.requireActivityOf(context);
             final Intent exportIntent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
             exportIntent.setType("*/*");
             exportIntent.addCategory(Intent.CATEGORY_OPENABLE);

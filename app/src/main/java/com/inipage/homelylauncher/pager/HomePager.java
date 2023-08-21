@@ -159,7 +159,7 @@ public class HomePager extends RecyclerView.Adapter<HomePager.PagerHolder> {
     }
 
     private Activity getActivity() {
-        return ViewUtils.activityOf(mAppDrawerController.getView().getContext());
+        return ViewUtils.requireActivityOf(mAppDrawerController.getView().getContext());
     }
 
     public AppDrawerController getAppDrawerController() {

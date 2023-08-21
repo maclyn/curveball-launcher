@@ -67,7 +67,7 @@ class PocketController(
     fun applyScrims(topScrimSize: Int, bottomScrimSize: Int) {
         ViewUtils.setHeight(topScrim, topScrimSize)
         ViewUtils.setHeight(bottomScrim, bottomScrimSize)
-        val activity = ViewUtils.activityOf(context) ?: return
+        val activity = ViewUtils.requireActivityOf(context) ?: return
         activity.window.decorView.addOnLayoutChangeListener(object : View.OnLayoutChangeListener {
             override fun onLayoutChange(
                 v: View?,

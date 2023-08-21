@@ -45,7 +45,7 @@ public class DecorViewManager {
     }
 
     public static DecorViewManager get(Context context) {
-        return get(ViewUtils.activityOf(context));
+        return get(ViewUtils.requireActivityOf(context));
     }
 
     public static DecorViewManager get(Activity activity) {

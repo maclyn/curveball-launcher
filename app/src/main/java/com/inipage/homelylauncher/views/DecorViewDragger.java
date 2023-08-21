@@ -70,7 +70,7 @@ public class DecorViewDragger {
     }
 
     public static DecorViewDragger get(Context context) {
-        return get(ViewUtils.activityOf(context));
+        return get(ViewUtils.requireActivityOf(context));
     }
 
     public static DecorViewDragger get(Activity activity) {

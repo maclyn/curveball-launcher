@@ -274,7 +274,7 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         }
         mAdapter = new ApplicationIconAdapter(
             mAdapterDelegate,
-            ViewUtils.activityOf(mContext),
+            ViewUtils.requireActivityOf(mContext),
             mUsingGridLayoutByDefault ? GRID_LAYOUT_COLUMN_COUNT : 1);
         mAdapter.setHasStableIds(true);
         appRecyclerView.setAdapter(mAdapter);
@@ -377,7 +377,7 @@ public class AppDrawerController implements BasePageController, FastScrollContro
                 final Intent pickWallpaper = new Intent(Intent.ACTION_SET_WALLPAPER);
                 pickWallpaper.setFlags(
                     Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                ViewUtils.activityOf(view.getContext()).startActivity(
+                ViewUtils.requireActivityOf(view.getContext()).startActivity(
                     Intent.createChooser(
                         pickWallpaper,
                         mContext.getString(R.string.set_wallpaper)));
@@ -385,7 +385,7 @@ public class AppDrawerController implements BasePageController, FastScrollContro
             .addItem(R.drawable.ic_settings_48, R.string.more_settings, () -> {
                 final Intent settingsActivity = new Intent(mContext, SettingsActivity.class);
                 settingsActivity.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                ViewUtils.activityOf(mContext).startActivity(settingsActivity);
+                ViewUtils.requireActivityOf(mContext).startActivity(settingsActivity);
             });
         if (BuildConfig.DEBUG) {
             // Crude tests of spliceInPackageChanges()
@@ -516,7 +516,7 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         intent.setData(Uri.parse(uri));
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         try {
-            ViewUtils.activityOf(mContext).startActivity(intent);
+            ViewUtils.requireActivityOf(mContext).startActivity(intent);
         } catch (ActivityNotFoundException activityNotFoundException) {
             Toast.makeText(mContext, R.string.store_not_installed, Toast.LENGTH_SHORT).show();
         }

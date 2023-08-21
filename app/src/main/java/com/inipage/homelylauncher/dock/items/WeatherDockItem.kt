@@ -1,8 +1,6 @@
 package com.inipage.homelylauncher.dock.items
 
 import android.Manifest
-import android.content.Context
-import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.view.View
 import android.widget.Toast
@@ -14,7 +12,6 @@ import com.inipage.homelylauncher.utils.ViewUtils
 import com.inipage.homelylauncher.utils.weather.WeatherController
 import com.inipage.homelylauncher.utils.weather.WeatherController.WeatherPresenter
 import com.inipage.homelylauncher.utils.weather.model.CleanedUpWeatherModel
-import com.inipage.homelylauncher.utils.weather.model.LTSForecastModel
 
 class WeatherDockItem : DockControllerItem(), WeatherPresenter {
 
@@ -32,7 +29,7 @@ class WeatherDockItem : DockControllerItem(), WeatherPresenter {
             R.string.grant_location_permission_for_weather,
             Toast.LENGTH_LONG
         ).show()
-        val activity = ViewUtils.activityOf(context) ?: return
+        val activity = ViewUtils.requireActivityOf(context) ?: return
         activity.requestPermissions(
             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
             HomeActivity.REQUEST_LOCATION_PERMISSION
