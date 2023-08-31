@@ -168,6 +168,8 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.pref_general);
 
+            bindCheckboxPreference("vertical_scroller_design", Constants.VERTICAL_SCROLLER_PREF, true);
+
             // Dock
             bindPreference("manage_cals", ctx -> HiddenCalendarsPickerBottomSheet.show(ctx, null));
             bindPreference("manage_hidden_apps",
@@ -237,6 +239,10 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
         }
 
         private void bindCheckboxPreference(String name, String backingPreference) {
+            bindCheckboxPreference(name, backingPreference, false);
+        }
+
+        private void bindCheckboxPreference(String name, String backingPreference, boolean triggerRestart) {
             Preference pref = findPreference(name);
             if (!(pref instanceof CheckBoxPreference)) {
                 return;
@@ -249,7 +255,10 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
                     return false;
                 }
                 prefs.edit().putBoolean(
-                    backingPreference, ((CheckBoxPreference) preference).isChecked()).apply();
+                    backingPreference, ((CheckBoxPreference) preference).isChecked()).commit();
+                if (triggerRestart) {
+                    ProcessPhoenix.triggerRebirth(preference.getContext());
+                }
                 return true;
             });
         }

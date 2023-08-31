@@ -31,7 +31,7 @@ public class HiddenCalendarsPickerBottomSheet {
             new HiddenCalendarsAdapter(
                 systemCalendars,
                 modifiedList -> {
-                    PrefsHelper.saveDisabledCalendars(context, modifiedList);
+                    PrefsHelper.get().saveDisabledCalendars(modifiedList);
                     if (callback != null) {
                         callback.onCalendarsUpdated();
                     }

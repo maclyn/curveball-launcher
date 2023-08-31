@@ -312,7 +312,7 @@ public class HomeActivity extends AppCompatActivity implements
             rootView.requestLayout();
             mPocketController.applyScrims(topScrim, bottomScrim);
             // New user experience
-            if (PrefsHelper.checkAndUpdateIsNewUser(this)) {
+            if (PrefsHelper.get().checkAndUpdateIsNewUser()) {
                 new NewUserBottomSheet(this).show();
             }
             return insets.consumeSystemWindowInsets();

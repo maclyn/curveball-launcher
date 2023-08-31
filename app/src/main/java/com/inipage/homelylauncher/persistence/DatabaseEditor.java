@@ -18,6 +18,7 @@ import com.inipage.homelylauncher.model.SwipeFolder;
 import com.inipage.homelylauncher.utils.Constants;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +50,10 @@ import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLE_GRID_I
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLE_GRID_PAGE;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLE_HIDDEN_APPS;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLE_ROWS;
+import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLE_VERTICAL_GRID_ITEM;
+import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLE_VERTICAL_GRID_PAGE;
+
+import javax.annotation.Nullable;
 
 public class DatabaseEditor {
 
@@ -74,10 +79,7 @@ public class DatabaseEditor {
     public List<GridPage> getGridPages() {
         final Map<String, GridPage> pageIdToPage = new HashMap<>();
         Cursor cursor = mDB.rawQuery(
-            "SELECT * FROM " +
-                TABLE_GRID_PAGE +
-                " ORDER BY " + COLUMN_INDEX + " desc",
-            null);
+        "SELECT * FROM " + TABLE_GRID_PAGE + " ORDER BY " + COLUMN_INDEX + " desc",null);
         getPages:
         {
             if (!cursor.moveToFirst()) {
@@ -142,9 +144,65 @@ public class DatabaseEditor {
         cursor.close();
 
         return pageIdToPage.entrySet().stream()
-            .sorted((o1, o2) -> o1.getValue().getIndex() - o2.getValue().getIndex())
+            .sorted(Comparator.comparingInt(o -> o.getValue().getIndex()))
             .map(Map.Entry::getValue)
             .collect(Collectors.toList());
+    }
+
+    @Nullable
+    public GridPage getVerticalGridPage() {
+        @Nullable GridPage page = null;
+        final String unsetPageId = "unset";
+        Cursor cursor = mDB.rawQuery("SELECT * FROM " + TABLE_VERTICAL_GRID_PAGE, null);
+        if (cursor.moveToFirst()) {
+            final int widthColumn = cursor.getColumnIndex(COLUMN_WIDTH);
+            final int heightColumn = cursor.getColumnIndex(COLUMN_HEIGHT);
+            final int width = cursor.getInt(widthColumn);
+            final int height = cursor.getInt(heightColumn);
+            page = new GridPage(new ArrayList<>(), unsetPageId, -1, width, height);
+        }
+        cursor.close();
+        if (page == null) {
+            return null;
+        }
+
+        cursor = mDB.rawQuery("SELECT * FROM " + TABLE_VERTICAL_GRID_ITEM, null);
+        getItems:
+        {
+            if (!cursor.moveToFirst()) {
+                break getItems;
+            }
+
+            final int xColumn = cursor.getColumnIndex(COLUMN_POSITION_X);
+            final int yColumn = cursor.getColumnIndex(COLUMN_POSITION_Y);
+            final int itemIdColumn = cursor.getColumnIndex(COLUMN_ITEM_ID);
+            final int widthColumn = cursor.getColumnIndex(COLUMN_WIDTH);
+            final int heightColumn = cursor.getColumnIndex(COLUMN_HEIGHT);
+            final int typeColumn = cursor.getColumnIndex(COLUMN_GRID_ITEM_TYPE);
+            final int dataStringOneColumn =
+                cursor.getColumnIndex(COLUMN_DATA_STRING_1);
+            final int dataStringTwoColumn =
+                cursor.getColumnIndex(COLUMN_DATA_STRING_2);
+            final int dataIntColumn =
+                cursor.getColumnIndex(COLUMN_DATA_INT_1);
+            while (!cursor.isAfterLast()) {
+                final GridItem gridItem = new GridItem(
+                    cursor.getString(itemIdColumn),
+                    unsetPageId,
+                    cursor.getInt(xColumn),
+                    cursor.getInt(yColumn),
+                    cursor.getInt(widthColumn),
+                    cursor.getInt(heightColumn),
+                    cursor.getInt(typeColumn),
+                    cursor.getString(dataStringOneColumn),
+                    cursor.getString(dataStringTwoColumn),
+                    cursor.getInt(dataIntColumn));
+                page.getItems().add(gridItem);
+                cursor.moveToNext();
+            }
+        }
+        cursor.close();
+        return page;
     }
 
     public void saveGridPages(List<GridPage> gridPages) {
@@ -154,6 +212,15 @@ public class DatabaseEditor {
         for (GridPage gridPage : gridPages) {
             writePage(gridPage);
         }
+        mDB.setTransactionSuccessful();
+        mDB.endTransaction();
+    }
+
+    public void saveVerticalGridPage(GridPage gridPage) {
+        mDB.beginTransaction();
+        mDB.delete(TABLE_VERTICAL_GRID_PAGE, null, null);
+        mDB.delete(TABLE_VERTICAL_GRID_ITEM, null, null);
+        writeVerticalPage(gridPage);
         mDB.setTransactionSuccessful();
         mDB.endTransaction();
     }
@@ -184,14 +251,49 @@ public class DatabaseEditor {
         mDB.insert(TABLE_GRID_PAGE, null, pageCV);
     }
 
+    private void writeVerticalPage(GridPage gridPage) {
+        dropVerticalPage();
+        for (GridItem gridItem : gridPage.getItems()) {
+            final ContentValues itemCV = new ContentValues();
+            itemCV.put(COLUMN_ITEM_ID, gridItem.getID());
+            itemCV.put(COLUMN_POSITION_X, gridItem.getX());
+            itemCV.put(COLUMN_POSITION_Y, gridItem.getY());
+            itemCV.put(COLUMN_HEIGHT, gridItem.getHeight());
+            itemCV.put(COLUMN_WIDTH, gridItem.getWidth());
+            itemCV.put(COLUMN_GRID_ITEM_TYPE, gridItem.getType());
+            itemCV.put(COLUMN_DATA_STRING_1, gridItem.getDS1());
+            itemCV.put(COLUMN_DATA_STRING_2, gridItem.getDS2());
+            itemCV.put(COLUMN_DATA_INT_1, gridItem.getDI());
+            mDB.insert(TABLE_VERTICAL_GRID_ITEM, null, itemCV);
+        }
+
+        final ContentValues pageCV = new ContentValues();
+        pageCV.put(COLUMN_INDEX, gridPage.getIndex());
+        pageCV.put(COLUMN_WIDTH, gridPage.getWidth());
+        pageCV.put(COLUMN_HEIGHT, gridPage.getHeight());
+        mDB.insert(TABLE_VERTICAL_GRID_PAGE, null, pageCV);
+    }
+
     public void dropPage(String pageId) {
         mDB.delete(TABLE_GRID_PAGE, COLUMN_PAGE_ID + "=?", new String[]{pageId});
         mDB.delete(TABLE_GRID_ITEM, COLUMN_PAGE_ID + "=?", new String[]{pageId});
     }
 
+    public void dropVerticalPage() {
+        mDB.delete(TABLE_VERTICAL_GRID_PAGE, null, null);
+        mDB.delete(TABLE_VERTICAL_GRID_ITEM, null, null);
+    }
+
     public void updatePage(GridPage page) {
         mDB.beginTransaction();
         writePage(page);
+        mDB.setTransactionSuccessful();
+        mDB.endTransaction();
+    }
+
+    public void updateVerticalPage(GridPage page) {
+        mDB.beginTransaction();
+        writeVerticalPage(page);
         mDB.setTransactionSuccessful();
         mDB.endTransaction();
     }

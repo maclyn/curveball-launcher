@@ -10,6 +10,9 @@ public class Constants {
     public static final String WEATHER_USE_CELCIUS_PREF = "use_celsius_pref";
 
     public static final String DISABLED_CALENDARS_PREF = "disabled_calendars_pref";
+
+    public static final String VERTICAL_SCROLLER_PREF = "vertical_scroller_pref";
+
     public static final String HAS_SHOWN_NEW_USER_EXPERIENCE = "new_user_pref";
 
     public static final String PACKAGE = "com.inipage.homelylauncher";

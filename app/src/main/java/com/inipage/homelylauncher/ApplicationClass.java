@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 
 import com.inipage.homelylauncher.caches.AppInfoCache;
 import com.inipage.homelylauncher.persistence.DatabaseEditor;
+import com.inipage.homelylauncher.persistence.PrefsHelper;
 import com.inipage.homelylauncher.utils.LifecycleLogUtils;
 
 import static com.inipage.homelylauncher.utils.LifecycleLogUtils.LogType.ERROR;
@@ -92,6 +93,7 @@ public class ApplicationClass extends Application {
         // ApplicationClass
         DatabaseEditor.seed(this);
         AppInfoCache.seed(this);
+        PrefsHelper.seed(this);
     }
 
     @Override

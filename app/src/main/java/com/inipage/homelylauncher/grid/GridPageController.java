@@ -76,7 +76,9 @@ import java.util.Set;
 
 /**
  * The glue between the Views in the grid (GridViewHolder) and the underlying data
- * (GridViewHolders).
+ * (GridViewHolders). Depending on the type of grid that is active (a classic multiple page grid,
+ * or a vertical scrolling grid), this page controller will behave slightly differently depending
+ * on the sub-class implementation.
  */
 public class GridPageController implements BasePageController {
 

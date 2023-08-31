@@ -62,10 +62,8 @@ class CalendarMappedDockItem : DockControllerItem() {
         context ?: return Runnable {}
         return Runnable {
             HiddenCalendarsPickerBottomSheet.show(context) {
-                if (
-                    event != null &&
-                    PrefsHelper.getDisabledCalendars(context).containsKey(event!!.calendarId)
-                ) {
+                val event = event ?: return@show
+                if (PrefsHelper.get().disabledCalendars.containsKey(event.calendarId)) {
                     hideSelf()
                 }
             }

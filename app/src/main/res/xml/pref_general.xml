@@ -20,6 +20,12 @@
         android:key="pref_advanced">
 
         <CheckBoxPreference
+            android:title="@string/vertical_scroller_title"
+            android:summary="@string/vertical_scroller_description"
+            android:key="vertical_scroller_design"
+            />
+
+        <CheckBoxPreference
             android:defaultValue="false"
             android:title="@string/use_celcius"
             android:summary="@string/use_celcius_summary"

@@ -79,7 +79,7 @@ public class CalendarUtils {
             return null;
         }
 
-        Map<Integer, Boolean> disabledCalendars = PrefsHelper.getDisabledCalendars(context);
+        Map<Integer, Boolean> disabledCalendars = PrefsHelper.get().getDisabledCalendars();
         @Nullable Event fallbackEvent = null;
         while (!cursor.isAfterLast()) {
             final int calendarId = cursor.getInt(calendarIdCol);
@@ -161,7 +161,7 @@ public class CalendarUtils {
             return result;
         }
 
-        Map<Integer, Boolean> disabledCalendars = PrefsHelper.getDisabledCalendars(context);
+        Map<Integer, Boolean> disabledCalendars = PrefsHelper.get().getDisabledCalendars();
         while (!cursor.isAfterLast()) {
             final String name = cursor.getString(displayNameStrCol);
             final int id = cursor.getInt(calendarIdIntCol);

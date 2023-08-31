@@ -18,7 +18,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // Database basics
     static final String TAG = "DatabaseHelper";
     static final String DATABASE_NAME = "database.db";
-    static final int DATABASE_VERSION = 15;
+    static final int DATABASE_VERSION = 17;
 
     // Common columns
     static final String COLUMN_ID = "_id";
@@ -61,6 +61,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     static final String COLUMN_DATA_STRING_2 = "ds2";
     static final String COLUMN_DATA_INT_1 = "di1";
 
+    // Vertical grid page
+    // Re-uses: HEIGHT, WIDTH
+    static final String TABLE_VERTICAL_GRID_PAGE = "vertical_grid_page_table";
+
     // Vertical grid item
     // Re-uses: HEIGHT, WIDTH, ITEM_IT, GRID_ITEM_TYPE, POSITION_X, POSITION_Y, DATA_STRING_1, DATA_STRING_2, DATA_INT_1
     static final String TABLE_VERTICAL_GRID_ITEM = "vertical_grid_item_table";
@@ -68,6 +72,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     static final String[] TABLES = new String[]{
         TABLE_GRID_PAGE,
         TABLE_GRID_ITEM,
+        TABLE_VERTICAL_GRID_PAGE,
         TABLE_VERTICAL_GRID_ITEM,
         TABLE_HIDDEN_APPS,
         TABLE_ROWS,
@@ -97,6 +102,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         + "(" + COLUMN_ID + " INTEGER PRIMARY KEY autoincrement, "
         + COLUMN_PAGE_ID + " text not null, "
         + COLUMN_INDEX + " integer not null, "
+        + COLUMN_WIDTH + " integer not null, "
+        + COLUMN_HEIGHT + " integer not null);";
+    private static final String VERTICAL_GRID_PAGE_TABLE_CREATE = "CREATE TABLE "
+        + TABLE_VERTICAL_GRID_PAGE
+        + "(" + COLUMN_ID + " INTEGER PRIMARY KEY autoincrement, "
         + COLUMN_WIDTH + " integer not null, "
         + COLUMN_HEIGHT + " integer not null);";
     private static final String GRID_ITEM_TABLE_CREATE = "CREATE TABLE "
@@ -149,10 +159,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // 15 -> 16 migration
-        if (newVersion == 16 && oldVersion == 15) {
-            LifecycleLogUtils.logEvent(LifecycleLogUtils.LogType.LOG, TAG + " upgrading from 15 to 16");
+        // 15 -> 16/17 migration
+        if (oldVersion == 15) {
+            LifecycleLogUtils.logEvent(LifecycleLogUtils.LogType.LOG, TAG + " upgrading from 15 to newer");
             db.execSQL(VERTICAL_GRID_ITEM_TABLE_CREATE);
+            db.execSQL(VERTICAL_GRID_PAGE_TABLE_CREATE);
+            return;
+        }
+
+        // 16 -> 17 migration
+        if (oldVersion == 16) {
+            LifecycleLogUtils.logEvent(LifecycleLogUtils.LogType.LOG, TAG + " upgrading from 16 to newer");
+            db.execSQL(VERTICAL_GRID_PAGE_TABLE_CREATE);
             return;
         }
 
