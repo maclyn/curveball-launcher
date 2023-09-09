@@ -25,7 +25,7 @@ import com.inipage.homelylauncher.caches.IconCacheSync;
 import com.inipage.homelylauncher.grid.AppViewHolder;
 import com.inipage.homelylauncher.model.ApplicationIcon;
 import com.inipage.homelylauncher.model.ApplicationIconHideable;
-import com.inipage.homelylauncher.model.GridItem;
+import com.inipage.homelylauncher.model.ClassicGridItem;
 import com.inipage.homelylauncher.state.LayoutEditingSingleton;
 import com.inipage.homelylauncher.utils.DebugLogUtils;
 import com.inipage.homelylauncher.utils.InstalledAppUtils;
@@ -594,7 +594,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 final AppViewHolder appViewHolder =
                     new AppViewHolder(
                         mActivity,
-                        GridItem.getNewAppItem(ai));
+                        ClassicGridItem.getNewAppItem(ai));
                 final View draggingView = viewHolder.icon;
                 DecorViewDragger.get(mActivity).startDrag(
                     draggingView, appViewHolder, true, rawX, rawY);

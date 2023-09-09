@@ -1,7 +1,5 @@
 package com.inipage.homelylauncher.model;
 
-import android.util.Log;
-
 import androidx.annotation.Nullable;
 
 import com.inipage.homelylauncher.grid.GridViewHolder;
@@ -10,14 +8,19 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
+/**
+ * Grid item. {@linkplain ClassicGridItem} adds page IDs to this class for use in conventional
+ * multi-page setups.
+ */
 public class GridItem {
 
     public static final int GRID_TYPE_APP = 1; /* Package name, activity name {str@2} */
     public static final int GRID_TYPE_WIDGET = 2; /* Widget ID {int@1} */
-    public static final int GRID_TYPE_SHORTCUT = 3; /* TODO: Implement shortcuts */
+
     // Let the DB autoincrement this
     static final String UNSET_STRING_ID = "unset";
     static final int UNSET_ID = Integer.MIN_VALUE;
+
     private final String mID;
     private final int mType;
     private final String mDS1;
@@ -27,13 +30,11 @@ public class GridItem {
     // These fields can change as GridItems are moved and resized
     private int mX;
     private int mY;
-    private String mPageId;
     private int mWidth;
     private int mHeight;
 
     public GridItem(
         String id,
-        String pageId,
         int x,
         int y,
         int width,
@@ -41,46 +42,17 @@ public class GridItem {
         int type,
         String DS1,
         String DS2,
-        int DI) {
+        int DI)
+    {
         mID = id;
         mX = x;
         mY = y;
-        mPageId = pageId;
         mWidth = width;
         mHeight = height;
         mType = type;
         mDS1 = DS1;
         mDS2 = DS2;
         mDI = DI;
-    }
-
-    public static GridItem getNewWidgetItem(
-        String pageId, int x, int y, int width, int height, int appWidgetID) {
-        return new GridItem(
-            UUID.randomUUID().toString(),
-            pageId,
-            x,
-            y,
-            width,
-            height,
-            GRID_TYPE_WIDGET,
-            null,
-            null,
-            appWidgetID);
-    }
-
-    public static GridItem getNewAppItem(ApplicationIcon app) {
-        return new GridItem(
-            UUID.randomUUID().toString(),
-            UNSET_STRING_ID,
-            UNSET_ID,
-            UNSET_ID,
-            1,
-            1,
-            GRID_TYPE_APP,
-            app.getPackageName(),
-            app.getActivityName(),
-            UNSET_ID);
     }
 
     public boolean isSizeUnset() {
@@ -109,7 +81,6 @@ public class GridItem {
     }
 
     public void resize(GridViewHolder.ResizeDirection direction) {
-        Log.d("MACLYN", "Resizing item in direction = " + direction);
         switch (direction) {
             case UP:
                 mY -= 1;
@@ -142,18 +113,17 @@ public class GridItem {
         }
     }
 
-    public void update(String pageID, int x, int y) {
-        mPageId = pageID;
+    public void update(int x, int y) {
         mX = x;
         mY = y;
     }
 
     // This isn't quite equals
     public boolean equalish(@Nullable Object obj) {
-        if (!(obj instanceof GridItem)) {
+        if (!(obj instanceof ClassicGridItem)) {
             return false;
         }
-        GridItem other = (GridItem) obj;
+        ClassicGridItem other = (ClassicGridItem) obj;
         return other.getID().equals(getID()) &&
             other.getType() == getType() &&
             other.getX() == getX() &&
@@ -186,17 +156,6 @@ public class GridItem {
         return mHeight;
     }
 
-    @NotNull
-    @Override
-    public String toString() {
-        return getX() + "x" + getY() + " on " + getPageId() + "-- Type=" + getType() + " DS=" +
-            getDS1() + ", " + getDS2() + ", " + getDI();
-    }
-
-    public String getPageId() {
-        return mPageId;
-    }
-
     public String getDS1() {
         return mDS1;
     }
@@ -207,5 +166,41 @@ public class GridItem {
 
     public int getDI() {
         return mDI;
+    }
+
+    @NotNull
+    @Override
+    public String toString() {
+        return getX() + "x" + getY() +
+            "-- Type=" + getType() +
+            "-- DS=" + getDS1() + ", " + getDS2() + ", " + getDI();
+    }
+
+    public static GridItem getNewWidgetItem(
+        String pageId, int x, int y, int width, int height, int appWidgetID)
+    {
+        return new GridItem(
+            UUID.randomUUID().toString(),
+            x,
+            y,
+            width,
+            height,
+            GRID_TYPE_WIDGET,
+            null,
+            null,
+            appWidgetID);
+    }
+
+    public static GridItem getNewAppItem(ApplicationIcon app) {
+        return new GridItem(
+            UUID.randomUUID().toString(),
+            UNSET_ID,
+            UNSET_ID,
+            1,
+            1,
+            GRID_TYPE_APP,
+            app.getPackageName(),
+            app.getActivityName(),
+            UNSET_ID);
     }
 }

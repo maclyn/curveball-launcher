@@ -3,16 +3,14 @@ package com.inipage.homelylauncher.dock.items;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
 
 import com.google.common.collect.ImmutableList;
 import com.inipage.homelylauncher.caches.AppInfoCache;
 import com.inipage.homelylauncher.dock.DockControllerItem;
 import com.inipage.homelylauncher.model.ApplicationIconHideable;
 import com.inipage.homelylauncher.model.DockItem;
-import com.inipage.homelylauncher.model.GridItem;
-import com.inipage.homelylauncher.model.GridPage;
+import com.inipage.homelylauncher.model.ClassicGridItem;
+import com.inipage.homelylauncher.model.ClassicGridPage;
 import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.utils.Constants;
 
@@ -56,10 +54,10 @@ public class ContextualAppFetcher {
             .getGridPages()
             .parallelStream()
             .flatMap(
-                (Function<GridPage, Stream<GridItem>>) gridPage ->
+                (Function<ClassicGridPage, Stream<ClassicGridItem>>) gridPage ->
                     gridPage.getItems().parallelStream())
             .filter(gridItem -> gridItem.getType() ==
-                GridItem.GRID_TYPE_APP)
+                ClassicGridItem.GRID_TYPE_APP)
             .map(gridItem -> lookupKey(gridItem.getPackageName(), gridItem.getActivityName()));
 
         mHiddenApps =

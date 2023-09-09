@@ -11,10 +11,12 @@ import com.google.common.collect.ImmutableList;
 import com.inipage.homelylauncher.HomeActivity;
 import com.inipage.homelylauncher.model.ApplicationIconHideable;
 import com.inipage.homelylauncher.model.DockItem;
+import com.inipage.homelylauncher.model.ClassicGridItem;
+import com.inipage.homelylauncher.model.ClassicGridPage;
 import com.inipage.homelylauncher.model.GridItem;
-import com.inipage.homelylauncher.model.GridPage;
 import com.inipage.homelylauncher.model.SwipeApp;
 import com.inipage.homelylauncher.model.SwipeFolder;
+import com.inipage.homelylauncher.model.VerticalGridPage;
 import com.inipage.homelylauncher.utils.Constants;
 
 import java.util.ArrayList;
@@ -76,8 +78,8 @@ public class DatabaseEditor {
     }
 
     // Grid page table
-    public List<GridPage> getGridPages() {
-        final Map<String, GridPage> pageIdToPage = new HashMap<>();
+    public List<ClassicGridPage> getGridPages() {
+        final Map<String, ClassicGridPage> pageIdToPage = new HashMap<>();
         Cursor cursor = mDB.rawQuery(
         "SELECT * FROM " + TABLE_GRID_PAGE + " ORDER BY " + COLUMN_INDEX + " desc",null);
         getPages:
@@ -95,7 +97,7 @@ public class DatabaseEditor {
                 final int index = cursor.getInt(indexColumn);
                 final int width = cursor.getInt(widthColumn);
                 final int height = cursor.getInt(heightColumn);
-                pageIdToPage.put(id, new GridPage(new ArrayList<>(), id, index, width, height));
+                pageIdToPage.put(id, new ClassicGridPage(new ArrayList<>(), id, index, width, height));
                 cursor.moveToNext();
             }
         }
@@ -124,7 +126,7 @@ public class DatabaseEditor {
             final int dataIntColumn =
                 cursor.getColumnIndex(COLUMN_DATA_INT_1);
             while (!cursor.isAfterLast()) {
-                final GridItem gridItem = new GridItem(
+                final ClassicGridItem gridItem = new ClassicGridItem(
                     cursor.getString(itemIdColumn),
                     cursor.getString(pageIdColumn),
                     cursor.getInt(xColumn),
@@ -150,16 +152,15 @@ public class DatabaseEditor {
     }
 
     @Nullable
-    public GridPage getVerticalGridPage() {
-        @Nullable GridPage page = null;
-        final String unsetPageId = "unset";
+    public VerticalGridPage getVerticalGridPage() {
+        @Nullable VerticalGridPage page = null;
         Cursor cursor = mDB.rawQuery("SELECT * FROM " + TABLE_VERTICAL_GRID_PAGE, null);
         if (cursor.moveToFirst()) {
             final int widthColumn = cursor.getColumnIndex(COLUMN_WIDTH);
             final int heightColumn = cursor.getColumnIndex(COLUMN_HEIGHT);
             final int width = cursor.getInt(widthColumn);
             final int height = cursor.getInt(heightColumn);
-            page = new GridPage(new ArrayList<>(), unsetPageId, -1, width, height);
+            page = new VerticalGridPage(new ArrayList<>(), width, height);
         }
         cursor.close();
         if (page == null) {
@@ -188,7 +189,6 @@ public class DatabaseEditor {
             while (!cursor.isAfterLast()) {
                 final GridItem gridItem = new GridItem(
                     cursor.getString(itemIdColumn),
-                    unsetPageId,
                     cursor.getInt(xColumn),
                     cursor.getInt(yColumn),
                     cursor.getInt(widthColumn),
@@ -205,18 +205,18 @@ public class DatabaseEditor {
         return page;
     }
 
-    public void saveGridPages(List<GridPage> gridPages) {
+    public void saveGridPages(List<ClassicGridPage> gridPages) {
         mDB.beginTransaction();
         mDB.delete(TABLE_GRID_PAGE, null, null);
         mDB.delete(TABLE_GRID_ITEM, null, null);
-        for (GridPage gridPage : gridPages) {
+        for (ClassicGridPage gridPage : gridPages) {
             writePage(gridPage);
         }
         mDB.setTransactionSuccessful();
         mDB.endTransaction();
     }
 
-    public void saveVerticalGridPage(GridPage gridPage) {
+    public void saveVerticalGridPage(VerticalGridPage gridPage) {
         mDB.beginTransaction();
         mDB.delete(TABLE_VERTICAL_GRID_PAGE, null, null);
         mDB.delete(TABLE_VERTICAL_GRID_ITEM, null, null);
@@ -225,10 +225,10 @@ public class DatabaseEditor {
         mDB.endTransaction();
     }
 
-    private void writePage(GridPage gridPage) {
+    private void writePage(ClassicGridPage gridPage) {
         dropPage(gridPage.getID());
 
-        for (GridItem gridItem : gridPage.getItems()) {
+        for (ClassicGridItem gridItem : gridPage.getItems()) {
             final ContentValues itemCV = new ContentValues();
             itemCV.put(COLUMN_ITEM_ID, gridItem.getID());
             itemCV.put(COLUMN_PAGE_ID, gridPage.getID());
@@ -251,7 +251,7 @@ public class DatabaseEditor {
         mDB.insert(TABLE_GRID_PAGE, null, pageCV);
     }
 
-    private void writeVerticalPage(GridPage gridPage) {
+    private void writeVerticalPage(VerticalGridPage gridPage) {
         dropVerticalPage();
         for (GridItem gridItem : gridPage.getItems()) {
             final ContentValues itemCV = new ContentValues();
@@ -268,7 +268,6 @@ public class DatabaseEditor {
         }
 
         final ContentValues pageCV = new ContentValues();
-        pageCV.put(COLUMN_INDEX, gridPage.getIndex());
         pageCV.put(COLUMN_WIDTH, gridPage.getWidth());
         pageCV.put(COLUMN_HEIGHT, gridPage.getHeight());
         mDB.insert(TABLE_VERTICAL_GRID_PAGE, null, pageCV);
@@ -284,14 +283,14 @@ public class DatabaseEditor {
         mDB.delete(TABLE_VERTICAL_GRID_ITEM, null, null);
     }
 
-    public void updatePage(GridPage page) {
+    public void updatePage(ClassicGridPage page) {
         mDB.beginTransaction();
         writePage(page);
         mDB.setTransactionSuccessful();
         mDB.endTransaction();
     }
 
-    public void updateVerticalPage(GridPage page) {
+    public void updateVerticalPage(VerticalGridPage page) {
         mDB.beginTransaction();
         writeVerticalPage(page);
         mDB.setTransactionSuccessful();

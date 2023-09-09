@@ -1,6 +1,5 @@
 package com.inipage.homelylauncher.grid;
 
-import android.animation.Animator;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Point;
@@ -9,7 +8,6 @@ import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewPropertyAnimator;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.view.animation.OvershootInterpolator;
@@ -19,12 +17,10 @@ import android.widget.RelativeLayout;
 
 import com.google.common.base.Preconditions;
 import com.inipage.homelylauncher.R;
-import com.inipage.homelylauncher.model.GridItem;
+import com.inipage.homelylauncher.model.ClassicGridItem;
 import com.inipage.homelylauncher.state.LayoutEditingSingleton;
 
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -79,7 +75,7 @@ public abstract class GridViewHolder {
     private static final Interpolator ACC_DEC_INTERPOLATOR = new AccelerateDecelerateInterpolator();
 
     // Subclasses need access to these fields to fill and populate their content
-    protected final GridItem mItem;
+    protected final ClassicGridItem mItem;
     protected final FrameLayout mRootView;
 
     // These are purely imp. details; listener results are sent down to the subclasses
@@ -91,7 +87,7 @@ public abstract class GridViewHolder {
     private Point mQueuedPoint, mQueuedPointPx;
 
     @SuppressLint("InflateParams")
-    public GridViewHolder(Context context, GridItem item) {
+    public GridViewHolder(Context context, ClassicGridItem item) {
         mItem = item;
         mRootView =
             (FrameLayout) LayoutInflater.from(context).inflate(
@@ -146,7 +142,7 @@ public abstract class GridViewHolder {
         mDownHandle.setArrowsEnabled(downIn, down);
     }
 
-    public GridItem getItem() {
+    public ClassicGridItem getItem() {
         return mItem;
     }
 
@@ -256,7 +252,7 @@ public abstract class GridViewHolder {
     }
 
     public void commitTranslationChange() {
-        mItem.update(mItem.getPageId(), mQueuedPoint.x, mQueuedPoint.y);
+        mItem.update(mQueuedPoint.x, mQueuedPoint.y);
         clearQueuedTranslation();
     }
 

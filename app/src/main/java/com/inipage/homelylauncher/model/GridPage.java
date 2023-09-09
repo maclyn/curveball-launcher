@@ -6,43 +6,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class GridPage {
+public abstract class GridPage<GridItemType> {
 
-    private static final int DIMENSION_UNSET = -1;
-    private final String mId;
-    private final int mIndex;
-    private List<GridItem> mItems;
-    private int mWidth;
-    private int mHeight;
+    protected static final int DIMENSION_UNSET = -1;
 
-    public GridPage(List<GridItem> items, String id, int index, int width, int height) {
-        mId = id;
+    protected List<GridItemType> mItems;
+    protected int mWidth;
+    protected int mHeight;
+
+    public GridPage(List<GridItemType> items, int width, int height) {
         mItems = items;
-        mIndex = index;
         mWidth = width;
         mHeight = height;
-    }
-
-    public static GridPage getInitialPage() {
-        return new GridPage(
-            new ArrayList<>(),
-            UUID.randomUUID().toString(),
-            0,
-            DIMENSION_UNSET,
-            DIMENSION_UNSET);
-    }
-
-    public static GridPage spawnNewPage(GridPage template) {
-        return new GridPage(
-            new ArrayList<>(),
-            UUID.randomUUID().toString(),
-            template.getIndex() + 1,
-            template.getWidth(),
-            template.getHeight());
-    }
-
-    public int getIndex() {
-        return mIndex;
     }
 
     public int getWidth() {
@@ -53,11 +28,7 @@ public class GridPage {
         return mHeight;
     }
 
-    public String getID() {
-        return mId;
-    }
-
-    public List<GridItem> getItems() {
+    public List<GridItemType> getItems() {
         return mItems;
     }
 
@@ -68,9 +39,5 @@ public class GridPage {
     /**
      * Set width and height of this page's grid based on the container size.
      */
-    public void sizeFromContainer(GridMetrics gridMetrics) {
-        mHeight = gridMetrics.getRowCount();
-        mWidth = gridMetrics.getColumnCount();
-        mItems = new ArrayList<>();
-    }
+    public abstract void sizeFromContainer(GridMetrics gridMetrics);
 }

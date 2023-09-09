@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.inipage.homelylauncher.R;
 import com.inipage.homelylauncher.drawer.AppDrawerController;
 import com.inipage.homelylauncher.grid.GridPageController;
-import com.inipage.homelylauncher.model.GridPage;
+import com.inipage.homelylauncher.model.ClassicGridPage;
 import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.state.EditingEvent;
 import com.inipage.homelylauncher.state.PagesChangedEvent;
@@ -37,7 +37,7 @@ public class HomePager extends RecyclerView.Adapter<HomePager.PagerHolder> {
     private static final int VIEW_TYPE_APP_DRAWER = 0;
     private static final int VIEW_TYPE_GRID_PAGE = 1;
     private final Host mHost;
-    private final List<GridPage> mGridPages;
+    private final List<ClassicGridPage> mGridPages;
     private final AppDrawerController mAppDrawerController;
     private final List<GridPageController> mGridPageControllers;
     private final Map<String, GridPageController> mGridPageIdToController;
@@ -47,12 +47,12 @@ public class HomePager extends RecyclerView.Adapter<HomePager.PagerHolder> {
         mAppDrawerController = new AppDrawerController(host, rootView);
         mGridPages = DatabaseEditor.get().getGridPages();
         if (mGridPages.isEmpty()) {
-            mGridPages.add(GridPage.getInitialPage());
+            mGridPages.add(ClassicGridPage.getInitialPage());
             DatabaseEditor.get().saveGridPages(mGridPages);
         }
         mGridPageControllers = new ArrayList<>();
         mGridPageIdToController = new HashMap<>();
-        for (GridPage page : mGridPages) {
+        for (ClassicGridPage page : mGridPages) {
             final GridPageController gridPageController = new GridPageController(host, page, false);
             mGridPageIdToController.put(page.getID(), gridPageController);
             mGridPageControllers.add(gridPageController);
@@ -63,8 +63,8 @@ public class HomePager extends RecyclerView.Adapter<HomePager.PagerHolder> {
     }
 
     public void spawnNewPage() {
-        final GridPage newPage =
-            GridPage.spawnNewPage(mGridPages.get(mGridPages.size() - 1));
+        final ClassicGridPage newPage =
+            ClassicGridPage.spawnNewPage(mGridPages.get(mGridPages.size() - 1));
         mGridPages.add(newPage);
         final GridPageController newController = new GridPageController(mHost, newPage, true);
         mGridPageIdToController.put(newPage.getID(), newController);
@@ -81,10 +81,10 @@ public class HomePager extends RecyclerView.Adapter<HomePager.PagerHolder> {
         }
 
         // Drop empty pages
-        Set<GridPage> pagesToDrop = new HashSet<>();
+        Set<ClassicGridPage> pagesToDrop = new HashSet<>();
         Set<GridPageController> controllersToDrop = new HashSet<>();
         for (int i = 0; i < mGridPages.size(); i++) {
-            GridPage page = mGridPages.get(i);
+            ClassicGridPage page = mGridPages.get(i);
             if (page.getItems().isEmpty() && i != 0) {
                 final GridPageController controllerToRemove = mGridPageControllers.get(i);
                 controllersToDrop.add(controllerToRemove);
