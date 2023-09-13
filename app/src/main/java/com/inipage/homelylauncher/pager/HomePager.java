@@ -6,13 +6,18 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.inipage.homelylauncher.R;
 import com.inipage.homelylauncher.drawer.AppDrawerController;
-import com.inipage.homelylauncher.grid.GridPageController;
+import com.inipage.homelylauncher.grid.BaseGridPageController;
+import com.inipage.homelylauncher.grid.ClassicGridPageController;
+import com.inipage.homelylauncher.grid.VerticalGridPageController;
 import com.inipage.homelylauncher.model.ClassicGridPage;
+import com.inipage.homelylauncher.model.VerticalGridPage;
 import com.inipage.homelylauncher.persistence.DatabaseEditor;
+import com.inipage.homelylauncher.persistence.PrefsHelper;
 import com.inipage.homelylauncher.state.EditingEvent;
 import com.inipage.homelylauncher.state.PagesChangedEvent;
 import com.inipage.homelylauncher.utils.ViewUtils;
@@ -34,39 +39,63 @@ import java.util.Set;
  */
 public class HomePager extends RecyclerView.Adapter<HomePager.PagerHolder> {
 
+    public interface Host extends AppDrawerController.Host, BaseGridPageController.Host {}
+
     private static final int VIEW_TYPE_APP_DRAWER = 0;
     private static final int VIEW_TYPE_GRID_PAGE = 1;
     private final Host mHost;
-    private final List<ClassicGridPage> mGridPages;
     private final AppDrawerController mAppDrawerController;
-    private final List<GridPageController> mGridPageControllers;
-    private final Map<String, GridPageController> mGridPageIdToController;
+
+    // Classic design
+    private List<ClassicGridPage> mGridPages;
+    private List<ClassicGridPageController> mGridPageControllers;
+    private Map<String, ClassicGridPageController> mGridPageIdToController;
+
+    // Vertical scroller design
+    private VerticalGridPage mVerticalGridPage;
+    private BaseGridPageController mVerticalPageController;
 
     public HomePager(final Host host, final ViewGroup rootView) {
         mHost = host;
         mAppDrawerController = new AppDrawerController(host, rootView);
-        mGridPages = DatabaseEditor.get().getGridPages();
-        if (mGridPages.isEmpty()) {
-            mGridPages.add(ClassicGridPage.getInitialPage());
-            DatabaseEditor.get().saveGridPages(mGridPages);
+
+        if (usingVScrollDesign()) {
+            mVerticalGridPage = DatabaseEditor.get().getVerticalGridPage();
+            if (mVerticalGridPage == null) {
+                mVerticalGridPage = VerticalGridPage.getInitialPage();
+                DatabaseEditor.get().saveVerticalGridPage(mVerticalGridPage);
+            }
+            mVerticalPageController = new VerticalGridPageController(host, mVerticalGridPage);
+        } else {
+            mGridPages = DatabaseEditor.get().getGridPages();
+            if (mGridPages.isEmpty()) {
+                mGridPages.add(ClassicGridPage.getInitialPage());
+                DatabaseEditor.get().saveGridPages(mGridPages);
+            }
+            mGridPageControllers = new ArrayList<>();
+            mGridPageIdToController = new HashMap<>();
+            for (ClassicGridPage page : mGridPages) {
+                final ClassicGridPageController gridPageController =
+                    new ClassicGridPageController(host, page, false);
+                mGridPageIdToController.put(page.getID(), gridPageController);
+                mGridPageControllers.add(gridPageController);
+            }
         }
-        mGridPageControllers = new ArrayList<>();
-        mGridPageIdToController = new HashMap<>();
-        for (ClassicGridPage page : mGridPages) {
-            final GridPageController gridPageController = new GridPageController(host, page, false);
-            mGridPageIdToController.put(page.getID(), gridPageController);
-            mGridPageControllers.add(gridPageController);
-        }
+
         if (!EventBus.getDefault().isRegistered(this)) {
             EventBus.getDefault().register(this);
         }
     }
 
     public void spawnNewPage() {
+        if (PrefsHelper.usingVScroll()) {
+            return;
+        }
         final ClassicGridPage newPage =
             ClassicGridPage.spawnNewPage(mGridPages.get(mGridPages.size() - 1));
         mGridPages.add(newPage);
-        final GridPageController newController = new GridPageController(mHost, newPage, true);
+        final ClassicGridPageController newController =
+            new ClassicGridPageController(mHost, newPage, true);
         mGridPageIdToController.put(newPage.getID(), newController);
         mGridPageControllers.add(newController);
         DatabaseEditor.get().saveGridPages(mGridPages);
@@ -79,14 +108,17 @@ public class HomePager extends RecyclerView.Adapter<HomePager.PagerHolder> {
         if (event.isEditing()) {
             return;
         }
+        if (PrefsHelper.usingVScroll()) {
+            return;
+        }
 
         // Drop empty pages
         Set<ClassicGridPage> pagesToDrop = new HashSet<>();
-        Set<GridPageController> controllersToDrop = new HashSet<>();
+        Set<BaseGridPageController> controllersToDrop = new HashSet<>();
         for (int i = 0; i < mGridPages.size(); i++) {
             ClassicGridPage page = mGridPages.get(i);
             if (page.getItems().isEmpty() && i != 0) {
-                final GridPageController controllerToRemove = mGridPageControllers.get(i);
+                final BaseGridPageController controllerToRemove = mGridPageControllers.get(i);
                 controllersToDrop.add(controllerToRemove);
                 DatabaseEditor.get().dropPage(page.getID());
                 mGridPageIdToController.remove(page.getID());
@@ -126,7 +158,7 @@ public class HomePager extends RecyclerView.Adapter<HomePager.PagerHolder> {
             holder.attachPageController(getAppDrawerController());
             return;
         }
-        final GridPageController relevantController = mGridPageControllers.get(position - 1);
+        final BaseGridPageController relevantController = usingVScrollDesign() ? mVerticalPageController : mGridPageControllers.get(position - 1);
         relevantController.bind(holder.mainView);
         holder.attachPageController(relevantController);
     }
@@ -141,7 +173,7 @@ public class HomePager extends RecyclerView.Adapter<HomePager.PagerHolder> {
 
     @Override
     public int getItemCount() {
-        return mGridPageControllers.size() + 1;
+        return usingVScrollDesign() ? 2 : mGridPageControllers.size() + 1;
     }
 
     @Override
@@ -166,15 +198,15 @@ public class HomePager extends RecyclerView.Adapter<HomePager.PagerHolder> {
         return mAppDrawerController;
     }
 
-    public GridPageController getGridController(String id) {
-        return mGridPageIdToController.get(id);
+    public BaseGridPageController getGridController(@Nullable String id) {
+        return usingVScrollDesign() ? mVerticalPageController : mGridPageIdToController.get(id);
     }
 
     public BasePageController getPageController(int index) {
         if (index == 0) {
             return mAppDrawerController;
         }
-        return mGridPageControllers.get(index - 1);
+        return usingVScrollDesign() ? mVerticalPageController : mGridPageControllers.get(index - 1);
     }
 
     public float getWallpaperOffsetSteps() {
@@ -186,7 +218,8 @@ public class HomePager extends RecyclerView.Adapter<HomePager.PagerHolder> {
         return (selectedItem * delta) + (offset * delta);
     }
 
-    public interface Host extends AppDrawerController.Host, GridPageController.Host {
+    private boolean usingVScrollDesign() {
+        return PrefsHelper.usingVScroll();
     }
 
     public static class PagerHolder extends RecyclerView.ViewHolder {

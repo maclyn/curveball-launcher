@@ -43,11 +43,10 @@ import com.inipage.homelylauncher.R;
 import com.inipage.homelylauncher.caches.AppInfoCache;
 import com.inipage.homelylauncher.caches.PackageModifiedEvent;
 import com.inipage.homelylauncher.model.ApplicationIconHideable;
-import com.inipage.homelylauncher.model.ClassicGridItem;
-import com.inipage.homelylauncher.model.ClassicGridPage;
+import com.inipage.homelylauncher.model.GridItem;
+import com.inipage.homelylauncher.model.GridPage;
 import com.inipage.homelylauncher.pager.BasePageController;
 import com.inipage.homelylauncher.pager.GesturePageLayout;
-import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.state.EditingEvent;
 import com.inipage.homelylauncher.state.GridDropFailedEvent;
 import com.inipage.homelylauncher.state.LayoutEditingSingleton;
@@ -76,14 +75,12 @@ import java.util.Set;
 
 /**
  * The glue between the Views in the grid (GridViewHolder) and the underlying data
- * (GridViewHolders). Depending on the type of grid that is active (a classic multiple page grid,
- * or a vertical scrolling grid), this page controller will behave slightly differently depending
- * on the sub-class implementation.
+ * (GridViewHolders).
  */
-public class GridPageController implements BasePageController {
+public abstract class BaseGridPageController implements BasePageController {
 
     private final Host mHost;
-    private final ClassicGridPage mPage;
+    private final GridPage<GridItem> mPage;
     private final GridViewHolderHost mGridItemHost;
     private final boolean mStartInEditing;
     private final DragListener mDragListener;
@@ -98,7 +95,7 @@ public class GridPageController implements BasePageController {
     private int mAdditionX;
     private int mAdditionY;
 
-    public GridPageController(Host host, ClassicGridPage page, boolean startInEditing) {
+    public BaseGridPageController(Host host, GridPage<GridItem> page, boolean startInEditing) {
         mHost = host;
         mPage = page;
         mDragListener = new DragListener(host.getContext());
@@ -159,7 +156,7 @@ public class GridPageController implements BasePageController {
         mContainer.setClickable(true);
         mContainer.setLongClickable(true);
         mContainer.post(mAnimatedBackgroundGrid::requestLayout);
-        for (ClassicGridItem item : mPage.getItems()) {
+        for (GridItem item : mPage.getItems()) {
             addItem(item);
         }
         validateGrid("Initial grid load");
@@ -170,16 +167,23 @@ public class GridPageController implements BasePageController {
         }
     }
 
-    private void commitPage() {
-        DatabaseEditor.get().updatePage(mPage);
-    }
+    abstract void commitPage();
 
-    private void addItem(ClassicGridItem item) {
+    abstract boolean isItemOnPage(GridItem item);
+
+    @Nullable
+    abstract String getPageId();
+
+    abstract GridItem buildWidgetItem(int x, int y, int width, int height, int widgetId);
+
+    abstract void updateItemToPage(GridItem item);
+
+    private void addItem(GridItem item) {
         switch (item.getType()) {
-            case ClassicGridItem.GRID_TYPE_APP:
+            case GridItem.GRID_TYPE_APP:
                 addAppItem(item);
                 break;
-            case ClassicGridItem.GRID_TYPE_WIDGET:
+            case GridItem.GRID_TYPE_WIDGET:
                 addWidgetItem(item);
                 break;
         }
@@ -203,13 +207,13 @@ public class GridPageController implements BasePageController {
     }
 
     //region GridItem specific code
-    private void addAppItem(ClassicGridItem gridItem) {
+    private void addAppItem(GridItem gridItem) {
         final GridViewHolder gridViewHolder =
             new AppViewHolder(mRootContainer.getContext(), gridItem);
         addViewHolder(gridViewHolder);
     }
 
-    private void addWidgetItem(ClassicGridItem gridItem) {
+    private void addWidgetItem(GridItem gridItem) {
         final int appWidgetId = gridItem.getDI();
         @Nullable final AppWidgetProviderInfo awpi =
             getAppWidgetManager().getAppWidgetInfo(appWidgetId);
@@ -242,8 +246,8 @@ public class GridPageController implements BasePageController {
         List<String> violations = new ArrayList<>();
 
         // Build map of ID -> item
-        final Map<String, ClassicGridItem> dbIdToItem = new HashMap<>();
-        for (ClassicGridItem item : mPage.getItems()) {
+        final Map<String, GridItem> dbIdToItem = new HashMap<>();
+        for (GridItem item : mPage.getItems()) {
             dbIdToItem.put(item.getID(), item);
         }
 
@@ -366,8 +370,8 @@ public class GridPageController implements BasePageController {
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onGridDropFailed(GridDropFailedEvent event) {
         final GridViewHolder holder = event.getGridViewHolder();
-        final ClassicGridItem item = holder.getItem();
-        if (!item.getPageId().equals(mPage.getID())) {
+        final GridItem item = holder.getItem();
+        if (!isItemOnPage(item)) {
             return;
         }
         mPage.getItems().add(item);
@@ -479,7 +483,7 @@ public class GridPageController implements BasePageController {
                 final boolean bindTest = getAppWidgetManager().bindAppWidgetIdIfAllowed(
                     mPendingAppWidgetId, awpi.provider);
                 if (!bindTest) {
-                    mHost.requestBindWidget(mPage.getID(), mPendingAppWidgetId, awpi);
+                    mHost.requestBindWidget(getPageId(), mPendingAppWidgetId, awpi);
                     return;
                 }
                 onBindWidgetSucceeded();
@@ -492,7 +496,7 @@ public class GridPageController implements BasePageController {
             commitPendingWidgetAddition();
             return;
         }
-        mHost.requestConfigureWidget(mPage.getID(), mPendingAppWidgetId, mPendingAwpi);
+        mHost.requestConfigureWidget(getPageId(), mPendingAppWidgetId, mPendingAwpi);
     }
 
     public void commitPendingWidgetAddition() {
@@ -504,13 +508,13 @@ public class GridPageController implements BasePageController {
         final int y = mAdditionY;
         final int gridWidth = mMetrics.getMinColumnCountForWidget(awpi);
         final int gridHeight = mMetrics.getMinRowCountForWidget(awpi);
-        final ClassicGridItem widgetItem = ClassicGridItem.getNewWidgetItem(
-            mPage.getID(),
-            x,
-            y,
-            gridWidth,
-            gridHeight,
-            mPendingAppWidgetId);
+        final GridItem widgetItem =
+            buildWidgetItem(
+                x,
+                y,
+                gridWidth,
+                gridHeight,
+                mPendingAppWidgetId);
         mPage.getItems().add(widgetItem);
         addWidgetItem(widgetItem);
         mPendingAppWidgetId = mAdditionX = mAdditionY = -1;
@@ -520,15 +524,15 @@ public class GridPageController implements BasePageController {
     }
 
     private void log(String tag, String contents) {
-        DebugLogUtils.needle(tag, "page=" + mPage.getIndex(), contents);
+        DebugLogUtils.needle(tag, "page=" + getPageId(), contents);
     }
 
     public interface Host {
         Activity getContext();
 
-        void requestBindWidget(String pageId, int appWidgetId, AppWidgetProviderInfo awpi);
+        void requestBindWidget(@Nullable String pageId, int appWidgetId, AppWidgetProviderInfo awpi);
 
-        void requestConfigureWidget(String pageId, int appWidgetId, AppWidgetProviderInfo awpi);
+        void requestConfigureWidget(@Nullable String pageId, int appWidgetId, AppWidgetProviderInfo awpi);
 
         void forwardSwipeUp(MotionEvent event, float deltaY);
     }
@@ -607,7 +611,7 @@ public class GridPageController implements BasePageController {
             }
 
             final GridViewHolder viewHolder = (GridViewHolder) event.getLocalState();
-            final ClassicGridItem gridItem = viewHolder.getItem();
+            final GridItem gridItem = viewHolder.getItem();
             switch (event.getAction()) {
                 case ACTION_DRAG_STARTED:
                     log(TAG_ICON_CASCADE, "Drag started received");
@@ -645,11 +649,12 @@ public class GridPageController implements BasePageController {
                         final Point targetCell = new Point(columnCell, rowCell);
                         @Nullable Set<GridViewHolder> naiveSolution = null;
                         try {
-                            naiveSolution = mHolderMap.solveForTranslationsToFitMovement(
-                                targetCell,
-                                mLastCellCommitted,
-                                mLastCellDraggedOver,
-                                gridItem);
+                            naiveSolution =
+                                mHolderMap.solveForTranslationsToFitMovement(
+                                    targetCell,
+                                    mLastCellCommitted,
+                                    mLastCellDraggedOver,
+                                    gridItem);
                         } catch (Exception solvedFailure) {
                             log(TAG_DRAG_OFFSET, "Failed to solve for movement: " + solvedFailure.toString());
                         }
@@ -695,7 +700,7 @@ public class GridPageController implements BasePageController {
             // DragEvent.getX() and DragEvent.getY() are already relative to the receiving view --
             // in this case, mContainer
             final GridViewHolder viewHolder = (GridViewHolder) event.getLocalState();
-            final ClassicGridItem gridItem = viewHolder.getItem();
+            final GridItem gridItem = viewHolder.getItem();
             final int cellWidth = mMetrics.getCellWidthPx();
             final int cellHeight = mMetrics.getCellHeightPx();
 
@@ -727,7 +732,7 @@ public class GridPageController implements BasePageController {
         }
 
         private void maybeCommitDragChanges(int x, int y, GridViewHolder holder) {
-            final ClassicGridItem gridItem = holder.getItem();
+            final GridItem gridItem = holder.getItem();
             if (mHolderMap.isAreaOccupied(x, y, gridItem.getWidth(), gridItem.getHeight())) {
                 Toast.makeText(
                     mContainer.getContext(),
@@ -737,7 +742,7 @@ public class GridPageController implements BasePageController {
             } else {
                 // Fix up item; x/y/pageId could all be wrong
                 gridItem.update(x, y);
-                gridItem.updatePageId(mPage.getID());
+                updateItemToPage(gridItem);
                 mPage.getItems().add(gridItem);
                 addItem(gridItem);
                 commitPage();
@@ -825,15 +830,6 @@ public class GridPageController implements BasePageController {
                 return true;
             }
 
-            // If it's a shortcut, start moving it
-            if (!(gridViewHolder instanceof AppViewHolder)) {
-                if (!isEditing) {
-                    LayoutEditingSingleton.getInstance().setEditing(true);
-                }
-                beginDragOnHolder(gridViewHolder, rawX, rawY);
-                return true;
-            }
-
             return false;
         }
 
@@ -888,10 +884,10 @@ public class GridPageController implements BasePageController {
 
         @Override
         public String getItemDescription(GridViewHolder viewHolder) {
-            ClassicGridItem item = viewHolder.getItem();
-            if (item.getType() == ClassicGridItem.GRID_TYPE_APP) {
+            GridItem item = viewHolder.getItem();
+            if (item.getType() == GridItem.GRID_TYPE_APP) {
                 return "App=" + item.getPackageName() + "/" + item.getActivityName();
-            } else if (item.getType() == ClassicGridItem.GRID_TYPE_WIDGET) {
+            } else if (item.getType() == GridItem.GRID_TYPE_WIDGET) {
                 @Nullable final AppWidgetProviderInfo awpi =
                     getAppWidgetManager().getAppWidgetInfo(item.getWidgetID());
                 if (awpi != null) {

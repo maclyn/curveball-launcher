@@ -18,6 +18,7 @@ import android.widget.RelativeLayout;
 import com.google.common.base.Preconditions;
 import com.inipage.homelylauncher.R;
 import com.inipage.homelylauncher.model.ClassicGridItem;
+import com.inipage.homelylauncher.model.GridItem;
 import com.inipage.homelylauncher.state.LayoutEditingSingleton;
 
 import java.util.Objects;
@@ -75,7 +76,7 @@ public abstract class GridViewHolder {
     private static final Interpolator ACC_DEC_INTERPOLATOR = new AccelerateDecelerateInterpolator();
 
     // Subclasses need access to these fields to fill and populate their content
-    protected final ClassicGridItem mItem;
+    protected final GridItem mItem;
     protected final FrameLayout mRootView;
 
     // These are purely imp. details; listener results are sent down to the subclasses
@@ -87,7 +88,7 @@ public abstract class GridViewHolder {
     private Point mQueuedPoint, mQueuedPointPx;
 
     @SuppressLint("InflateParams")
-    public GridViewHolder(Context context, ClassicGridItem item) {
+    public GridViewHolder(Context context, GridItem item) {
         mItem = item;
         mRootView =
             (FrameLayout) LayoutInflater.from(context).inflate(
@@ -142,7 +143,7 @@ public abstract class GridViewHolder {
         mDownHandle.setArrowsEnabled(downIn, down);
     }
 
-    public ClassicGridItem getItem() {
+    public GridItem getItem() {
         return mItem;
     }
 

@@ -9,12 +9,13 @@ import android.widget.TextView;
 
 import com.inipage.homelylauncher.R;
 import com.inipage.homelylauncher.model.ClassicGridItem;
+import com.inipage.homelylauncher.model.GridItem;
 
 public class MissingViewHolder extends GridViewHolder {
 
     private final TextView mDeadView;
 
-    public MissingViewHolder(Context context, ClassicGridItem item) {
+    public MissingViewHolder(Context context, GridItem item) {
         super(context, item);
         mDeadView = new TextView(context);
         mDeadView.setText(R.string.installed_widget_app_missing);

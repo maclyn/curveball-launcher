@@ -14,6 +14,7 @@ import com.inipage.homelylauncher.caches.IconCacheSync;
 import com.inipage.homelylauncher.drawer.BitmapView;
 import com.inipage.homelylauncher.model.ApplicationIcon;
 import com.inipage.homelylauncher.model.ClassicGridItem;
+import com.inipage.homelylauncher.model.GridItem;
 import com.inipage.homelylauncher.utils.InstalledAppUtils;
 
 public class AppViewHolder extends GridViewHolder {
@@ -21,7 +22,7 @@ public class AppViewHolder extends GridViewHolder {
     private final BitmapView mBitmapView;
     private final TextView mLabelView;
 
-    public AppViewHolder(Context context, ClassicGridItem gridItem) {
+    public AppViewHolder(Context context, GridItem gridItem) {
         super(context, gridItem);
 
         final LayoutInflater inflater = LayoutInflater.from(context);

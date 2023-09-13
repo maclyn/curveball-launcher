@@ -176,8 +176,7 @@ public class GridItem {
             "-- DS=" + getDS1() + ", " + getDS2() + ", " + getDI();
     }
 
-    public static GridItem getNewWidgetItem(
-        String pageId, int x, int y, int width, int height, int appWidgetID)
+    public static GridItem getNewWidgetItem(int x, int y, int width, int height, int appWidgetID)
     {
         return new GridItem(
             UUID.randomUUID().toString(),

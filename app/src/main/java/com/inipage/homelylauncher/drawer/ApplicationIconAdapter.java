@@ -86,11 +86,11 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         }
 
         static AdapterElement createTopElement() {
-            return new AdapterElement(null, TOP_HEADER_BACKING_CHAR, ITEM_VIEW_TYPE_TOP_HEADER, 0);
+            return new AdapterElement(null, TOP_HEADER_BACKING_CHAR, ITEM_VIEW_TYPE_TOP, 0);
         }
 
         static AdapterElement createHeaderElement(char index) {
-            return new AdapterElement(null, index, ITEM_VIEW_TYPE_LETTER_HEADER, 0);
+            return new AdapterElement(null, index, ITEM_VIEW_TYPE_HEADER, 0);
         }
 
         static AdapterElement createSpacerElement(char header, int index) {
@@ -109,7 +109,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
         public char getUnderlyingHeaderChar() {
             Preconditions.checkState(
-                mElementType == ITEM_VIEW_TYPE_LETTER_HEADER ||
+                mElementType == ITEM_VIEW_TYPE_HEADER ||
                 mElementType == ITEM_VIEW_TYPE_SPACER);
             return mUnderlyingHeaderChar;
         }
@@ -129,9 +129,9 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             switch (mElementType) {
                 case ITEM_VIEW_TYPE_APP:
                     return "App element for " + getUnderlyingApp().toString();
-                case ITEM_VIEW_TYPE_TOP_HEADER:
+                case ITEM_VIEW_TYPE_TOP:
                     return "Topmost header";
-                case ITEM_VIEW_TYPE_LETTER_HEADER:
+                case ITEM_VIEW_TYPE_HEADER:
                     return "Letter header for " + getUnderlyingHeaderChar();
                 case ITEM_VIEW_TYPE_SPACER:
                     return "Spacer for " + getUnderlyingHeaderChar() + "/" + getSpacingIndex();
@@ -152,11 +152,11 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             switch (mElementType) {
                 case ITEM_VIEW_TYPE_APP:
                     return getUnderlyingApp().equals(other.getUnderlyingApp());
-                case ITEM_VIEW_TYPE_LETTER_HEADER:
+                case ITEM_VIEW_TYPE_HEADER:
                 case ITEM_VIEW_TYPE_SPACER:
                     return getUnderlyingHeaderChar() == other.getUnderlyingHeaderChar() &&
                         getSpacingIndex() == other.getSpacingIndex();
-                case ITEM_VIEW_TYPE_TOP_HEADER:
+                case ITEM_VIEW_TYPE_TOP:
                 default:
                     return true;
             }
@@ -167,10 +167,12 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         @Override
         public int compare(AdapterElement o1, AdapterElement o2) {
             // Top header and anything else -> easy
-            if (o1.getElementType() == ITEM_VIEW_TYPE_TOP_HEADER && o2.getElementType() != ITEM_VIEW_TYPE_TOP_HEADER) {
+            if (o1.getElementType() == ITEM_VIEW_TYPE_TOP && o2.getElementType() !=
+                ITEM_VIEW_TYPE_TOP) {
                 return -1;
             }
-            if (o1.getElementType() != ITEM_VIEW_TYPE_TOP_HEADER && o2.getElementType() == ITEM_VIEW_TYPE_TOP_HEADER) {
+            if (o1.getElementType() != ITEM_VIEW_TYPE_TOP && o2.getElementType() ==
+                ITEM_VIEW_TYPE_TOP) {
                 return 1;
             }
 
@@ -180,7 +182,8 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             }
 
             // Two headers -- easy, compare character
-            if (o1.getElementType() == ITEM_VIEW_TYPE_LETTER_HEADER && o2.getElementType() == ITEM_VIEW_TYPE_LETTER_HEADER) {
+            if (o1.getElementType() == ITEM_VIEW_TYPE_HEADER && o2.getElementType() ==
+                ITEM_VIEW_TYPE_HEADER) {
                 return FastScrollable.getCharComparator().compare(o1.getUnderlyingHeaderChar(), o2.getUnderlyingHeaderChar());
             }
 
@@ -195,7 +198,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             }
 
             // lhs = header/spacer, rhs = app
-            if ((o1.getElementType() == ITEM_VIEW_TYPE_LETTER_HEADER ||
+            if ((o1.getElementType() == ITEM_VIEW_TYPE_HEADER ||
                 o1.getElementType() == ITEM_VIEW_TYPE_SPACER) &&
                     o2.getElementType() == ITEM_VIEW_TYPE_APP) {
                 char header = o1.getUnderlyingHeaderChar();
@@ -211,7 +214,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
             // lhs = app, rhs = header/spacer
             if (o1.getElementType() == ITEM_VIEW_TYPE_APP &&
-                    (o2.getElementType() == ITEM_VIEW_TYPE_LETTER_HEADER ||
+                    (o2.getElementType() == ITEM_VIEW_TYPE_HEADER ||
                         o2.getElementType() == ITEM_VIEW_TYPE_SPACER)) {
                 char appHeader = o1.getUnderlyingApp().getScrollableField();
                 char header = o2.getUnderlyingHeaderChar();
@@ -235,8 +238,8 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     }
 
     private static final int ITEM_VIEW_TYPE_APP = 1;
-    private static final int ITEM_VIEW_TYPE_TOP_HEADER = 2;
-    private static final int ITEM_VIEW_TYPE_LETTER_HEADER = 3;
+    private static final int ITEM_VIEW_TYPE_TOP = 2;
+    private static final int ITEM_VIEW_TYPE_HEADER = 3;
     private static final int ITEM_VIEW_TYPE_SPACER = 4;
     private static final char TOP_HEADER_BACKING_CHAR = '?';
 
@@ -383,7 +386,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         int netOffsetFromAddRemove = 0;
         for (int i = mColumnCount; i < mElements.size(); i++) {
             AdapterElement element = mElements.get(i);
-            if (element.getElementType() == ITEM_VIEW_TYPE_LETTER_HEADER) {
+            if (element.getElementType() == ITEM_VIEW_TYPE_HEADER) {
                 AdapterElement previousElement = mElements.get(i - 1);
                 if (usingGridLayout()) {
                     if (previousElement.getElementType() == ITEM_VIEW_TYPE_SPACER &&
@@ -391,7 +394,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                         // Walk back, and delete
                     }
                 } else {
-                    if (previousElement.getElementType() == ITEM_VIEW_TYPE_LETTER_HEADER) {
+                    if (previousElement.getElementType() == ITEM_VIEW_TYPE_HEADER) {
                         // We've seen two headers in a row; trim the one right before
                         changeIndices.add(new Pair<>(
                             i - 1 + netOffsetFromAddRemove,
@@ -442,10 +445,11 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         if (position == -1) {
             return;
         }
-        final boolean hasHeaderAbove = mElements.get(position - 1).getElementType() == ITEM_VIEW_TYPE_LETTER_HEADER;
+        final boolean hasHeaderAbove = mElements.get(position - 1).getElementType() ==
+            ITEM_VIEW_TYPE_HEADER;
         final boolean lastItemInSection = position == mElements.size() - 1 ?
           hasHeaderAbove :
-          mElements.get(position + 1).getElementType() == ITEM_VIEW_TYPE_LETTER_HEADER;
+          mElements.get(position + 1).getElementType() == ITEM_VIEW_TYPE_HEADER;
         mElements.remove(position);
         mAppsTree.remove(searchKey.getName().toLowerCase(Locale.getDefault()));
         String headerMapKey = String.valueOf(searchKey.getScrollableField());
@@ -493,7 +497,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                             .inflate(R.layout.application_icon, viewGroup, false);
                 return new AppIconHolder(rootView);
             }
-            case ITEM_VIEW_TYPE_LETTER_HEADER: {
+            case ITEM_VIEW_TYPE_HEADER: {
                 final View rootView =
                         LayoutInflater.from(viewGroup.getContext())
                             .inflate(R.layout.letter_header_row, viewGroup, false);
@@ -503,7 +507,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 final View view = new View(viewGroup.getContext());
                 return new SpacerHolder(view);
             }
-            case ITEM_VIEW_TYPE_TOP_HEADER:
+            case ITEM_VIEW_TYPE_TOP:
             default: {
                 final View rootView =
                         LayoutInflater.from(viewGroup.getContext())
@@ -518,7 +522,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     public synchronized void onBindViewHolder(final RecyclerView.ViewHolder holder, int i) {
         final int itemViewType = getItemViewType(i);
 
-        if (itemViewType == ITEM_VIEW_TYPE_TOP_HEADER) {
+        if (itemViewType == ITEM_VIEW_TYPE_TOP) {
             final TopHeaderHolder headerHolder = (TopHeaderHolder) holder;
             final Context context = headerHolder.installCount.getContext();
             final SpannableString headerText =
@@ -532,7 +536,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             headerHolder.installCount.setText(headerText);
             return;
         }
-        if (itemViewType == ITEM_VIEW_TYPE_LETTER_HEADER) {
+        if (itemViewType == ITEM_VIEW_TYPE_HEADER) {
             final LetterHolder letterHolder = (LetterHolder) holder;
             String underlyingCharacter = String.valueOf(mElements.get(i).getUnderlyingHeaderChar());
             letterHolder.title.setHeaderChar(underlyingCharacter);
@@ -610,9 +614,9 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     @Override
     public synchronized long getItemId(int position) {
         switch (getItemViewType(position)) {
-            case ITEM_VIEW_TYPE_TOP_HEADER:
+            case ITEM_VIEW_TYPE_TOP:
                 return HEADER_ITEM_ID;
-            case ITEM_VIEW_TYPE_LETTER_HEADER:
+            case ITEM_VIEW_TYPE_HEADER:
                 return mElements.get(position).getUnderlyingHeaderChar();
             case ITEM_VIEW_TYPE_SPACER:
                 return mElements.get(position).getUnderlyingHeaderChar() +
@@ -638,7 +642,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         letter = Character.toLowerCase(letter);
         for (int i = 0; i < mElements.size(); i++) {
             AdapterElement element = mElements.get(i);
-            if (element.getElementType() != ITEM_VIEW_TYPE_LETTER_HEADER) {
+            if (element.getElementType() != ITEM_VIEW_TYPE_HEADER) {
                 continue;
             }
             if (Character.toLowerCase(element.getUnderlyingHeaderChar()) != letter) {

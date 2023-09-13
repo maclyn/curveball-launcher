@@ -15,11 +15,10 @@ import androidx.annotation.Nullable;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
- * Places {@linkplain GridViewHolder}s on the {@linkplain GridPageController}.
+ * Places {@linkplain GridViewHolder}s on the {@linkplain BaseGridPageController}.
  */
 public class GridChoreographer {
 

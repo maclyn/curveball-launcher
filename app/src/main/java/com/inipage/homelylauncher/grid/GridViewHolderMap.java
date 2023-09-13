@@ -7,6 +7,7 @@ import android.util.Pair;
 import androidx.annotation.Nullable;
 
 import com.inipage.homelylauncher.model.ClassicGridItem;
+import com.inipage.homelylauncher.model.GridItem;
 import com.inipage.homelylauncher.utils.DebugLogUtils;
 
 import java.util.ArrayDeque;
@@ -51,7 +52,7 @@ public class GridViewHolderMap {
     }
 
     private void addHolderToGrid(GridViewHolder viewHolder) {
-        final ClassicGridItem gridItem = viewHolder.getItem();
+        final GridItem gridItem = viewHolder.getItem();
         final int startX = gridItem.getX();
         final int startY = gridItem.getY();
         final int endX = startX + gridItem.getWidth();
@@ -65,7 +66,7 @@ public class GridViewHolderMap {
 
     public void removeHolder(GridViewHolder gridViewHolder) {
         mItems.remove(gridViewHolder);
-        final ClassicGridItem gridItem = gridViewHolder.getItem();
+        final GridItem gridItem = gridViewHolder.getItem();
         final int startX = gridItem.getX();
         final int startY = gridItem.getY();
         final int endX = startX + gridItem.getWidth();
@@ -97,7 +98,7 @@ public class GridViewHolderMap {
 
     public boolean canItemExpandOutInDirection(
         GridViewHolder viewHolder, GridViewHolder.ResizeDirection direction) {
-        ClassicGridItem item = viewHolder.getItem();
+        GridItem item = viewHolder.getItem();
         final int x = item.getX();
         final int y = item.getY();
         final int width = item.getWidth();
@@ -246,7 +247,8 @@ public class GridViewHolderMap {
         Point targetCell,
         @Nullable Point lastCommittedCell,
         @Nullable Point lastTargetCell,
-        ClassicGridItem draggedItem) {
+        GridItem draggedItem)
+    {
         final int height = draggedItem.getHeight();
         final int width = draggedItem.getWidth();
         DebugLogUtils.needle(
@@ -327,7 +329,7 @@ public class GridViewHolderMap {
                         }
                         while (!holdersToMove.isEmpty()) {
                             GridViewHolder holder = holdersToMove.pop();
-                            ClassicGridItem item = holder.getItem();
+                            GridItem item = holder.getItem();
                             final int targetX = item.getX();
                             int targetY = Integer.MAX_VALUE;
                             for (
@@ -401,7 +403,7 @@ public class GridViewHolderMap {
                         }
                         while (!holdersToMove.isEmpty()) {
                             GridViewHolder holder = holdersToMove.pop();
-                            ClassicGridItem item = holder.getItem();
+                            GridItem item = holder.getItem();
                             final int targetX = item.getX();
                             int targetY = Integer.MIN_VALUE;
                             for (
@@ -467,7 +469,7 @@ public class GridViewHolderMap {
                         }
                         while (!holdersToMove.isEmpty()) {
                             GridViewHolder holder = holdersToMove.pop();
-                            ClassicGridItem item = holder.getItem();
+                            GridItem item = holder.getItem();
                             final int targetY = item.getY();
                             int targetX = Integer.MAX_VALUE;
                             for (
@@ -542,7 +544,7 @@ public class GridViewHolderMap {
                         }
                         while (!holdersToMove.isEmpty()) {
                             GridViewHolder holder = holdersToMove.pop();
-                            ClassicGridItem item = holder.getItem();
+                            GridItem item = holder.getItem();
                             final int targetY = item.getY();
                             int targetX = Integer.MIN_VALUE;
                             for (

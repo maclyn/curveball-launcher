@@ -2,7 +2,6 @@ package com.inipage.homelylauncher;
 
 import static android.view.DragEvent.ACTION_DRAG_ENDED;
 import static android.view.DragEvent.ACTION_DRAG_ENTERED;
-import static android.view.DragEvent.ACTION_DRAG_EXITED;
 import static android.view.DragEvent.ACTION_DRAG_LOCATION;
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
@@ -24,15 +23,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.util.Log;
 import android.util.Pair;
 import android.view.DragEvent;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.HorizontalScrollView;
-import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -47,7 +43,7 @@ import com.inipage.homelylauncher.caches.IconCacheSync;
 import com.inipage.homelylauncher.dock.DockController;
 import com.inipage.homelylauncher.dock.ForwardingContainer;
 import com.inipage.homelylauncher.drawer.HideAppEvent;
-import com.inipage.homelylauncher.grid.GridPageController;
+import com.inipage.homelylauncher.grid.BaseGridPageController;
 import com.inipage.homelylauncher.grid.GridViewHolder;
 import com.inipage.homelylauncher.model.ApplicationIcon;
 import com.inipage.homelylauncher.pager.BasePageController;
@@ -247,7 +243,7 @@ public class HomeActivity extends AppCompatActivity implements
                             mSwitchPageHandler.queueLeftSwitch();
                         } else if (event.getRawX() > switchPosition) {
                             @Nullable
-                            final GridPageController currentPage = getSelectedGridPage();
+                            final BaseGridPageController currentPage = getSelectedGridPage();
                             if (currentPage != null && !currentPage.isEmptyPage() && !mSyntheticScrolling) {
                                 mSwitchPageHandler.queueRightSwitch();
                             }
@@ -443,10 +439,10 @@ public class HomeActivity extends AppCompatActivity implements
     }
 
     @Nullable
-    private GridPageController getSelectedGridPage() {
+    private BaseGridPageController getSelectedGridPage() {
         final BasePageController pageController = mPager.getPageController(pagerView.getCurrentItem());
-        if (pageController instanceof GridPageController) {
-            return (GridPageController) pageController;
+        if (pageController instanceof BaseGridPageController) {
+            return (BaseGridPageController) pageController;
         }
         return null;
     }
@@ -458,7 +454,8 @@ public class HomeActivity extends AppCompatActivity implements
 
     @Override
     public void requestBindWidget(
-        String pageId, int appWidgetId, AppWidgetProviderInfo appWidgetProviderInfo) {
+        String pageId, int appWidgetId, AppWidgetProviderInfo appWidgetProviderInfo)
+    {
         mPendingGridPageId = pageId;
 
         final Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_BIND);
@@ -639,8 +636,8 @@ public class HomeActivity extends AppCompatActivity implements
     public void clearActiveDragTarget() {
         final BasePageController pageController =
             mPager.getPageController(pagerView.getCurrentItem());
-        if (pageController instanceof GridPageController) {
-            ((GridPageController) pageController).clearDragTarget();
+        if (pageController instanceof BaseGridPageController) {
+            ((BaseGridPageController) pageController).clearDragTarget();
         }
     }
 

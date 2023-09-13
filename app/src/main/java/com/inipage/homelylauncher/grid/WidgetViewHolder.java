@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import com.inipage.homelylauncher.model.ClassicGridItem;
+import com.inipage.homelylauncher.model.GridItem;
 
 public class WidgetViewHolder extends GridViewHolder {
 
@@ -16,7 +17,8 @@ public class WidgetViewHolder extends GridViewHolder {
     public WidgetViewHolder(
         AppWidgetHostView hostView,
         AppWidgetProviderInfo widgetProviderInfo,
-        ClassicGridItem gridItem) {
+        GridItem gridItem)
+    {
         super(hostView.getContext(), gridItem);
         mWidgetHostView = hostView;
         mAppWidgetProviderInfo = widgetProviderInfo;
