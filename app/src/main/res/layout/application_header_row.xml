@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="?selectableItemBackground"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:padding="8dp"
     android:gravity="center_vertical">
 
@@ -22,4 +22,10 @@
         android:fontFamily="sans-serif-thin"
         android:textSize="32sp" />
 
+    <LinearLayout
+        android:id="@+id/group_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        />
 </LinearLayout>

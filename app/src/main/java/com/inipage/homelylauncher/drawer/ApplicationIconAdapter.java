@@ -7,11 +7,15 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.TextAppearanceSpan;
 import android.util.Pair;
+import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -26,6 +30,8 @@ import com.inipage.homelylauncher.grid.AppViewHolder;
 import com.inipage.homelylauncher.model.ApplicationIcon;
 import com.inipage.homelylauncher.model.ApplicationIconHideable;
 import com.inipage.homelylauncher.model.ClassicGridItem;
+import com.inipage.homelylauncher.model.SwipeFolder;
+import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.state.LayoutEditingSingleton;
 import com.inipage.homelylauncher.utils.DebugLogUtils;
 import com.inipage.homelylauncher.utils.InstalledAppUtils;
@@ -40,6 +46,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.annotation.ElementType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -234,6 +241,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     private enum Mode {
         SHOWING_ALL,
+        SHOWING_GROUP,
         SEARCH_RESULTS
     }
 
@@ -245,20 +253,27 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     private static final int HEADER_ITEM_ID = 0;
 
+    private static final int HEADER_TOP_GROUP_DESELECTED_ALPHA = 180;
+    private static final int HEADER_TOP_GROUP_SELECTED_ALPHA = 255;
+
+
     private final Delegate mDelegate;
     private final List<ApplicationIconHideable> mApps;
+    private final List<SwipeFolder> mGroups;
     private final PatriciaTrie<ApplicationIconHideable> mAppsTree = new PatriciaTrie<>();
     private final Map<String, Integer> mHeaderToCount = new HashMap<>();
     private final Activity mActivity;
     private final int mColumnCount;
 
     private List<AdapterElement> mElements;
+    @Nullable private SwipeFolder mSelectedFolder;
     @Nullable
     private List<ApplicationIconHideable> mLastSearchResult;
     private Mode mMode;
 
     public ApplicationIconAdapter(Delegate delegate, Activity activity, int columnCount) {
         this.mApps = AppInfoCache.get().getAppDrawerActivities();
+        this.mGroups = DatabaseEditor.get().getGestureFavorites();
         for (ApplicationIconHideable icon : mApps) {
             mAppsTree.put(icon.getName().toLowerCase(Locale.getDefault()), icon);
             Prewarmer.getInstance().prewarm(() ->
@@ -280,10 +295,34 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     @SuppressLint("NotifyDataSetChanged")
     public synchronized boolean performSearch(String query) {
         mMode = Mode.SEARCH_RESULTS;
+        mSelectedFolder = null;
         if (rebuild(query)) {
             notifyDataSetChanged();
         }
         return !mElements.isEmpty();
+    }
+
+    public synchronized void showGroup(SwipeFolder group) {
+        assert(mMode != Mode.SEARCH_RESULTS);
+
+        Mode oldMode = mMode;
+        mMode = Mode.SHOWING_GROUP;
+        mSelectedFolder = group;
+        notifyItemChanged(0);
+
+        if (oldMode == Mode.SHOWING_GROUP) {
+            rebuild(null);
+        }
+        for (int i = 1; i < mElements.size(); i++) {
+            AdapterElement element = mElements.get(i);
+            if (element.getElementType() != ITEM_VIEW_TYPE_APP ||
+                !group.doesContainApp(element.getUnderlyingApp()))
+            {
+                mElements.remove(i);
+                notifyItemRemoved(i);
+                i--;
+            }
+        }
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -523,6 +562,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         final int itemViewType = getItemViewType(i);
 
         if (itemViewType == ITEM_VIEW_TYPE_TOP) {
+            // Count of apps
             final TopHeaderHolder headerHolder = (TopHeaderHolder) holder;
             final Context context = headerHolder.installCount.getContext();
             final SpannableString headerText =
@@ -534,6 +574,22 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 String.valueOf(mApps.size()).length(),
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             headerHolder.installCount.setText(headerText);
+
+            // Group selection view
+            headerHolder.groupContainer.removeAllViews();
+            int addedCount = 0;
+            LinearLayout currentContainer =
+                getGroupViewHorizontalLayout(headerHolder.groupContainer);
+            for (SwipeFolder folder : mGroups) {
+                currentContainer.addView(getGroupView(currentContainer, folder, folder == mSelectedFolder));
+                addedCount++;
+                if (addedCount > 5) {
+                    headerHolder.groupContainer.addView(currentContainer);
+                    currentContainer = getGroupViewHorizontalLayout(headerHolder.groupContainer);
+                    addedCount = 0;
+                }
+            }
+            headerHolder.groupContainer.addView(currentContainer);
             return;
         }
         if (itemViewType == ITEM_VIEW_TYPE_HEADER) {
@@ -756,12 +812,47 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         return mColumnCount > 1;
     }
 
+    private View getGroupView(View parent, SwipeFolder folder, boolean isSelected) {
+        FrameLayout itemContainer = new FrameLayout(parent.getContext(), null);
+        ImageView groupFolderView = new ImageView(itemContainer.getContext(), null);
+        int appIconSize =
+            parent.getContext().getResources().getDimensionPixelSize(R.dimen.app_drawer_group_icon_size);
+        FrameLayout.LayoutParams groupFolderViewParams =
+            new FrameLayout.LayoutParams(appIconSize, appIconSize);
+        groupFolderViewParams.gravity = Gravity.CENTER;
+        groupFolderView.setImageBitmap(folder.getIcon(parent.getContext()));
+        groupFolderView.setImageAlpha(
+            isSelected ?
+                HEADER_TOP_GROUP_SELECTED_ALPHA :
+                HEADER_TOP_GROUP_DESELECTED_ALPHA);
+        groupFolderView.setOnClickListener(v -> showGroup(folder));
+        itemContainer.addView(groupFolderView);
+
+        LinearLayout.LayoutParams itemContainerLayoutParams =
+            new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        itemContainerLayoutParams.weight = 1.0F;
+        itemContainer.setLayoutParams(itemContainerLayoutParams);
+
+        return itemContainer;
+    }
+
+    private LinearLayout getGroupViewHorizontalLayout(View parent) {
+        LinearLayout linearLayout = new LinearLayout(parent.getContext());
+        linearLayout.setOrientation(LinearLayout.HORIZONTAL);
+        linearLayout.setLayoutParams(
+            new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        return linearLayout;
+    }
+
     public static class TopHeaderHolder extends AnimatableViewHolder {
         TextView installCount;
+        LinearLayout groupContainer;
 
         public TopHeaderHolder(View view) {
             super(view);
             this.installCount = ViewCompat.requireViewById(view, R.id.installed_apps_count);
+            this.groupContainer = ViewCompat.requireViewById(view, R.id.group_container);
         }
     }
 
