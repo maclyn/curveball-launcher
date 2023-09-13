@@ -793,9 +793,15 @@ public abstract class BaseGridPageController implements BasePageController {
                     AppViewHolder appViewHolder = (AppViewHolder) gridViewHolder;
                     mRootContainer.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
                     mShowingMenu = true;
+
+                    // Center on the menu on center of the app icon
+                    appViewHolder.getDragView().getLocationOnScreen(out);
+                    int viewWidth = appViewHolder.getDragView().getMeasuredWidth();
+                    int viewHeight = appViewHolder.getDragView().getMeasuredHeight();
+
                     new AppPopupMenu().show(
-                        rawX,
-                        rawY,
+                        out[0] + (viewWidth / 2),
+                        out[1] + (viewHeight / 2),
                         true,
                         mRootContainer.getContext(),
                         appViewHolder.getAppIcon(),

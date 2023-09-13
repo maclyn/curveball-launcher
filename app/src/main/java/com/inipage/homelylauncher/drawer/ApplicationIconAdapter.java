@@ -570,9 +570,13 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 }
                 mainView.getParent().requestDisallowInterceptTouchEvent(true);
                 mainView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+                final int[] out = new int[2];
+                int viewWidth = mainView.getMeasuredWidth();
+                int viewHeight = mainView.getMeasuredHeight();
+                mainView.getLocationOnScreen(out);
                 new AppPopupMenu().show(
-                    startX,
-                    startY,
+                    out[0] + (viewWidth / 2),
+                    out[1] + (viewHeight / 2),
                     false,
                     mainView.getContext(),
                     ai,
