@@ -10,6 +10,7 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import androidx.core.view.marginTop
 import com.inipage.homelylauncher.R
 import com.inipage.homelylauncher.utils.ViewUtils
 import com.inipage.homelylauncher.views.DecorViewManager
@@ -120,7 +121,13 @@ class FastScrollController(private val host: Host) {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 Gravity.CENTER
-            )
+            ).also {
+                val reachabilityPadding =
+                    if (ViewUtils.isPhablet(context)) ViewUtils.diagonalSize(context) * 0.2
+                    else 0
+                it.setMargins(0, reachabilityPadding.toInt()
+                    , 0, 0)
+            }
         )
     }
 

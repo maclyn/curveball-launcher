@@ -8,6 +8,12 @@
     android:padding="8dp"
     android:gravity="center_vertical">
 
+    <View
+        android:id="@+id/reachability_padding"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        />
+
     <TextView
         android:id="@+id/installed_apps_count"
         android:layout_width="match_parent"

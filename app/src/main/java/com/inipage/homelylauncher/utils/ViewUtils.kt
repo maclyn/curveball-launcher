@@ -6,6 +6,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.res.Configuration
+import android.graphics.Point
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.view.*
@@ -13,6 +14,9 @@ import androidx.core.content.ContextCompat
 import com.inipage.homelylauncher.R
 import java.io.IOException
 import java.lang.IllegalArgumentException
+import java.lang.Math.pow
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 object ViewUtils {
     private var IS_SQUARISH_DEVICE: Boolean? = null
@@ -140,6 +144,32 @@ object ViewUtils {
     fun isTablet(context: Context): Boolean {
         return context.resources.configuration.screenLayout and
                 Configuration.SCREENLAYOUT_SIZE_XLARGE > 0
+    }
+
+    @JvmStatic
+    fun isPhablet(context: Context): Boolean {
+        val screenLayout = context.resources.configuration.screenLayout
+        val matchesAttrs =
+            screenLayout and Configuration.SCREENLAYOUT_LONG_MASK == Configuration.SCREENLAYOUT_LONG_YES
+        val diag = diagonalSize(context)
+        return matchesAttrs && diag >= 5.0 && diag <= 6.95
+    }
+
+    @JvmStatic
+    fun diagonalSize(context: Context): Double {
+        val displayPixels = screenSize(context)
+        val displayMetrics = context.resources.displayMetrics
+        val widthInches = displayPixels.x / displayMetrics.xdpi
+        val heightInches = displayPixels.y / displayMetrics.ydpi
+        return sqrt(widthInches.toDouble().pow(2.0) + heightInches.toDouble().pow(2.0))
+    }
+
+    @JvmStatic
+    fun screenSize(context: Context): Point {
+        val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val displayPixels = Point()
+        wm.defaultDisplay.getRealSize(displayPixels)
+        return displayPixels
     }
 
     fun getDrawableFromAssetPNG(context: Context, assetId: String): Drawable? {

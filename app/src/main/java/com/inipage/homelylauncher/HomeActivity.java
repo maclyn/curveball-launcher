@@ -46,6 +46,7 @@ import com.inipage.homelylauncher.drawer.HideAppEvent;
 import com.inipage.homelylauncher.grid.BaseGridPageController;
 import com.inipage.homelylauncher.grid.GridViewHolder;
 import com.inipage.homelylauncher.model.ApplicationIcon;
+import com.inipage.homelylauncher.model.SwipeFolder;
 import com.inipage.homelylauncher.pager.BasePageController;
 import com.inipage.homelylauncher.pager.HomePager;
 import com.inipage.homelylauncher.pager.NonTouchInputCoordinator;
@@ -555,6 +556,11 @@ public class HomeActivity extends AppCompatActivity implements
     @Override
     public void editFolderOrder() {
         mPocketController.editFolderOrder();
+    }
+
+    @Override
+    public void editFolder(SwipeFolder folder) {
+        // TODO
     }
 
     @Override

@@ -42,6 +42,7 @@ import com.inipage.homelylauncher.caches.PackagesBulkModifiedEvent;
 import com.inipage.homelylauncher.grid.AppViewHolder;
 import com.inipage.homelylauncher.model.ApplicationIcon;
 import com.inipage.homelylauncher.model.ApplicationIconHideable;
+import com.inipage.homelylauncher.model.SwipeFolder;
 import com.inipage.homelylauncher.pager.BasePageController;
 import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.utils.InstalledAppUtils;
@@ -173,6 +174,11 @@ public class AppDrawerController implements BasePageController, FastScrollContro
             return mUsingGridLayoutByDefault && !mIsSearching ?
                    mGridLayoutManager.getItemCount() :
                    mLinearLayoutManager.getItemCount();
+        }
+
+        @Override
+        public void setItemAnimator(RecyclerView.ItemAnimator animator) {
+            appRecyclerView.setItemAnimator(animator);
         }
     };
 
@@ -592,6 +598,8 @@ public class AppDrawerController implements BasePageController, FastScrollContro
     public interface Host {
 
         void editFolderOrder();
+
+        void editFolder(SwipeFolder folder);
 
         void requestAppDrawerFocus();
     }

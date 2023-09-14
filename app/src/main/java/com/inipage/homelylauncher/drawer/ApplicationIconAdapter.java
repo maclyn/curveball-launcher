@@ -20,6 +20,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.view.ViewCompat;
+import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.common.base.Preconditions;
@@ -37,6 +38,7 @@ import com.inipage.homelylauncher.utils.DebugLogUtils;
 import com.inipage.homelylauncher.utils.InstalledAppUtils;
 import com.inipage.homelylauncher.utils.LifecycleLogUtils;
 import com.inipage.homelylauncher.utils.Prewarmer;
+import com.inipage.homelylauncher.utils.ViewUtils;
 import com.inipage.homelylauncher.views.AppPopupMenu;
 import com.inipage.homelylauncher.views.DecorViewDragger;
 import com.inipage.homelylauncher.views.DecorViewManager;
@@ -75,6 +77,8 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         int getLastIndexOnScreen();
 
         int getTotalCount();
+
+        void setItemAnimator(RecyclerView.ItemAnimator animator);
     }
 
     private static class AdapterElement {
@@ -305,9 +309,15 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     public synchronized void showGroup(SwipeFolder group) {
         assert(mMode != Mode.SEARCH_RESULTS);
 
+        if (group == mSelectedFolder) {
+            leaveGroupSelection();
+            return;
+        }
+
         Mode oldMode = mMode;
         mMode = Mode.SHOWING_GROUP;
         mSelectedFolder = group;
+        mDelegate.setItemAnimator(null);
         notifyItemChanged(0);
 
         if (oldMode == Mode.SHOWING_GROUP) {
@@ -323,6 +333,15 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 i--;
             }
         }
+    }
+
+    public synchronized void leaveGroupSelection() {
+        mMode = Mode.SHOWING_ALL;
+        mLastSearchResult = null;
+        mSelectedFolder = null;
+        rebuild(null);
+        notifyDataSetChanged();
+        mDelegate.setItemAnimator(new DefaultItemAnimator());
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -562,9 +581,17 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         final int itemViewType = getItemViewType(i);
 
         if (itemViewType == ITEM_VIEW_TYPE_TOP) {
-            // Count of apps
             final TopHeaderHolder headerHolder = (TopHeaderHolder) holder;
             final Context context = headerHolder.installCount.getContext();
+
+            // Reachability padding
+            // ~1/3 screen height if needed
+            final boolean isPhablet = ViewUtils.isPhablet(context);
+            ViewUtils.setHeight(
+                headerHolder.reachabilityPadding,
+                isPhablet ? (int) (ViewUtils.screenSize(context).y / 3.5F) : 0);
+
+            // Count of apps
             final SpannableString headerText =
                 new SpannableString(
                     context.getResources().getString(R.string.header_app_count, mApps.size()));
@@ -583,6 +610,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             for (SwipeFolder folder : mGroups) {
                 currentContainer.addView(getGroupView(currentContainer, folder, folder == mSelectedFolder));
                 addedCount++;
+                // >6, break off a new row
                 if (addedCount > 5) {
                     headerHolder.groupContainer.addView(currentContainer);
                     currentContainer = getGroupViewHorizontalLayout(headerHolder.groupContainer);
@@ -848,11 +876,13 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     public static class TopHeaderHolder extends AnimatableViewHolder {
         TextView installCount;
         LinearLayout groupContainer;
+        View reachabilityPadding;
 
         public TopHeaderHolder(View view) {
             super(view);
             this.installCount = ViewCompat.requireViewById(view, R.id.installed_apps_count);
             this.groupContainer = ViewCompat.requireViewById(view, R.id.group_container);
+            this.reachabilityPadding = ViewCompat.requireViewById(view, R.id.reachability_padding);
         }
     }
 
