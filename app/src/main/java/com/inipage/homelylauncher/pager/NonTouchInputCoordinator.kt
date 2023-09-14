@@ -30,8 +30,6 @@ class NonTouchInputCoordinator(private val host: Host, private val context: Acti
 
         fun getPager(): HomePager
 
-        fun isPocketExpanded(): Boolean
-
         fun isAlphabeticalPickerOpen(): Boolean
 
         // "Setters"
@@ -48,8 +46,6 @@ class NonTouchInputCoordinator(private val host: Host, private val context: Acti
     }
 
     enum class NonTouchInputMessage {
-        EXPAND_POCKET,
-        COLLAPSE_POCKET,
         EXPAND_STATUS_BAR,
         SWITCH_RIGHT,
         SWITCH_LEFT,
@@ -96,13 +92,7 @@ class NonTouchInputCoordinator(private val host: Host, private val context: Acti
                 val isVerticalScroll = abs(yDelta) > abs(xDelta)
                 if (isVerticalScroll) {
                     if (yDelta > 0 && !host.isOnAppDrawer()) {
-                        if (host.isPocketExpanded()) {
-                            queueMessage(NonTouchInputMessage.COLLAPSE_POCKET)
-                        } else {
-                            queueMessage(NonTouchInputMessage.EXPAND_STATUS_BAR)
-                        }
-                    } else if (!host.isOnAppDrawer()) {
-                        queueMessage(NonTouchInputMessage.EXPAND_POCKET)
+                        queueMessage(NonTouchInputMessage.EXPAND_STATUS_BAR)
                     }
                 } else {
                     if (xDelta > 0) {
@@ -176,10 +166,6 @@ class NonTouchInputCoordinator(private val host: Host, private val context: Acti
 
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             if (DecorViewManager.get(context).detachTopView()) {
-                return true
-            }
-            if (host.isPocketExpanded()) {
-                runMessageImmediately(NonTouchInputMessage.COLLAPSE_POCKET)
                 return true
             }
             if (host.isOnAppDrawer()) {

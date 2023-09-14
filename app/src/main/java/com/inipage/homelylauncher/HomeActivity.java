@@ -29,6 +29,7 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -55,7 +56,6 @@ import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.persistence.PrefsHelper;
 import com.inipage.homelylauncher.pocket.PocketController;
 import com.inipage.homelylauncher.pocket.PocketControllerDropView;
-import com.inipage.homelylauncher.pocket.PocketOpenArrowView;
 import com.inipage.homelylauncher.state.EditingEvent;
 import com.inipage.homelylauncher.state.GridDropFailedEvent;
 import com.inipage.homelylauncher.state.LayoutEditingSingleton;
@@ -104,10 +104,6 @@ public class HomeActivity extends AppCompatActivity implements
     View backgroundTint;
     @BindView(R.id.top_scrim_gradient)
     View scrimGradient;
-    @BindView(R.id.pocket_view_container)
-    ForwardingContainer pocketContainer;
-    @BindView(R.id.bottom_indicator)
-    PocketOpenArrowView pocketIdleView;
     @BindView(R.id.pocket_drop_view)
     PocketControllerDropView pocketDropView;
     @BindView(R.id.pager_indicator_view)
@@ -118,8 +114,8 @@ public class HomeActivity extends AppCompatActivity implements
     View bottomScrim;
     @BindView(R.id.dock_container)
     RecyclerView dockView;
-    @BindView(R.id.forwarding_container)
-    ForwardingContainer forwardingContainer;
+    @BindView(R.id.dock_element_container)
+    RelativeLayout dockElementContainer;
     @BindView(R.id.pager_view)
     ViewPager2 pagerView;
 
@@ -135,17 +131,17 @@ public class HomeActivity extends AppCompatActivity implements
             if (position == 0) {
                 updateBackgroundAlpha(1 - positionOffset);
                 mPager.getAppDrawerController().getView().setAlpha(1 - positionOffset);
-                forwardingContainer.setTranslationX(
-                    forwardingContainer.getWidth() - positionOffsetPixels);
-                forwardingContainer.setAlpha(positionOffset);
+                dockElementContainer.setTranslationX(
+                    dockElementContainer.getWidth() - positionOffsetPixels);
+                dockElementContainer.setAlpha(positionOffset);
                 if (!mSyntheticScrolling) {
                     mPager.getAppDrawerController().quitSearch();
                 }
             } else if (position >= 1) {
                 dockView.setAlpha(1);
-                forwardingContainer.setAlpha(1);
+                dockElementContainer.setAlpha(1);
                 updateBackgroundAlpha(0);
-                forwardingContainer.setTranslationX(0);
+                dockElementContainer.setTranslationX(0);
             }
 
             // Fade each page in/out
@@ -307,7 +303,6 @@ public class HomeActivity extends AppCompatActivity implements
             ViewUtils.setHeight(HomeActivity.this.bottomScrim, bottomScrim);
             rootView.addOnLayoutChangeListener(mFirstLayoutListener);
             rootView.requestLayout();
-            mPocketController.applyScrims(topScrim, bottomScrim);
             // New user experience
             if (PrefsHelper.get().checkAndUpdateIsNewUser()) {
                 new NewUserBottomSheet(this).show();
@@ -322,12 +317,7 @@ public class HomeActivity extends AppCompatActivity implements
         mPocketController = new PocketController(
             getContext(),
             this,
-            pocketContainer,
-            dockView,
-            pocketDropView,
-            pocketIdleView);
-        forwardingContainer.setForwardingListener(mPocketController);
-        pocketContainer.setForwardingListener(mPocketController);
+            pocketDropView);
     }
 
     @Override
@@ -388,12 +378,6 @@ public class HomeActivity extends AppCompatActivity implements
     @Override
     public void commitNonTouchInput(@NonNull NonTouchInputCoordinator.NonTouchInputMessage msg) {
         switch (msg) {
-            case EXPAND_POCKET:
-                mPocketController.expand();
-                break;
-            case COLLAPSE_POCKET:
-                mPocketController.collapse();
-                break;
             case EXPAND_STATUS_BAR:
                 StatusBarUtils.expandStatusBar(this);
                 break;
@@ -488,7 +472,7 @@ public class HomeActivity extends AppCompatActivity implements
         if (LayoutEditingSingleton.getInstance().isEditing()) {
             return;
         }
-        mPocketController.onForwardEvent(event, -deltaY);
+        // TODO: This probably needs to be purged for vertical grid controllers to work
     }
 
     @SuppressLint("UseCompatLoadingForDrawables")
@@ -516,10 +500,6 @@ public class HomeActivity extends AppCompatActivity implements
         super.onNewIntent(intent);
         if (intent.getAction().equals(Intent.ACTION_MAIN)) {
             if (DecorViewManager.get(this).detachAllViews()) {
-                return;
-            }
-            if (mPocketController.isExpanded()) {
-                mPocketController.collapse();
                 return;
             }
             if (!isOnFirstHomeScreen()) {
@@ -593,52 +573,6 @@ public class HomeActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onPartiallyExpandedPocket(float percent) {
-        DebugLogUtils.needle(TAG_POCKET_ANIMATION, "onPartiallyExpandedPocket " + percent);
-
-        forwardingContainer.setVisibility(VISIBLE);
-        dockView.setAlpha(1 - percent);
-        pagerIndicatorView.setAlpha(1 - percent);
-        pocketIdleView.setAlpha(1 - percent);
-        pagerView.setAlpha(1 - percent);
-        pagerView.setScaleX(1 - (percent * PocketController.scaleDelta));
-        pagerView.setScaleY(1 - (percent * PocketController.scaleDelta));
-        pagerView.setTranslationY(-actuationDistance * percent);
-
-        updateBackgroundAlpha(percent);
-    }
-
-    @Override
-    public void onPocketExpanded() {
-        DebugLogUtils.needle(TAG_POCKET_ANIMATION, "onPocketExpanded");
-
-        forwardingContainer.setVisibility(GONE);
-        dockView.setAlpha(0);
-        pagerIndicatorView.setAlpha(0);
-        pocketIdleView.setAlpha(0);
-        pagerView.setAlpha(0);
-        pagerView.setScaleX(1 - PocketController.scaleDelta);
-        pagerView.setScaleY(1 - PocketController.scaleDelta);
-        pagerView.setTranslationY(-actuationDistance);
-        updateBackgroundAlpha(1);
-    }
-
-    @Override
-    public void onPocketCollapsed() {
-        DebugLogUtils.needle(TAG_POCKET_ANIMATION, "onPocketCollapsed");
-
-        forwardingContainer.setVisibility(VISIBLE);
-        dockView.setAlpha(1);
-        pagerIndicatorView.setAlpha(1);
-        pocketIdleView.setAlpha(1);
-        pagerView.setAlpha(1);
-        pagerView.setScaleX(1);
-        pagerView.setScaleY(1);
-        pagerView.setTranslationY(0);
-        updateBackgroundAlpha(0);
-    }
-
-    @Override
     public void clearActiveDragTarget() {
         final BasePageController pageController =
             mPager.getPageController(pagerView.getCurrentItem());
@@ -682,11 +616,6 @@ public class HomeActivity extends AppCompatActivity implements
     @Override
     public HomePager getPager() {
         return mPager;
-    }
-
-    @Override
-    public boolean isPocketExpanded() {
-        return mPocketController.isExpanded();
     }
 
     @Override
