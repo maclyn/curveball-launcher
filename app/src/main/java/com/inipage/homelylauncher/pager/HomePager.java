@@ -118,7 +118,8 @@ public class HomePager extends RecyclerView.Adapter<HomePager.PagerHolder> {
         for (int i = 0; i < mGridPages.size(); i++) {
             ClassicGridPage page = mGridPages.get(i);
             if (page.getItems().isEmpty() && i != 0) {
-                final BaseGridPageController controllerToRemove = mGridPageControllers.get(i);
+                final ClassicGridPageController controllerToRemove =
+                    mGridPageControllers.get(i);
                 controllersToDrop.add(controllerToRemove);
                 DatabaseEditor.get().dropPage(page.getID());
                 mGridPageIdToController.remove(page.getID());

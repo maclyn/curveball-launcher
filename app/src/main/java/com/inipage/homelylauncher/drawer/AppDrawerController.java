@@ -178,7 +178,7 @@ public class AppDrawerController implements BasePageController, FastScrollContro
 
         @Override
         public void setItemAnimator(RecyclerView.ItemAnimator animator) {
-            appRecyclerView.setItemAnimator(animator);
+            appRecyclerView.post(() -> appRecyclerView.setItemAnimator(animator));
         }
     };
 

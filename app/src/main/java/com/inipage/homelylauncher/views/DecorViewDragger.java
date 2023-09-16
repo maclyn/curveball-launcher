@@ -318,7 +318,7 @@ public class DecorViewDragger {
     }
 
     /**
-     * @param dragAwareComponent Register a compnonent to receive all DRAG_STARTED, DRAG_LOCATION,
+     * @param dragAwareComponent Register a component to receive all DRAG_STARTED, DRAG_LOCATION,
      *                           and DRAG_ENDED events. This is useful for determining where a drag
      *                           event is happening on screen, for things such as knowing when to
      *                           switch screen pages.

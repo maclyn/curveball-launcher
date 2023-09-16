@@ -45,6 +45,7 @@ import com.inipage.homelylauncher.dock.DockController;
 import com.inipage.homelylauncher.dock.ForwardingContainer;
 import com.inipage.homelylauncher.drawer.HideAppEvent;
 import com.inipage.homelylauncher.grid.BaseGridPageController;
+import com.inipage.homelylauncher.grid.ClassicGridPageController;
 import com.inipage.homelylauncher.grid.GridViewHolder;
 import com.inipage.homelylauncher.model.ApplicationIcon;
 import com.inipage.homelylauncher.model.SwipeFolder;
@@ -89,15 +90,14 @@ public class HomeActivity extends AppCompatActivity implements
     public static final int REQUEST_CONFIGURE_WIDGET = 400;
     public static final int REQUEST_LOCATION_PERMISSION = 500;
 
-    public static final long PAGE_SWITCH_DELAY = 750L;
+    public static final long PAGE_SWITCH_DELAY = 1000L;
 
     // TODO: Fix this
     private static final boolean DISABLE_WALLPAPER_OFFSET_CHANGING = true;
 
-    @SizeValAttribute(16)
+    @SizeDimenAttribute(R.dimen.dist_from_edge_to_switch)
     int distanceFromEdgeToSwitchPages;
-    @SizeDimenAttribute(R.dimen.actuation_distance)
-    int actuationDistance;
+
     @BindView(R.id.rootView)
     ViewGroup rootView;
     @BindView(R.id.background_tint)
@@ -234,16 +234,20 @@ public class HomeActivity extends AppCompatActivity implements
                         break;
                     case ACTION_DRAG_ENTERED:
                     case ACTION_DRAG_LOCATION:
-                        final int switchPosition =
-                            rootView.getWidth() - distanceFromEdgeToSwitchPages;
                         if (event.getRawX() < distanceFromEdgeToSwitchPages) {
-                            mSwitchPageHandler.queueLeftSwitch();
-                        } else if (event.getRawX() > switchPosition) {
                             @Nullable
-                            final BaseGridPageController currentPage = getSelectedGridPage();
+                            final ClassicGridPageController currentPage = getSelectedGridPage();
+                            if (currentPage != null && !mSyntheticScrolling) {
+                                mSwitchPageHandler.queueLeftSwitch();
+                            }
+                        } else if (event.getRawX() > rootView.getWidth() - distanceFromEdgeToSwitchPages) {
+                            @Nullable
+                            final ClassicGridPageController currentPage = getSelectedGridPage();
                             if (currentPage != null && !currentPage.isEmptyPage() && !mSyntheticScrolling) {
                                 mSwitchPageHandler.queueRightSwitch();
                             }
+                        } else {
+                            mSwitchPageHandler.clearMessages();
                         }
                         break;
                     case ACTION_DRAG_ENDED:
@@ -424,10 +428,10 @@ public class HomeActivity extends AppCompatActivity implements
     }
 
     @Nullable
-    private BaseGridPageController getSelectedGridPage() {
+    private ClassicGridPageController getSelectedGridPage() {
         final BasePageController pageController = mPager.getPageController(pagerView.getCurrentItem());
-        if (pageController instanceof BaseGridPageController) {
-            return (BaseGridPageController) pageController;
+        if (pageController instanceof ClassicGridPageController) {
+            return (ClassicGridPageController) pageController;
         }
         return null;
     }
@@ -554,8 +558,8 @@ public class HomeActivity extends AppCompatActivity implements
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onPagesChangedEvent(PagesChangedEvent event) {
-        pagerIndicatorView.setup(event.getNewPageCount());
         mSyntheticScrolling = true;
+        pagerIndicatorView.setup(event.getNewPageCount());
         pagerView.setCurrentItem(event.getNewPageCount(), true);
     }
 
@@ -680,7 +684,7 @@ public class HomeActivity extends AppCompatActivity implements
                     return true;
                 case MSG_MOVE_RIGHT:
                     switchPageRight();
-                    return false;
+                    return true;
             }
             return false;
         }

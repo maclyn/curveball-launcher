@@ -259,7 +259,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     private static final int HEADER_TOP_GROUP_DESELECTED_ALPHA = 180;
     private static final int HEADER_TOP_GROUP_SELECTED_ALPHA = 255;
-
+    private static final int GROUP_ITEM_ROW_COUNT = 5;
 
     private final Delegate mDelegate;
     private final List<ApplicationIconHideable> mApps;
@@ -610,12 +610,17 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             for (SwipeFolder folder : mGroups) {
                 currentContainer.addView(getGroupView(currentContainer, folder, folder == mSelectedFolder));
                 addedCount++;
-                // >6, break off a new row
-                if (addedCount > 5) {
+                // >5, break off a new row
+                if (addedCount > GROUP_ITEM_ROW_COUNT - 1) {
                     headerHolder.groupContainer.addView(currentContainer);
                     currentContainer = getGroupViewHorizontalLayout(headerHolder.groupContainer);
                     addedCount = 0;
                 }
+            }
+            int remainder = GROUP_ITEM_ROW_COUNT - (addedCount % GROUP_ITEM_ROW_COUNT);
+            while (remainder > 0) {
+                currentContainer.addView(getGroupView(currentContainer, null, false));
+                remainder--;
             }
             headerHolder.groupContainer.addView(currentContainer);
             return;
@@ -840,24 +845,31 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         return mColumnCount > 1;
     }
 
-    private View getGroupView(View parent, SwipeFolder folder, boolean isSelected) {
+    private View getGroupView(View parent, @Nullable SwipeFolder folder, boolean isSelected) {
         FrameLayout itemContainer = new FrameLayout(parent.getContext(), null);
-        ImageView groupFolderView = new ImageView(itemContainer.getContext(), null);
         int appIconSize =
-            parent.getContext().getResources().getDimensionPixelSize(R.dimen.app_drawer_group_icon_size);
+            parent
+                .getContext()
+                .getResources()
+                .getDimensionPixelSize(R.dimen.app_drawer_group_icon_size);
         FrameLayout.LayoutParams groupFolderViewParams =
             new FrameLayout.LayoutParams(appIconSize, appIconSize);
         groupFolderViewParams.gravity = Gravity.CENTER;
-        groupFolderView.setImageBitmap(folder.getIcon(parent.getContext()));
-        groupFolderView.setImageAlpha(
-            isSelected ?
+        ImageView groupFolderView = new ImageView(itemContainer.getContext(), null);
+        if (folder != null) {
+            groupFolderView.setImageBitmap(folder.getIcon(parent.getContext()));
+            groupFolderView.setImageAlpha(
+                isSelected ?
                 HEADER_TOP_GROUP_SELECTED_ALPHA :
                 HEADER_TOP_GROUP_DESELECTED_ALPHA);
-        groupFolderView.setOnClickListener(v -> showGroup(folder));
-        itemContainer.addView(groupFolderView);
+            groupFolderView.setOnClickListener(v -> showGroup(folder));
+        }
+        itemContainer.addView(groupFolderView, groupFolderViewParams);
 
         LinearLayout.LayoutParams itemContainerLayoutParams =
-            new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
         itemContainerLayoutParams.weight = 1.0F;
         itemContainer.setLayoutParams(itemContainerLayoutParams);
 

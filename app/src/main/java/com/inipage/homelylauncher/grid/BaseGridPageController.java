@@ -588,6 +588,7 @@ public abstract class BaseGridPageController implements BasePageController {
         private Point mLastCellCommitted;
         @Nullable
         private Point mLastCellDraggedOver;
+        private final int mDistFromEdgeForDrags;
 
         public DragListener(Context context) {
             mLastCellDraggedOver = mLastCellCommitted = null;
@@ -597,6 +598,8 @@ public abstract class BaseGridPageController implements BasePageController {
                 mHolderMap.invalidate();
                 onGridMakeupChanged();
             });
+            mDistFromEdgeForDrags =
+                context.getResources().getDimensionPixelSize(R.dimen.dist_from_edge_to_switch);
         }
 
         @Override
@@ -618,6 +621,15 @@ public abstract class BaseGridPageController implements BasePageController {
                     break;
                 case ACTION_DRAG_ENTERED:
                 case ACTION_DRAG_LOCATION:
+                    // If we're over the very edge of the screen, we're queueing a move left/right,
+                    // so we don't do a displacement action
+                    if (event.getRawX() < mDistFromEdgeForDrags ||
+                        event.getRawX() > (mRootContainer.getWidth() - mDistFromEdgeForDrags))
+                    {
+                        mChoreographer.clear();
+                        return;
+                    }
+
                     // Set last cell dragged over & last cell committed if not already set
                     if (!viewHolder.getItem().isSizeUnset() &&
                         mLastCellDraggedOver == null &&
@@ -656,7 +668,7 @@ public abstract class BaseGridPageController implements BasePageController {
                                     mLastCellDraggedOver,
                                     gridItem);
                         } catch (Exception solvedFailure) {
-                            log(TAG_DRAG_OFFSET, "Failed to solve for movement: " + solvedFailure.toString());
+                            log(TAG_DRAG_OFFSET, "Failed to solve for movement: " + solvedFailure);
                         }
                         if (naiveSolution != null) {
                             mChoreographer.queueSolve(naiveSolution, targetCell);
@@ -671,7 +683,7 @@ public abstract class BaseGridPageController implements BasePageController {
                     final Point dropDragPoint = findPointFromDragEvent(event);
                     log(TAG_ICON_CASCADE, "Drag drop point=" + dropDragPoint);
                     maybeCommitDragChanges(dropDragPoint.x, dropDragPoint.y, viewHolder);
-                    mChoreographer.queueSolve(new HashSet<>(), null);
+                    mChoreographer.clear();
                     mAnimatedBackgroundGrid.quitDragMode();
                     mLastCellDraggedOver = mLastCellCommitted = null;
                     break;
