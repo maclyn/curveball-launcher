@@ -83,9 +83,15 @@ public class AppPopupMenu {
             appPopupButtons.findViewById(R.id.remove_app_button);
         final ImageView appInfoButton =
             appPopupButtons.findViewById(R.id.info_app_button);
+        final View uninstallWhitespace = appPopupButtons.findViewById(R.id.uninstall_whitespace);
+        final View hideWhitespace = appPopupButtons.findViewById(R.id.hide_whitespace);
+        final View removeWhitespace = appPopupButtons.findViewById(R.id.remove_whitespace);
         uninstallAppButton.setVisibility(canBeUninstalled ? VISIBLE : GONE);
+        uninstallWhitespace.setVisibility(canBeUninstalled ? VISIBLE : GONE);
         hideAppButton.setVisibility(useRemoveAction ? GONE : VISIBLE);
+        hideWhitespace.setVisibility(useRemoveAction ? GONE : VISIBLE);
         removeAppButton.setVisibility(useRemoveAction ? VISIBLE : GONE);
+        removeWhitespace.setVisibility(useRemoveAction ? VISIBLE : GONE);
         hideAppButton.setOnClickListener(
             v -> {
                 DecorViewManager.get(context).removeView(mDecorViewHandle);

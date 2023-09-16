@@ -24,6 +24,7 @@
         app:tint="@color/bar_root_action_tint_color" />
 
     <View
+        android:id="@+id/hide_whitespace"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_weight="1" />
@@ -40,6 +41,7 @@
         app:tint="@color/bar_root_action_tint_color" />
 
     <View
+        android:id="@+id/remove_whitespace"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_weight="1" />
@@ -56,6 +58,7 @@
         app:tint="@color/bar_root_action_tint_color" />
 
     <View
+        android:id="@+id/uninstall_whitespace"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_weight="1" />
