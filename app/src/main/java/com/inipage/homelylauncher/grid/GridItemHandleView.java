@@ -1,11 +1,14 @@
 package com.inipage.homelylauncher.grid;
 
 import android.animation.AnimatorInflater;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.MotionEvent;
+import android.view.TouchDelegate;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -108,6 +111,25 @@ public class GridItemHandleView extends FrameLayout {
 
     public void setListener(@Nullable Listener listener) {
         mListener = listener;
+    }
+
+    private final Rect hitRect = new Rect();
+
+
+    @SuppressLint("DrawAllocation")
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+        if (changed) {
+            getHitRect(hitRect);
+            final int width = hitRect.width();
+            final int height = hitRect.height();
+            hitRect.left -= (width / 2);
+            hitRect.right += (width / 2);
+            hitRect.top -= (height / 2);
+            hitRect.bottom += (height / 2);
+            setTouchDelegate(new TouchDelegate(hitRect, this));
+        }
     }
 
     @Override
