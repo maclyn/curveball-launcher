@@ -108,7 +108,6 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             return new AdapterElement(null, header, ITEM_VIEW_TYPE_SPACER, index);
         }
 
-
         static AdapterElement createAppElement(ApplicationIconHideable icon) {
             return new AdapterElement(icon, '?', ITEM_VIEW_TYPE_APP, 0);
         }
@@ -584,13 +583,6 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
             final TopHeaderHolder headerHolder = (TopHeaderHolder) holder;
             final Context context = headerHolder.installCount.getContext();
 
-            // Reachability padding
-            // ~1/3 screen height if needed
-            final boolean isPhablet = ViewUtils.isPhablet(context);
-            ViewUtils.setHeight(
-                headerHolder.reachabilityPadding,
-                isPhablet ? (int) (ViewUtils.screenSize(context).y / 3.5F) : 0);
-
             // Count of apps
             final SpannableString headerText =
                 new SpannableString(
@@ -612,7 +604,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 addedCount++;
                 // >5, break off a new row
                 if (addedCount > GROUP_ITEM_ROW_COUNT - 1) {
-                    headerHolder.groupContainer.addView(currentContainer);
+                    // headerHolder.groupContainer.addView(currentContainer);
                     currentContainer = getGroupViewHorizontalLayout(headerHolder.groupContainer);
                     addedCount = 0;
                 }
@@ -622,7 +614,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 currentContainer.addView(getGroupView(currentContainer, null, false));
                 remainder--;
             }
-            headerHolder.groupContainer.addView(currentContainer);
+            // headerHolder.groupContainer.addView(currentContainer);
             return;
         }
         if (itemViewType == ITEM_VIEW_TYPE_HEADER) {
@@ -888,13 +880,11 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     public static class TopHeaderHolder extends AnimatableViewHolder {
         TextView installCount;
         LinearLayout groupContainer;
-        View reachabilityPadding;
 
         public TopHeaderHolder(View view) {
             super(view);
             this.installCount = ViewCompat.requireViewById(view, R.id.installed_apps_count);
             this.groupContainer = ViewCompat.requireViewById(view, R.id.group_container);
-            this.reachabilityPadding = ViewCompat.requireViewById(view, R.id.reachability_padding);
         }
     }
 

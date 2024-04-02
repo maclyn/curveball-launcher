@@ -20,6 +20,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -86,6 +87,8 @@ public class AppDrawerController implements BasePageController, FastScrollContro
     View rootView;
     @BindView(R.id.all_apps_layout)
     RecyclerView appRecyclerView;
+    @BindView(R.id.folder_container)
+    LinearLayout folderContainer;
     @BindView(R.id.search_box_button)
     View searchBoxButton;
     @BindView(R.id.bottom_sheet_settings_button)
@@ -267,6 +270,7 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         });
         setSearchDrawable();
         reloadAppList();
+        reloadFolders();
     }
 
     @Override
@@ -284,6 +288,13 @@ public class AppDrawerController implements BasePageController, FastScrollContro
             mUsingGridLayoutByDefault ? GRID_LAYOUT_COLUMN_COUNT : 1);
         mAdapter.setHasStableIds(true);
         appRecyclerView.setAdapter(mAdapter);
+    }
+
+    private void reloadFolders() {
+        List<SwipeFolder> groups = DatabaseEditor.get().getGestureFavorites();
+        for (SwipeFolder folder : groups) {
+
+        }
     }
 
     public void quitSearch() {
@@ -491,9 +502,9 @@ public class AppDrawerController implements BasePageController, FastScrollContro
     }
 
     @OnEditorAction(R.id.search_box)
-    public boolean onSearchAction(int actionId, KeyEvent event) {
-        if (actionId == EditorInfo.IME_ACTION_GO ||
-            (actionId == EditorInfo.IME_NULL && event.getAction() == KeyEvent.ACTION_DOWN)) {
+    public boolean onSearchAction(int actionId, @Nullable KeyEvent event) {
+        if (actionId == EditorInfo.IME_ACTION_SEARCH ||
+            (actionId == EditorInfo.IME_NULL && event != null && event.getAction() == KeyEvent.ACTION_DOWN)) {
             return launchFirstApp();
         }
         return false;

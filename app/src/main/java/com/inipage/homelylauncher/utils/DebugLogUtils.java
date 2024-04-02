@@ -24,7 +24,7 @@ public class DebugLogUtils {
     public static final String TAG_POCKET_ANIMATION = "tag_pocket_animation";
     public static final String TAG_VIRTUAL_TRACKPAD = "tag_virtual_trackpad";
 
-    private static final String NEEDLED = TAG_VIRTUAL_TRACKPAD;
+    private static final String NEEDLED = TAG_PAGE_SCROLL;
 
     public static void needle(String tag, Object... out) {
         String[] array = Arrays.stream(out).map(Object::toString).toArray(String[]::new);

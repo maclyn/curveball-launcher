@@ -146,17 +146,23 @@ public class HomeActivity extends AppCompatActivity implements
 
             // Fade each page in/out
             for (int i = 0; i < mPager.getItemCount(); i++) {
+                if (i < position - 1 || i > position + 1) {
+                    continue;
+                }
+
                 BasePageController controller = mPager.getPageController(i);
-                float targetAlpha = 0;
+                float dillutionAmount = 0;
                 if (i == position) {
-                    targetAlpha = 1 - positionOffset;
-                } else if (i == position - 1 || i == position + 1) {
-                    targetAlpha = positionOffset;
+                    dillutionAmount = positionOffset;
+                } else {
+                    // The bigger the offset, the closer we are
+                    dillutionAmount = 1 - positionOffset;
                 }
                 @Nullable final View v =
                     controller.getDragAwareComponent().getDragAwareTargetView();
                 if (v != null) {
-                    v.setAlpha(targetAlpha);
+                    // Range from 0.5 to 1, so the effect isn't too pronounced
+                    v.setAlpha(1 - (dillutionAmount / 2.0F));
                 }
             }
 

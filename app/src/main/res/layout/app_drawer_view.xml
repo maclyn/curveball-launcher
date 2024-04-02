@@ -127,4 +127,12 @@
         </FrameLayout>
     </LinearLayout>
 
+    <LinearLayout
+        android:id="@+id/folder_container"
+        android:layout_above="@+id/app_drawer_actions_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        />
+
 </RelativeLayout>
