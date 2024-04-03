@@ -1,17 +1,23 @@
 package com.inipage.homelylauncher.dock.items
 
 import android.Manifest
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import android.view.View
 import android.widget.Toast
+import androidx.core.content.ContextCompat.startActivity
 import com.inipage.homelylauncher.HomeActivity
 import com.inipage.homelylauncher.R
 import com.inipage.homelylauncher.dock.DockControllerItem
 import com.inipage.homelylauncher.dock.DockItemPriorities
+import com.inipage.homelylauncher.persistence.PrefsHelper
 import com.inipage.homelylauncher.utils.ViewUtils
 import com.inipage.homelylauncher.utils.weather.WeatherController
 import com.inipage.homelylauncher.utils.weather.WeatherController.WeatherPresenter
 import com.inipage.homelylauncher.utils.weather.model.CleanedUpWeatherModel
+
 
 class WeatherDockItem : DockControllerItem(), WeatherPresenter {
 
@@ -66,8 +72,20 @@ class WeatherDockItem : DockControllerItem(), WeatherPresenter {
     override fun getAction(view: View): Runnable {
         val context = context ?: return Runnable {}
         return Runnable {
-            val bottomSheet = WeatherBottomSheet(context)
-            bottomSheet.show()
+            if (PrefsHelper.useGWeather()) {
+                val intent = Intent("android.intent.action.VIEW")
+                intent.data = Uri.parse("dynact://velour/weather/ProxyActivity")
+                intent.setClassName(
+                    "com.google.android.googlequicksearchbox",
+                    "com.google.android.apps.gsa.velour.DynamicActivityTrampoline"
+                )
+                try {
+                    context.startActivity(intent)
+                } catch (ignored: ActivityNotFoundException) {}
+            } else {
+                val bottomSheet = WeatherBottomSheet(context)
+                bottomSheet.show()
+            }
         }
     }
 

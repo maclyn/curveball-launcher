@@ -27,7 +27,7 @@ class PagerIndicatorView @JvmOverloads constructor(
     var DESIRED_HEIGHT = AttributeApplier.intValue()
     @SizeValAttribute(2F)
     var STROKE_WIDTH = AttributeApplier.intValue()
-    @SizeValAttribute(4F)
+    @SizeValAttribute(6F)
     var INDICATOR_SIZE = AttributeApplier.intValue()
 
     private var mGridPageCount: Int = 0

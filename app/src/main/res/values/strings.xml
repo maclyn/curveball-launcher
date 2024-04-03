@@ -97,6 +97,8 @@
     <string name="preferences_name">Preferences</string>
     <string name="vertical_scroller_title">Use alternate design</string>
     <string name="vertical_scroller_description">Use a vertically scrolling homescreen design</string>
+    <string name="use_g_weather_title">Open G Weather instead of bottom sheet</string>
+    <string name="use_g_weather_description">Launch the usually installed weather intent instead of a limited bottom sheet showing the next few days weather.</string>
     <string name="attributions">Attributions</string>
     <string name="tap_to_view_software_used">Tap to view software used in creating this product.</string>
     <string name="close">Close</string>

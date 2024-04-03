@@ -53,9 +53,11 @@ class DockAdapter(context: Context, val items: List<DockControllerItem>) : Recyc
 
         // Map text
         val label = item.label
+        var hasLabel = false
         if (label != null) {
             holder.primaryLabel.text = label
             holder.primaryLabel.visibility = View.VISIBLE
+            hasLabel = true
         } else {
             holder.primaryLabel.visibility = View.GONE
         }
@@ -63,9 +65,12 @@ class DockAdapter(context: Context, val items: List<DockControllerItem>) : Recyc
         if (secondaryLabel != null && !isSquarish) {
             holder.secondaryLabel.text = secondaryLabel
             holder.secondaryLabel.visibility = View.VISIBLE
+            hasLabel = true
         } else {
             holder.secondaryLabel.visibility = View.GONE
         }
+
+        holder.labelContainer.visibility = if (hasLabel) View.VISIBLE else View.GONE
 
         // Map actions
         holder.itemView.setOnClickListener { item.getAction(it).run() }
@@ -81,6 +86,7 @@ class DockAdapter(context: Context, val items: List<DockControllerItem>) : Recyc
     class DockItemViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val containerView: View = ViewCompat.requireViewById(view, R.id.dock_item_root_container)
         val iconView: ImageView = ViewCompat.requireViewById(view, R.id.contextual_dock_item_icon)
+        val labelContainer: View = ViewCompat.requireViewById(view, R.id.contextual_dock_item_labels_container)
         val primaryLabel: TextView = ViewCompat.requireViewById(view, R.id.contextual_dock_item_label)
         val secondaryLabel: TextView = ViewCompat.requireViewById(view, R.id.contextual_dock_item_secondary_label)
     }

@@ -13,6 +13,12 @@
             android:title="@string/manage_hidden_apps"
             android:summary="@string/manage_hidden_recents_description"
             android:key="manage_hidden_apps"/>
+
+        <CheckBoxPreference
+            android:title="@string/use_g_weather_title"
+            android:summary="@string/use_g_weather_description"
+            android:key="use_g_weather"
+            />
     </PreferenceCategory>
 
     <PreferenceCategory

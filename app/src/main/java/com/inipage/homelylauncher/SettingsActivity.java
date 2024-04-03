@@ -169,6 +169,7 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
             addPreferencesFromResource(R.xml.pref_general);
 
             bindCheckboxPreference("vertical_scroller_design", Constants.VERTICAL_SCROLLER_PREF, true);
+            bindCheckboxPreference("use_g_weather", Constants.USE_G_WEATHER_PREF, false);
 
             // Dock
             bindPreference("manage_cals", ctx -> HiddenCalendarsPickerBottomSheet.show(ctx, null));
