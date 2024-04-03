@@ -47,6 +47,7 @@ import com.inipage.homelylauncher.drawer.HideAppEvent;
 import com.inipage.homelylauncher.grid.BaseGridPageController;
 import com.inipage.homelylauncher.grid.ClassicGridPageController;
 import com.inipage.homelylauncher.grid.GridViewHolder;
+import com.inipage.homelylauncher.hacks.FasterPagerSnapHelper;
 import com.inipage.homelylauncher.model.ApplicationIcon;
 import com.inipage.homelylauncher.model.SwipeFolder;
 import com.inipage.homelylauncher.pager.BasePageController;
@@ -282,6 +283,7 @@ public class HomeActivity extends AppCompatActivity implements
 
         mPager = new HomePager(this, rootView);
         mNonTouchInputCoordinator = new NonTouchInputCoordinator(this, this);
+        FasterPagerSnapHelper.Companion.apply(pagerView);
         pagerView.setAdapter(mPager);
         pagerView.registerOnPageChangeCallback(mOnPageChangeCallback);
         pagerView.setOffscreenPageLimit(100);
