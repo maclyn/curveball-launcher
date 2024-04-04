@@ -5,6 +5,7 @@ import android.view.View;
 
 import androidx.annotation.Nullable;
 
+import com.inipage.homelylauncher.R;
 import com.inipage.homelylauncher.model.DockItem;
 import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.utils.InstalledAppUtils;
@@ -58,7 +59,7 @@ public abstract class ConfigurableAppBackedDockItem extends DockControllerItem {
                     mBackingItem.setComponent(packageName, activityName);
                     DatabaseEditor.get().addDockPreference(mBackingItem);
                 },
-                context.getString(getBottomSheetMessage()));
+                context.getString(R.string.choose_right_app, context.getString(getBottomSheetMessage())));
         };
     }
 

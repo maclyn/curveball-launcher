@@ -11,7 +11,10 @@ import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
+import android.util.Pair;
 
+import com.inipage.homelylauncher.icons.IconPackLoader;
+import com.inipage.homelylauncher.persistence.PrefsHelper;
 import com.inipage.homelylauncher.utils.AttributeApplier;
 import com.inipage.homelylauncher.utils.SizeValAttribute;
 
@@ -34,6 +37,7 @@ public class IconCacheSync {
 
     private static final String TAG = "IconCacheSync";
     private static IconCacheSync s_INSTANCE;
+    private final Context mAppContext;
     private final Resources mBaseResources;
     private final PackageManager mPackageManager;
     private final String mPackageName;
@@ -41,14 +45,19 @@ public class IconCacheSync {
     private final Map<IconKey, Bitmap> mRemoteResourceMap;
     private final Map<String, Set<IconKey>> mPackageToIconKeyMap;
     private final Map<String, Resources> mRemoteApplicationResourcesMap;
-    private final Map<String, Bitmap> mLocalResourceMap;
+    private final Map<String, IconPackLoader> mPackageToIPL;
     private final Bitmap mDummyBitmap;
     private final IconKey mTempKey;
     @SizeValAttribute(64)
     private final int mDefaultSize = intValue();
 
+    private final boolean mIsUsingIconPack;
+    @Nullable private final String mIconPackPackage;
+    Map<Pair<String, String>, String> mIconPackStandIns;
+
     private IconCacheSync(Context context) {
         AttributeApplier.applyDensity(this, context);
+        mAppContext = context.getApplicationContext();
         mBaseResources = context.getResources();
         mPackageManager = context.getPackageManager();
         mPackageName = context.getPackageName();
@@ -56,8 +65,16 @@ public class IconCacheSync {
         mRemoteResourceMap = new HashMap<>();
         mPackageToIconKeyMap = new HashMap<>();
         mRemoteApplicationResourcesMap = new HashMap<>();
-        mLocalResourceMap = new HashMap<>();
+        mPackageToIPL = new HashMap<>();
         mTempKey = new IconKey();
+
+        mIsUsingIconPack = PrefsHelper.isUsingIconPack();
+        mIconPackPackage = PrefsHelper.getIconPack();
+        if (mIsUsingIconPack && mIconPackPackage != null) {
+            mIconPackStandIns = PrefsHelper.loadStandIns(mIconPackPackage);
+        } else {
+            mIconPackStandIns = new HashMap<>();
+        }
 
         // Create a dummy bitmap so we don't have to throw exceptions
         final int roughAppSize = mBaseResources.getDisplayMetrics().widthPixels / 4;
@@ -88,8 +105,22 @@ public class IconCacheSync {
         final IconKey key = mTempKey.clone();
         Bitmap bitmap;
         try {
-            bitmap = getBitmapFromDrawable(
-                mPackageManager.getActivityIcon(new ComponentName(packageName, activityName)));
+            Drawable d = null;
+            if (mIsUsingIconPack) {
+                IconPackLoader iconLoader = getIconPackLoader(mIconPackPackage);
+                d = iconLoader.loadDrawableForComponent(packageName, activityName);
+                if (d == null) {
+                    @Nullable String altDrawableName =
+                        mIconPackStandIns.get(Pair.create(packageName, activityName));
+                    if (altDrawableName != null) {
+                        d = iconLoader.loadDrawableByName(altDrawableName);
+                    }
+                }
+            }
+            if (d == null) {
+                d = mPackageManager.getActivityIcon(new ComponentName(packageName, activityName));
+            }
+            bitmap = getBitmapFromDrawable(d);
         } catch (OutOfMemoryError | PackageManager.NameNotFoundException e) {
             bitmap = mDummyBitmap;
         }
@@ -114,24 +145,6 @@ public class IconCacheSync {
         d.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
         d.draw(canvas);
         return toDraw;
-    }
-
-    public synchronized Bitmap getLocalResource(int resourceId) {
-        @Nullable final Bitmap value =
-            mLocalResourceMap.get(String.valueOf(resourceId));
-        if (value != null) {
-            Log.v(TAG, "Cache hit for local resource=" + resourceId);
-            return value;
-        }
-        Log.v(TAG, "Cache miss for local resource=" + resourceId);
-        Bitmap bitmap;
-        try {
-            bitmap = getBitmapFromDrawable(mBaseResources.getDrawable(resourceId));
-        } catch (OutOfMemoryError outOfMemoryError) {
-            bitmap = mDummyBitmap;
-        }
-        mLocalResourceMap.put(String.valueOf(resourceId), bitmap);
-        return bitmap;
     }
 
     public synchronized Bitmap getNamedResource(String packageName, String resourceName) {
@@ -176,7 +189,6 @@ public class IconCacheSync {
 
     public synchronized void clearCache() {
         mAppIconMap.clear();
-        mLocalResourceMap.clear();
         mRemoteResourceMap.clear();
         mPackageToIconKeyMap.clear();
         mRemoteApplicationResourcesMap.clear();
@@ -191,6 +203,13 @@ public class IconCacheSync {
             mAppIconMap.remove(key);
             mRemoteResourceMap.remove(key);
         }
+    }
+
+    public synchronized IconPackLoader getIconPackLoader(String packageName) {
+        if (!mPackageToIPL.containsKey(packageName)) {
+            mPackageToIPL.put(packageName, new IconPackLoader(mAppContext, packageName));
+        }
+        return mPackageToIPL.get(packageName);
     }
 
     public synchronized Bitmap getDummyBitmap() {

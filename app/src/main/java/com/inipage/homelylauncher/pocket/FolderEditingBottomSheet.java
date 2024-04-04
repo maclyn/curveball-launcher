@@ -49,7 +49,7 @@ public class FolderEditingBottomSheet {
                 icon.setImageBitmap(
                     IconCacheSync.getInstance(context).getNamedResource(iconPackage, iconDrawable));
                 icon.setTag(new Pair<>(iconPackage, iconDrawable));
-            });
+            }, null, null);
         });
 
         final String bottomSheetTitle = isNew ?

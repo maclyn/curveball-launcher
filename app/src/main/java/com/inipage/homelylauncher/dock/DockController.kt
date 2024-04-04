@@ -104,13 +104,11 @@ class DockController(val container: RecyclerView) {
                 override fun tintLoaded(color: Int) = adapter?.notifyItemChanged(index) ?: Unit
             })
         }
-        container.translationY = container.height.toFloat()
         container.alpha = 0f
         container.animate()
-            .translationY(0f)
             .alpha(1f)
             .withStartAction { container.visibility = View.VISIBLE }
-            .setDuration(175L)
+            .setDuration(250L)
             .start()
     }
 

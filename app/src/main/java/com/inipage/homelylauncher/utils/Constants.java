@@ -17,6 +17,11 @@ public class Constants {
 
     public static final String HAS_SHOWN_NEW_USER_EXPERIENCE = "new_user_pref";
 
+    // Icon pack prefs
+    public static final String HAS_ICON_PACK_SET_PREF = "has_icon_pack_set_pref";
+    public static final String SELECTED_ICON_PACK_PACKAGE_PREF = "icon_package_pkg_pref";
+    public static final String ICON_PACK_REMAPS_PIPE_DELIMITED_STRING_SET_PREF = "icon_packs_remap_pref";
+
     public static final String PACKAGE = "com.inipage.homelylauncher";
     public static final String DEFAULT_FOLDER_ICON = "ic_folder_white_48dp";
 

@@ -12,13 +12,13 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.preference.CheckBoxPreference;
+import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.util.Pair;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -28,10 +28,17 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NavUtils;
 
+import com.inipage.homelylauncher.caches.AppInfoCache;
+import com.inipage.homelylauncher.caches.IconCacheSync;
+import com.inipage.homelylauncher.dock.ActivityPickerBottomSheet;
 import com.inipage.homelylauncher.dock.HiddenRecentAppsBottomSheet;
 import com.inipage.homelylauncher.dock.items.HiddenCalendarsPickerBottomSheet;
+import com.inipage.homelylauncher.icons.IconPackLoader;
+import com.inipage.homelylauncher.icons.IconPickerBottomSheet;
+import com.inipage.homelylauncher.model.ApplicationIconHideable;
 import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.persistence.DatabaseHelper;
+import com.inipage.homelylauncher.persistence.PrefsHelper;
 import com.inipage.homelylauncher.utils.Constants;
 import com.inipage.homelylauncher.utils.FileUtils;
 import com.inipage.homelylauncher.utils.LifecycleLogUtils;
@@ -44,7 +51,10 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
+import java.util.stream.Stream;
 
 public class SettingsActivity extends AppCompatActivity implements ProvidesOverallDimensions {
 
@@ -163,10 +173,16 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
 
     public static class MainFragment extends PreferenceFragment {
 
+        private String mMissingIconPackage = "unset";
+        private List<ApplicationIconHideable> mMissingIcons = new LinkedList<>();
+        private int mMissingIconsIdx = 0;
+
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.pref_general);
+
+            setupIconPackPrefs();
 
             bindCheckboxPreference("vertical_scroller_design", Constants.VERTICAL_SCROLLER_PREF, true);
             bindCheckboxPreference("use_g_weather", Constants.USE_G_WEATHER_PREF, false);
@@ -295,6 +311,121 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
                 Intent.EXTRA_TITLE,
                 DATABASE_TITLE_FORMAT.format(new Date()) + "_logfile.txt");
             parent.startActivityForResult(exportIntent, EXPORT_LOG_REQUEST_CODE);
+        }
+
+        private void setupIconPackPrefs() {
+            // Main icon pack
+            final String defaultPack = "unset";
+            final String currentPack = PrefsHelper.getIconPack();
+            ListPreference iconPackPref = (ListPreference) findPreference("icon_packs");
+            List<Pair<String, String>> iconPacks = IconPackLoader.Companion.resolveIconPacks(getContext());
+            Pair<String, String> defaultOption = Pair.create(defaultPack, "Default");
+            CharSequence[] iconPackNames =
+                Stream.concat(Stream.of(defaultOption), iconPacks.stream())
+                    .map(stringStringPair -> stringStringPair.second)
+                    .toArray(CharSequence[]::new);
+            CharSequence[] iconPackValues =
+                Stream.concat(Stream.of(defaultOption), iconPacks.stream())
+                    .map(stringStringPair -> stringStringPair.first)
+                    .toArray(CharSequence[]::new);
+            int selectedIndex = 0;
+            for (int i = 0; i < iconPackValues.length; i++) {
+                if (iconPackValues[i].equals(currentPack)) {
+                    selectedIndex = i;
+                    break;
+                }
+            }
+            iconPackPref.setValueIndex(selectedIndex);
+            iconPackPref.setEntryValues(iconPackValues);
+            iconPackPref.setEntries(iconPackNames);
+            iconPackPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                if (newValue.equals(defaultPack)) {
+                    PrefsHelper.setIconPack(null);
+                } else {
+                    PrefsHelper.setIconPack((String) newValue);
+                }
+                ProcessPhoenix.triggerRebirth(getContext());
+                return true;
+            });
+
+            Preference fillIconsPref = findPreference("fill_missing_icons");
+            fillIconsPref.setEnabled(currentPack != null && !currentPack.equals(defaultPack));
+            fillIconsPref.setOnPreferenceClickListener(preference -> {
+                runMissingIconReplacement();
+                return true;
+            });
+
+            Preference replaceOnePref = findPreference("replace_one_icon");
+            replaceOnePref.setEnabled(currentPack != null && !currentPack.equals(defaultPack));
+            replaceOnePref.setOnPreferenceClickListener(preference -> {
+                runSingleIconReplacement();
+                return true;
+            });
+
+            Preference clearStandIns = findPreference("clear_icon_replacements");
+            clearStandIns.setEnabled(currentPack != null && !currentPack.equals(defaultPack));
+            clearStandIns.setOnPreferenceClickListener(preference -> {
+                PrefsHelper.clearStandIns();
+                ProcessPhoenix.triggerRebirth(getContext());
+                return true;
+            });
+        }
+
+        private void runMissingIconReplacement() {
+            @Nullable String iconPack = PrefsHelper.getIconPack();
+            if (iconPack == null) {
+                return;
+            }
+            mMissingIconPackage = iconPack;
+            mMissingIcons.clear();
+            mMissingIconsIdx = 0;
+            IconPackLoader ipl =
+                IconCacheSync.getInstance(getContext()).getIconPackLoader(iconPack);
+            List<ApplicationIconHideable> apps = AppInfoCache.get().getAllActivities();
+            for (ApplicationIconHideable app : apps) {
+                if (!ipl.hasIconForComponent(app.getPackageName(), app.getActivityName())) {
+                    mMissingIcons.add(app);
+                }
+            }
+            Toast.makeText(getContext(), mMissingIcons.size() + " missing icon(s) found", Toast.LENGTH_SHORT).show();
+            runMissingIconReplacementAtCurrentIdx();
+        }
+
+        private void runMissingIconReplacementAtCurrentIdx() {
+            if (mMissingIconsIdx >= mMissingIcons.size()) {
+                ProcessPhoenix.triggerRebirth(getContext());
+                return;
+            }
+            ApplicationIconHideable app = mMissingIcons.get(mMissingIconsIdx);
+            new IconPickerBottomSheet(getContext(), (iconPackage, iconDrawable) -> {
+                replaceIconWithDrawable(app.getPackageName(),
+                                        app.getActivityName(),
+                                        iconDrawable);
+                mMissingIconsIdx++;
+                runMissingIconReplacementAtCurrentIdx();
+            }, mMissingIconPackage, app.getName() + " replacement icon");
+        }
+
+        private void runSingleIconReplacement() {
+            new ActivityPickerBottomSheet(getContext(), (packageName, activityName) -> {
+                mMissingIconPackage = PrefsHelper.getIconPack();
+                if (mMissingIconPackage == null) {
+                    return;
+                }
+                mMissingIcons.clear();
+                mMissingIcons.add(
+                    new ApplicationIconHideable(getContext(), packageName, activityName, false));
+                mMissingIconsIdx = 0;
+                runMissingIconReplacementAtCurrentIdx();
+            }, "Select an app for icon replacement");
+        }
+
+        private void replaceIconWithDrawable(String packageName, String activity, String drawable) {
+            @Nullable String iconPack = PrefsHelper.getIconPack();
+            if (iconPack == null) {
+                return;
+            }
+            PrefsHelper.setStandIn(iconPack, Pair.create(packageName, activity), drawable);
         }
 
         private String getBPath(Context context) {

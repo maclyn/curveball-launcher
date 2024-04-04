@@ -1,5 +1,28 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <ListPreference
+        android:key="icon_packs"
+        android:title="Choose an icon pack"
+        android:summary="Select from installed icon packs"
+        />
+
+    <Preference
+        android:key="fill_missing_icons"
+        android:title="Replace missing icon pack icons"
+        android:summary="Use other icons as stand-ins for icons missing from your pack"
+        />
+
+    <Preference
+        android:key="replace_one_icon"
+        android:title="Replace a single icon"
+        android:summary="Use icon as stand-in for any app icon"
+        />
+
+    <Preference
+        android:key="clear_icon_replacements"
+        android:title="Clear icon stand-ins"
+        android:summary="Reset all icon stand-ins" />
+
     <PreferenceCategory
         android:title="@string/dock_items"
         android:key="dock_items">
@@ -53,7 +76,7 @@
             android:key="log_clear"/>
     </PreferenceCategory>
 
-    <PreferenceCategory
+    <PreferenceScreen
         android:title="@string/database_management">
 
         <Preference
@@ -80,7 +103,7 @@
             android:title="@string/export_database_to_storage"
             android:summary="@string/export_database_to_storage_description"
             android:key="export_database" />
-    </PreferenceCategory>
+    </PreferenceScreen>
 
     <PreferenceCategory
         android:title="@string/attributions"

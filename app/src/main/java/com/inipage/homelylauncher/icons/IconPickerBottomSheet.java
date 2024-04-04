@@ -1,20 +1,17 @@
 package com.inipage.homelylauncher.icons;
 
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.ResolveInfo;
-import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.util.Pair;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -24,13 +21,10 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.inipage.homelylauncher.R;
+import com.inipage.homelylauncher.caches.IconCacheSync;
 import com.inipage.homelylauncher.views.BottomSheetHelper;
 import com.inipage.homelylauncher.views.DecorViewManager;
 
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserFactory;
-
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -55,8 +49,9 @@ public class IconPickerBottomSheet {
     private Resources mActiveResources;
     @Nullable
     private Runnable mIconFetchRunnable;
+    @Nullable private String mFixedPackage;
 
-    public IconPickerBottomSheet(Context context, Callback callback) {
+    public IconPickerBottomSheet(Context context, Callback callback, @Nullable String fixedPackage, @Nullable String title) {
         mCallback = callback;
         final View contentView =
             LayoutInflater.from(context).inflate(R.layout.icon_chooser_view, null, false);
@@ -64,22 +59,32 @@ public class IconPickerBottomSheet {
         mSourceSpinner = contentView.findViewById(R.id.icon_source_spinner);
         mSearchBox = contentView.findViewById(R.id.icon_search_bar);
 
-        // Source list
-        populateIconPacksList(context);
-        final ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(
-            context, android.R.layout.simple_spinner_item, mIconPackLabels);
-        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        mSourceSpinner.setAdapter(spinnerAdapter);
-        mSourceSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                fetchIconsInPackage(context, mIconPackPackages.get(position));
-            }
+        // Source list, if needed
+        if (fixedPackage != null) {
+            mIconPackPackages.add(fixedPackage);
+            mFixedPackage = fixedPackage;
+            mSourceSpinner.setVisibility(View.GONE);
+        } else {
+            populateIconPacksList(context);
+            final ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(
+                context, android.R.layout.simple_spinner_item, mIconPackLabels);
+            spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            mSourceSpinner.setAdapter(spinnerAdapter);
+            mSourceSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(
+                    AdapterView<?> parent,
+                    View view,
+                    int position,
+                    long id) {
+                    fetchIconsInPackage(context, mIconPackPackages.get(position));
+                }
 
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-            }
-        });
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {
+                }
+            });
+        }
 
         // Icon search box
         mSearchBox.addTextChangedListener(new TextWatcher() {
@@ -107,22 +112,17 @@ public class IconPickerBottomSheet {
             new BottomSheetHelper()
                 .setContentView(contentView)
                 .setIsFixedHeight()
-                .show(context, context.getString(R.string.pick_an_icon));
+                .show(context, title == null ? context.getString(R.string.pick_an_icon) : title);
     }
 
     private void populateIconPacksList(Context context) {
         // Add ourselves
         mIconPackPackages.add(context.getPackageName());
         mIconPackLabels.add(context.getString(R.string.included_icons));
-
-        // Add matches
-        // com.novalauncher.THEME
-        final Intent allPacksIntent = new Intent("com.gau.go.launcherex.theme", null);
-        List<ResolveInfo> matches =
-            context.getPackageManager().queryIntentActivities(allPacksIntent, 0);
-        for (ResolveInfo ri : matches) {
-            mIconPackPackages.add(ri.activityInfo.packageName);
-            mIconPackLabels.add((String) ri.loadLabel(context.getPackageManager()));
+        // Add installed icons
+        for (Pair<String, String> pair : IconPackLoader.Companion.resolveIconPacks(context)) {
+            mIconPackPackages.add(pair.first);
+            mIconPackLabels.add(pair.second);
         }
     }
 
@@ -131,74 +131,17 @@ public class IconPickerBottomSheet {
         mSearchBox.setEnabled(false);
         mIconFetchRunnable = () -> {
             try {
-                final Resources resources =
-                    context.getPackageManager().getResourcesForApplication(packageName);
-                final int drawableRes = resources.getIdentifier("drawable", "xml", packageName);
-                XmlPullParser xmlParser = null;
-                if (drawableRes != 0) {
-                    xmlParser = resources.getXml(drawableRes);
-                } else {
-                    try {
-                        final AssetManager am = resources.getAssets();
-                        final String[] assets = am.list("");
-                        for (String str : assets) {
-                            if (!str.equals("drawable.xml")) {
-                                continue;
-                            }
-
-                            try {
-                                xmlParser = am.openXmlResourceParser(str);
-                            } catch (Exception defaultParserUnavailable) {
-                                try {
-                                    final InputStream inputStream = am.open(str);
-                                    final XmlPullParserFactory factory =
-                                        XmlPullParserFactory.newInstance();
-                                    factory.setNamespaceAware(true);
-                                    xmlParser = factory.newPullParser();
-                                    xmlParser.setInput(inputStream, null);
-                                } catch (Exception ignored) {
-                                }
-                            }
-                        }
-                    } catch (Exception e) {
-                        throw new Exception("No drawable.xml file found");
-                    }
-                }
-
-                // Go through and grab drawable="" components
-                List<Pair<String, Integer>> iconData = new ArrayList<>();
-                int eventType =
-                    xmlParser == null ?
-                    XmlPullParser.END_DOCUMENT :
-                    xmlParser.getEventType();
-                while (eventType != XmlPullParser.END_DOCUMENT) {
-                    if (eventType != XmlPullParser.START_TAG) {
-                        eventType = xmlParser.next();
-                        continue;
-                    }
-
-                    final String attrValue = xmlParser.getAttributeValue(null, "drawable");
-                    if (attrValue != null) {
-                        final int resId = resources.getIdentifier(
-                            attrValue,
-                            "drawable",
-                            packageName);
-                        if (resId != 0) {
-                            String name = resources.getResourceEntryName(resId);
-                            iconData.add(new Pair<>(name, resId));
-                        }
-                    }
-                    eventType = xmlParser.next();
-                }
-                if (iconData.isEmpty()) {
+                IconPackLoader ipl =
+                    IconCacheSync.getInstance(context).getIconPackLoader(packageName);
+                if (ipl.getIconList().isEmpty()) {
                     throw new Exception();
                 }
                 new Handler(Looper.getMainLooper()).post(() -> {
-                    mIconsResourceAndId = iconData;
-                    mActiveResources = resources;
+                    mIconsResourceAndId = ipl.getIconList();
+                    mActiveResources = ipl.getResources();
                     mSearchBox.setEnabled(true);
                     mIconFetchRunnable = null;
-                    setAdapter(context, iconData);
+                    setAdapter(context, mIconsResourceAndId);
                 });
             } catch (Exception fetchFailed) {
                 new Handler(Looper.getMainLooper()).post(() -> {
@@ -237,7 +180,9 @@ public class IconPickerBottomSheet {
                 mActiveResources,
                 iconResource -> {
                     final String packageName =
-                        mIconPackPackages.get(mSourceSpinner.getSelectedItemPosition());
+                        mFixedPackage == null ?
+                        mIconPackPackages.get(mSourceSpinner.getSelectedItemPosition()) :
+                        mFixedPackage;
                     mCallback.onIconPicked(packageName, iconResource.first);
                     DecorViewManager.get(context).removeView(mAttachmentToken);
                 });
