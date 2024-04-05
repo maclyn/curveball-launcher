@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.preference.CheckBoxPreference;
@@ -344,7 +345,7 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
                 } else {
                     PrefsHelper.setIconPack((String) newValue);
                 }
-                ProcessPhoenix.triggerRebirth(getContext());
+                restartHomeActivity();
                 return true;
             });
 
@@ -366,9 +367,15 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
             clearStandIns.setEnabled(currentPack != null && !currentPack.equals(defaultPack));
             clearStandIns.setOnPreferenceClickListener(preference -> {
                 PrefsHelper.clearStandIns();
-                ProcessPhoenix.triggerRebirth(getContext());
+                restartHomeActivity();
                 return true;
             });
+        }
+
+        private void restartHomeActivity() {
+            IconCacheSync.getInstance(getContext()).clearCache();
+            setupIconPackPrefs();
+            getContext().sendBroadcast(new Intent(Constants.INTENT_ACTION_RESTART));
         }
 
         private void runMissingIconReplacement() {
@@ -393,7 +400,7 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
 
         private void runMissingIconReplacementAtCurrentIdx() {
             if (mMissingIconsIdx >= mMissingIcons.size()) {
-                ProcessPhoenix.triggerRebirth(getContext());
+                restartHomeActivity();
                 return;
             }
             ApplicationIconHideable app = mMissingIcons.get(mMissingIconsIdx);

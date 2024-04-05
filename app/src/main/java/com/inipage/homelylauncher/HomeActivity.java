@@ -14,7 +14,10 @@ import android.app.Activity;
 import android.app.WallpaperManager;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Rect;
@@ -63,6 +66,7 @@ import com.inipage.homelylauncher.state.GridDropFailedEvent;
 import com.inipage.homelylauncher.state.LayoutEditingSingleton;
 import com.inipage.homelylauncher.state.PagesChangedEvent;
 import com.inipage.homelylauncher.utils.AttributeApplier;
+import com.inipage.homelylauncher.utils.Constants;
 import com.inipage.homelylauncher.utils.DebugLogUtils;
 import com.inipage.homelylauncher.utils.SizeDimenAttribute;
 import com.inipage.homelylauncher.utils.SizeValAttribute;
@@ -280,6 +284,12 @@ public class HomeActivity extends AppCompatActivity implements
         setRequestedOrientation(ViewUtils.isTablet(this) ?
             ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED :
             ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
+        registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                recreate();
+            }
+        }, new IntentFilter(Constants.INTENT_ACTION_RESTART), RECEIVER_NOT_EXPORTED);
 
         mPager = new HomePager(this, rootView);
         mNonTouchInputCoordinator = new NonTouchInputCoordinator(this, this);

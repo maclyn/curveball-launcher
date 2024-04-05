@@ -51,8 +51,8 @@ public class IconCacheSync {
     @SizeValAttribute(64)
     private final int mDefaultSize = intValue();
 
-    private final boolean mIsUsingIconPack;
-    @Nullable private final String mIconPackPackage;
+    private boolean mIsUsingIconPack;
+    @Nullable private String mIconPackPackage;
     Map<Pair<String, String>, String> mIconPackStandIns;
 
     private IconCacheSync(Context context) {
@@ -68,6 +68,7 @@ public class IconCacheSync {
         mPackageToIPL = new HashMap<>();
         mTempKey = new IconKey();
 
+        loadIconPackAttrs();
         mIsUsingIconPack = PrefsHelper.isUsingIconPack();
         mIconPackPackage = PrefsHelper.getIconPack();
         if (mIsUsingIconPack && mIconPackPackage != null) {
@@ -192,6 +193,8 @@ public class IconCacheSync {
         mRemoteResourceMap.clear();
         mPackageToIconKeyMap.clear();
         mRemoteApplicationResourcesMap.clear();
+        mPackageToIPL.clear();
+        loadIconPackAttrs();
     }
 
     public synchronized void clearCacheForPackage(String packageName) {
@@ -214,6 +217,16 @@ public class IconCacheSync {
 
     public synchronized Bitmap getDummyBitmap() {
         return mDummyBitmap;
+    }
+
+    private void loadIconPackAttrs() {
+        mIsUsingIconPack = PrefsHelper.isUsingIconPack();
+        mIconPackPackage = PrefsHelper.getIconPack();
+        if (mIsUsingIconPack && mIconPackPackage != null) {
+            mIconPackStandIns = PrefsHelper.loadStandIns(mIconPackPackage);
+        } else {
+            mIconPackStandIns = new HashMap<>();
+        }
     }
 
     private static class IconKey {

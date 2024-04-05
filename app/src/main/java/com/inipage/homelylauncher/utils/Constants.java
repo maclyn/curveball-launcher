@@ -25,6 +25,8 @@ public class Constants {
     public static final String PACKAGE = "com.inipage.homelylauncher";
     public static final String DEFAULT_FOLDER_ICON = "ic_folder_white_48dp";
 
+    public static final String INTENT_ACTION_RESTART = "com.inipage.homelylauncher.RESTART_HOME";
+
     public static final Gson DEFAULT_GSON = new Gson();
 
     public static final boolean DEBUG_RENDER = false;
