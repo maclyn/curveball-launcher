@@ -46,6 +46,7 @@ import com.inipage.homelylauncher.model.ApplicationIconHideable;
 import com.inipage.homelylauncher.model.SwipeFolder;
 import com.inipage.homelylauncher.pager.BasePageController;
 import com.inipage.homelylauncher.persistence.DatabaseEditor;
+import com.inipage.homelylauncher.persistence.PrefsHelper;
 import com.inipage.homelylauncher.utils.InstalledAppUtils;
 import com.inipage.homelylauncher.utils.ViewUtils;
 import com.inipage.homelylauncher.views.BottomSheetHelper;
@@ -386,10 +387,6 @@ public class AppDrawerController implements BasePageController, FastScrollContro
                 R.drawable.ic_visibility_off_white_48dp,
                 R.string.hidden_apps_setting_title,
                 this::showHideAppsMenu)
-            .addItem(
-                R.drawable.ic_reorder,
-                R.string.reorder_pocket_items,
-                mHost::editFolderOrder)
             .addItem(R.drawable.ic_wallpaper_24, R.string.wallpaper_settings_title, () -> {
                 final Intent pickWallpaper = new Intent(Intent.ACTION_SET_WALLPAPER);
                 pickWallpaper.setFlags(
@@ -404,7 +401,7 @@ public class AppDrawerController implements BasePageController, FastScrollContro
                 settingsActivity.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 ViewUtils.requireActivityOf(mContext).startActivity(settingsActivity);
             });
-        if (BuildConfig.DEBUG) {
+        if (BuildConfig.DEBUG && PrefsHelper.isDevMode()) {
             // Crude tests of spliceInPackageChanges()
             bottomSheetHelper
                 .addItem(R.drawable.ic_more_vert_white_48dp, R.string.splice_test, () -> {
@@ -458,6 +455,10 @@ public class AppDrawerController implements BasePageController, FastScrollContro
             bottomSheetHelper.addItem(R.drawable.ic_visibility_white_48dp, R.string.show_new_user_bottom_sheet, () -> {
                 new NewUserBottomSheet(mContext).show();
             });
+            bottomSheetHelper.addItem(
+                R.drawable.ic_reorder,
+                R.string.reorder_pocket_items,
+                mHost::editFolderOrder);
         }
         bottomSheetHelper.show(mContext, mContext.getString(R.string.settings));
     }

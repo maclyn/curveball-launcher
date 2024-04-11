@@ -17,6 +17,8 @@ public class Constants {
 
     public static final String HAS_SHOWN_NEW_USER_EXPERIENCE = "new_user_pref";
 
+    public static final String DEV_MODE_PREF = "dev_mode_pref";
+
     // Icon pack prefs
     public static final String HAS_ICON_PACK_SET_PREF = "has_icon_pack_set_pref";
     public static final String SELECTED_ICON_PACK_PACKAGE_PREF = "icon_package_pkg_pref";

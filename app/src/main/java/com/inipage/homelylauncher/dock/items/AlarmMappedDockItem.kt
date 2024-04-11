@@ -33,7 +33,7 @@ class AlarmMappedDockItem : DockControllerItem() {
     }
 
     override fun getSecondaryLabel(): String? {
-        return alarmHandle?.nextAlarmTimeAmPm
+        return null
     }
 
     override fun getTint(): Int {

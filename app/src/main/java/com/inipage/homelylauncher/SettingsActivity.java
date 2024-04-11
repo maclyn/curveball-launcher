@@ -65,6 +65,10 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
     private static final SimpleDateFormat DATABASE_TITLE_FORMAT =
         new SimpleDateFormat("hhmma_MM_dd_yyyy", Locale.US);
 
+    interface PrefRunnable {
+        void run(Context context);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -175,7 +179,7 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
     public static class MainFragment extends PreferenceFragment {
 
         private String mMissingIconPackage = "unset";
-        private List<ApplicationIconHideable> mMissingIcons = new LinkedList<>();
+        private final List<ApplicationIconHideable> mMissingIcons = new LinkedList<>();
         private int mMissingIconsIdx = 0;
 
         @Override
@@ -183,44 +187,16 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.pref_general);
 
+            setupAdvancedPrefs();
             setupIconPackPrefs();
 
-            bindCheckboxPreference("vertical_scroller_design", Constants.VERTICAL_SCROLLER_PREF, true);
-            bindCheckboxPreference("use_g_weather", Constants.USE_G_WEATHER_PREF, false);
-
             // Dock
+            bindCheckboxPreference("use_g_weather", Constants.USE_G_WEATHER_PREF, false, null);
             bindPreference("manage_cals", ctx -> HiddenCalendarsPickerBottomSheet.show(ctx, null));
             bindPreference("manage_hidden_apps",
                HiddenRecentAppsBottomSheet.INSTANCE::showHiddenRecentAppsBottomSheet);
             bindCheckboxPreference("celcius_pref", Constants.WEATHER_USE_CELCIUS_PREF);
 
-            // Logging
-            bindPreference("log_show", this::showLogs);
-            bindPreference("log_export", this::exportLogs);
-            bindPreference("log_clear", __ -> LifecycleLogUtils.clearLog());
-
-            // Database
-            bindPreference("reset_database", context -> {
-                DatabaseEditor.get().dropAllTables();
-                ProcessPhoenix.triggerRebirth(context);
-            });
-            bindPreference("move_database_to_b", context -> {
-                FileUtils.copy(
-                    DatabaseEditor.get().getPath(),
-                    getBPath(context));
-                Toast.makeText(context, "Database moved.", Toast.LENGTH_SHORT).show();
-            });
-            bindPreference("overwrite_from_b", context -> {
-                final String bPath = getBPath(context);
-                if (!(new File(bPath).exists())) {
-                    Toast.makeText(context, "No database in B slot.", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                FileUtils.copy(
-                    bPath,
-                    DatabaseEditor.get().getPath());
-                ProcessPhoenix.triggerRebirth(context);
-            });
             bindPreference("import_database", context -> {
                 final Activity parent = ViewUtils.requireActivityOf(context);
                 final Intent exportIntent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
@@ -240,6 +216,7 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
                 parent.startActivityForResult(exportIntent, EXPORT_DATABASE_REQUEST_CODE);
             });
 
+
             // Attributions
             bindPreference("attrs", context ->
                 new AlertDialog.Builder(context)
@@ -257,10 +234,14 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
         }
 
         private void bindCheckboxPreference(String name, String backingPreference) {
-            bindCheckboxPreference(name, backingPreference, false);
+            bindCheckboxPreference(name, backingPreference, false, null);
         }
 
-        private void bindCheckboxPreference(String name, String backingPreference, boolean triggerRestart) {
+        private void bindCheckboxPreference(
+                String name,
+                String backingPreference,
+                boolean triggerRestart,
+                @Nullable PrefRunnable listener) {
             Preference pref = findPreference(name);
             if (!(pref instanceof CheckBoxPreference)) {
                 return;
@@ -274,6 +255,9 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
                 }
                 prefs.edit().putBoolean(
                     backingPreference, ((CheckBoxPreference) preference).isChecked()).commit();
+                if (listener != null) {
+                    listener.run(getContext());
+                }
                 if (triggerRestart) {
                     ProcessPhoenix.triggerRebirth(preference.getContext());
                 }
@@ -312,6 +296,48 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
                 Intent.EXTRA_TITLE,
                 DATABASE_TITLE_FORMAT.format(new Date()) + "_logfile.txt");
             parent.startActivityForResult(exportIntent, EXPORT_LOG_REQUEST_CODE);
+        }
+
+        private void setupAdvancedPrefs() {
+            final boolean isDevModeEnabled = PrefsHelper.isDevMode();
+            bindCheckboxPreference(
+                "dev_mode", Constants.DEV_MODE_PREF, false, context -> setupAdvancedPrefs());
+            bindPreference("log_show", this::showLogs);
+            bindPreference("log_export", this::exportLogs);
+            bindPreference("log_clear", __ -> LifecycleLogUtils.clearLog());
+            /*
+            // TODO: Horribly breaks app right now; need to figure this out
+            bindCheckboxPreference(
+                "vertical_scroller_design", Constants.VERTICAL_SCROLLER_PREF, true, null);
+             */
+
+            // Dangerous DB options
+            bindPreference("reset_database", context -> {
+                DatabaseEditor.get().dropAllTables();
+                ProcessPhoenix.triggerRebirth(context);
+            });
+            bindPreference("move_database_to_b", context -> {
+                FileUtils.copy(
+                    DatabaseEditor.get().getPath(),
+                    getBPath(context));
+                Toast.makeText(context, "Database moved.", Toast.LENGTH_SHORT).show();
+            });
+            bindPreference("overwrite_from_b", context -> {
+                final String bPath = getBPath(context);
+                if (!(new File(bPath).exists())) {
+                    Toast.makeText(context, "No database in B slot.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                FileUtils.copy(
+                    bPath,
+                    DatabaseEditor.get().getPath());
+                ProcessPhoenix.triggerRebirth(context);
+            });
+
+            findPreference("vertical_scroller_design").setEnabled(isDevModeEnabled);
+            findPreference("reset_database").setEnabled(isDevModeEnabled);
+            findPreference("move_database_to_b").setEnabled(isDevModeEnabled);
+            findPreference("overwrite_from_b").setEnabled(isDevModeEnabled);
         }
 
         private void setupIconPackPrefs() {
@@ -437,10 +463,6 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
 
         private String getBPath(Context context) {
             return new File(context.getFilesDir(), "b.db").toString();
-        }
-
-        interface PrefRunnable {
-            void run(Context context);
         }
     }
 }

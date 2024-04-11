@@ -86,6 +86,14 @@ public class PrefsHelper {
         return get().mSharedPreferences.getString(Constants.SELECTED_ICON_PACK_PACKAGE_PREF, null);
     }
 
+    public static void setIsDevMode(boolean isDevMode) {
+        get().mSharedPreferences.edit().putBoolean(Constants.DEV_MODE_PREF, isDevMode).commit();
+    }
+
+    public static boolean isDevMode() {
+        return get().mSharedPreferences.getBoolean(Constants.DEV_MODE_PREF, false);
+    }
+
     public static void setIconPack(@Nullable String packageName) {
         if (packageName == null) {
             get().mSharedPreferences.edit()

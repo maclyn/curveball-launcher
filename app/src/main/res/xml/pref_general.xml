@@ -1,27 +1,33 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <ListPreference
-        android:key="icon_packs"
-        android:title="Choose an icon pack"
-        android:summary="Select from installed icon packs"
-        />
+    <PreferenceCategory
+        android:key="icon_category"
+        android:title="Icon packs"
+        >
 
-    <Preference
-        android:key="fill_missing_icons"
-        android:title="Replace missing icon pack icons"
-        android:summary="Use other icons as stand-ins for icons missing from your pack"
-        />
+        <ListPreference
+            android:key="icon_packs"
+            android:title="Choose an icon pack"
+            android:summary="Select from installed icon packs"
+            />
 
-    <Preference
-        android:key="replace_one_icon"
-        android:title="Replace a single icon"
-        android:summary="Use icon as stand-in for any app icon"
-        />
+        <Preference
+            android:key="fill_missing_icons"
+            android:title="Replace missing icon pack icons"
+            android:summary="Use other icons as stand-ins for icons missing from your pack"
+            />
 
-    <Preference
-        android:key="clear_icon_replacements"
-        android:title="Clear icon stand-ins"
-        android:summary="Reset all icon stand-ins" />
+        <Preference
+            android:key="replace_one_icon"
+            android:title="Replace a single icon"
+            android:summary="Use icon as stand-in for any app icon"
+            />
+
+        <Preference
+            android:key="clear_icon_replacements"
+            android:title="Clear icon stand-ins"
+            android:summary="Reset all icon stand-ins" />
+    </PreferenceCategory>
 
     <PreferenceCategory
         android:title="@string/dock_items"
@@ -38,6 +44,12 @@
             android:key="manage_hidden_apps"/>
 
         <CheckBoxPreference
+            android:defaultValue="false"
+            android:title="@string/use_celcius"
+            android:summary="@string/use_celcius_summary"
+            android:key="celcius_pref" />
+
+        <CheckBoxPreference
             android:title="@string/use_g_weather_title"
             android:summary="@string/use_g_weather_description"
             android:key="use_g_weather"
@@ -45,39 +57,34 @@
     </PreferenceCategory>
 
     <PreferenceCategory
+        android:title="@string/database_management">
+
+        <Preference
+            android:title="@string/import_database_from_storage"
+            android:summary="@string/import_database_from_storage_description"
+            android:key="import_database" />
+
+        <Preference
+            android:title="@string/export_database_to_storage"
+            android:summary="@string/export_database_to_storage_description"
+            android:key="export_database" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
         android:title="@string/advanced"
         android:key="pref_advanced">
+
+        <CheckBoxPreference
+            android:title="Set dev mode"
+            android:summary="Enable some incomplete options"
+            android:key="dev_mode"
+            />
 
         <CheckBoxPreference
             android:title="@string/vertical_scroller_title"
             android:summary="@string/vertical_scroller_description"
             android:key="vertical_scroller_design"
             />
-
-        <CheckBoxPreference
-            android:defaultValue="false"
-            android:title="@string/use_celcius"
-            android:summary="@string/use_celcius_summary"
-            android:key="celcius_pref" />
-
-        <Preference
-            android:title="@string/export_log"
-            android:summary="@string/export_log_description"
-            android:key="log_export" />
-
-        <Preference
-            android:title="@string/show_debug_log"
-            android:summary="@string/show_debug_log_summary"
-            android:key="log_show"/>
-
-        <Preference
-            android:title="@string/clear_debug_log"
-            android:summary="@string/clear_debug_log_summary"
-            android:key="log_clear"/>
-    </PreferenceCategory>
-
-    <PreferenceScreen
-        android:title="@string/database_management">
 
         <Preference
             android:title="@string/reset_database"
@@ -95,15 +102,20 @@
             android:key="overwrite_from_b" />
 
         <Preference
-            android:title="@string/import_database_from_storage"
-            android:summary="@string/import_database_from_storage_description"
-            android:key="import_database" />
+            android:title="@string/export_log"
+            android:summary="@string/export_log_description"
+            android:key="log_export" />
 
         <Preference
-            android:title="@string/export_database_to_storage"
-            android:summary="@string/export_database_to_storage_description"
-            android:key="export_database" />
-    </PreferenceScreen>
+            android:title="@string/show_debug_log"
+            android:summary="@string/show_debug_log_summary"
+            android:key="log_show"/>
+
+        <Preference
+            android:title="@string/clear_debug_log"
+            android:summary="@string/clear_debug_log_summary"
+            android:key="log_clear"/>
+    </PreferenceCategory>
 
     <PreferenceCategory
         android:title="@string/attributions"

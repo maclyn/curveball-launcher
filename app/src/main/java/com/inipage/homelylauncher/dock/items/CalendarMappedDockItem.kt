@@ -12,6 +12,8 @@ import java.util.*
 class CalendarMappedDockItem : DockControllerItem() {
 
     private val eventDateFormatter = SimpleDateFormat("h:mm aa", Locale.getDefault())
+    private val eventDateFormatterSimple = SimpleDateFormat("h:mm aa", Locale.getDefault())
+
     private var event: CalendarUtils.Event? = null
 
     override fun onAttach() {
@@ -39,8 +41,19 @@ class CalendarMappedDockItem : DockControllerItem() {
         val context = context ?: return null
         return if (event.allDay)
             context.getString(R.string.all_day)
-        else
-            eventDateFormatter.format(Date(event.start))
+        else {
+            val start = GregorianCalendar().also {
+                it.time = Date(event.start)
+            }
+            val end = GregorianCalendar().also {
+                it.time = Date(event.end)
+            }
+            val now = GregorianCalendar()
+            if (now.before(start)) {
+                return start.formatTime()
+            }
+            return context.getString(R.string.ends_at, end.formatTime())
+        }
     }
 
     override fun getTint(): Int {
@@ -76,6 +89,11 @@ class CalendarMappedDockItem : DockControllerItem() {
         else
             DockItemPriorities.PRIORITY_EVENT_RANGED.priority.toLong()
     }
+
+    private fun Calendar.formatTime(): String =
+        if (this.get(Calendar.MINUTE) == 0)
+            eventDateFormatterSimple.format(this.time) else
+                eventDateFormatter.format(this.time)
 
     companion object {
         private const val ONE_DAY_MS = (1000 * 60 * 60 * 24).toLong()

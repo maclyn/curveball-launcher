@@ -17,7 +17,7 @@ import static android.content.Context.ALARM_SERVICE;
 public class AlarmUtils {
 
     private static final SimpleDateFormat ALARM_TIME_FORMAT =
-        new SimpleDateFormat("h:mm", Locale.US);
+        new SimpleDateFormat("h:mm aa", Locale.US);
     private static final SimpleDateFormat ALARM_TIME_AMPM_FORMAT =
         new SimpleDateFormat("aa", Locale.US);
     private static final long HALF_DAY_MILLIS = 1000 * 60 * 60 * 12;
