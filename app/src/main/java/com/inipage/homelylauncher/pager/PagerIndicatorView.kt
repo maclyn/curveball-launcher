@@ -19,7 +19,7 @@ class PagerIndicatorView @JvmOverloads constructor(
 
     private val INACTIVE_ALPHA = 80
     private val ACTIVE_ALPHA = 220
-    private val INDICATOR_WIDTH_FACTOR = 8
+    private val INDICATOR_WIDTH_FACTOR = 4
     private val OVERLAP_XFER_MODE = PorterDuffXfermode(PorterDuff.Mode.XOR)
     private val mPaint: Paint
 

@@ -1,6 +1,9 @@
 package com.inipage.homelylauncher.dock
 
 import android.content.Context
+import android.graphics.Color
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
 import android.view.LayoutInflater
@@ -19,6 +22,9 @@ import com.inipage.homelylauncher.utils.ViewUtils
 class DockAdapter(context: Context, val items: List<DockControllerItem>) : RecyclerView.Adapter<DockAdapter.DockItemViewHolder>() {
 
     private val isSquarish: Boolean = ViewUtils.isSquarishDevice(context)
+    private val monoColorFilter: ColorMatrixColorFilter = ColorMatrixColorFilter(ColorMatrix().also {
+        it.setSaturation(0F)
+    })
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DockItemViewHolder =
         DockItemViewHolder(
@@ -27,6 +33,7 @@ class DockAdapter(context: Context, val items: List<DockControllerItem>) : Recyc
 
     override fun onBindViewHolder(holder: DockItemViewHolder, position: Int) {
         val item = items[position]
+        val isMono = item.mHost.hasMonoDock()
 
         holder.containerView.visibility = if (item.isLoaded) View.VISIBLE else View.GONE
         if (!item.isLoaded) {
@@ -35,7 +42,7 @@ class DockAdapter(context: Context, val items: List<DockControllerItem>) : Recyc
 
         // Setup background color
         holder.containerView.background.colorFilter = PorterDuffColorFilter(
-            item.tint,
+            if (isMono) Color.WHITE else item.tint,
             PorterDuff.Mode.SRC_IN
         )
 
@@ -50,6 +57,7 @@ class DockAdapter(context: Context, val items: List<DockControllerItem>) : Recyc
         } else if (drawable != null) {
             holder.iconView.setImageDrawable(drawable)
         }
+        holder.iconView.colorFilter = if (isMono) monoColorFilter else null
 
         // Map text
         val label = item.label
@@ -65,9 +73,11 @@ class DockAdapter(context: Context, val items: List<DockControllerItem>) : Recyc
         if (secondaryLabel != null && !isSquarish) {
             holder.secondaryLabel.text = secondaryLabel
             holder.secondaryLabel.visibility = View.VISIBLE
+            holder.textDivider.visibility = View.VISIBLE
             hasLabel = true
         } else {
             holder.secondaryLabel.visibility = View.GONE
+            holder.textDivider.visibility = View.GONE
         }
 
         holder.labelContainer.visibility = if (hasLabel) View.VISIBLE else View.GONE
@@ -89,5 +99,6 @@ class DockAdapter(context: Context, val items: List<DockControllerItem>) : Recyc
         val labelContainer: View = ViewCompat.requireViewById(view, R.id.contextual_dock_item_labels_container)
         val primaryLabel: TextView = ViewCompat.requireViewById(view, R.id.contextual_dock_item_label)
         val secondaryLabel: TextView = ViewCompat.requireViewById(view, R.id.contextual_dock_item_secondary_label)
+        val textDivider: View = ViewCompat.requireViewById(view, R.id.contextual_dock_item_divider)
     }
 }

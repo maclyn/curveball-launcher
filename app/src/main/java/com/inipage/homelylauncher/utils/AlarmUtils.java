@@ -22,7 +22,7 @@ public class AlarmUtils {
         new SimpleDateFormat("aa", Locale.US);
     private static final long HALF_DAY_MILLIS = 1000 * 60 * 60 * 12;
     private static final String[] BLOCKED_ALARM_SENDERS = new String[]{
-        "com.google,android.calendar",
+        "com.google.android.calendar",
         "com.android.calendar",
         "com.samsung.android.calendar",
         "com.android.providers.calendar"

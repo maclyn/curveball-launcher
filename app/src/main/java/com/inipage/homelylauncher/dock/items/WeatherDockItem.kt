@@ -54,15 +54,9 @@ class WeatherDockItem : DockControllerItem(), WeatherPresenter {
         return ViewUtils.getDrawableFromAssetPNG(context, assetId)
     }
 
-    override fun getLabel(): String? {
-        return if (mForecast == null) null else mForecast?.currentTemp
-    }
+    override fun getLabel(): String? = mForecast?.condition
 
-    override fun getSecondaryLabel(): String? {
-        val context = context ?: return null
-        return if (mForecast == null) null else
-            context.getString(R.string.temp_format_string, mForecast?.low, mForecast?.highTemp)
-    }
+    override fun getSecondaryLabel(): String? = mForecast?.currentTemp
 
     override fun getTint(): Int {
         val context = context ?: return super.getTint()

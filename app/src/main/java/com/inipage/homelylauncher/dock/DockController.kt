@@ -18,6 +18,7 @@ import com.inipage.homelylauncher.dock.items.PowerMappedDockItem
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.inipage.homelylauncher.R
 import com.inipage.homelylauncher.dock.DockAdapter
+import com.inipage.homelylauncher.persistence.PrefsHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -40,6 +41,7 @@ class DockController(val container: RecyclerView) {
     private var adapter: DockAdapter? = null
     private var activeDockItems: MutableList<DockControllerItem> = ArrayList()
     private var appBackedItemsCache: MutableMap<Int, DockItem> = HashMap()
+    private var isMono: Boolean = false
     
     fun loadDock() {
         destroyDockImpl()
@@ -52,10 +54,10 @@ class DockController(val container: RecyclerView) {
         destroyDockImpl()
     }
 
-
     private fun loadDockItemsImpl() {
         // Setup the dock controller supporting fields
         appFetcher.reloadPrefs()
+        isMono = PrefsHelper.usingMonochromeDock();
         appBackedItemsCache = DatabaseEditor.get().dockPreferences
             .parallelStream()
             .filter { dockItem: DockItem -> dockItem.whenToShow != DockItem.DOCK_SHOW_NEVER }
@@ -102,6 +104,8 @@ class DockController(val container: RecyclerView) {
                 override fun hideHostedItem() = adapter?.notifyItemChanged(index) ?: Unit
 
                 override fun tintLoaded(color: Int) = adapter?.notifyItemChanged(index) ?: Unit
+
+                override fun hasMonoDock() = isMono
             })
         }
         container.alpha = 0f

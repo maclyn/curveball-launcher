@@ -12,7 +12,6 @@ import java.util.*
 class CalendarMappedDockItem : DockControllerItem() {
 
     private val eventDateFormatter = SimpleDateFormat("h:mm aa", Locale.getDefault())
-    private val eventDateFormatterSimple = SimpleDateFormat("h:mm aa", Locale.getDefault())
 
     private var event: CalendarUtils.Event? = null
 
@@ -22,25 +21,20 @@ class CalendarMappedDockItem : DockControllerItem() {
         if (event != null && event.allDay && event.start - event.end > ONE_DAY_MS) {
             return
         }
-        this.event = event
-        if (this.event != null) {
-            showSelf()
-        }
+        this.event = event?.also { showSelf() }
     }
 
     override fun getIcon(): Int {
         return R.drawable.dock_icon_event
     }
 
-    override fun getLabel(): String? {
-        return if (event == null) null else event!!.title
-    }
+    override fun getLabel(): String? = event?.title
 
     override fun getSecondaryLabel(): String? {
         val event = event ?: return null
         val context = context ?: return null
         return if (event.allDay)
-            context.getString(R.string.all_day)
+            null
         else {
             val start = GregorianCalendar().also {
                 it.time = Date(event.start)
@@ -90,10 +84,7 @@ class CalendarMappedDockItem : DockControllerItem() {
             DockItemPriorities.PRIORITY_EVENT_RANGED.priority.toLong()
     }
 
-    private fun Calendar.formatTime(): String =
-        if (this.get(Calendar.MINUTE) == 0)
-            eventDateFormatterSimple.format(this.time) else
-                eventDateFormatter.format(this.time)
+    private fun Calendar.formatTime(): String = eventDateFormatter.format(this.time)
 
     companion object {
         private const val ONE_DAY_MS = (1000 * 60 * 60 * 24).toLong()

@@ -27,7 +27,7 @@
     <dimen name="contextual_dock_height">56dp</dimen>
     <dimen name="pocket_indicator_height">16dp</dimen>
     <dimen name="contextual_dock_internal_padding">4dp</dimen>
-    <dimen name="contextual_dock_internal_text_padding">8dp</dimen>
+    <dimen name="contextual_dock_internal_text_padding">4dp</dimen>
     <dimen name="contextual_dock_external_padding">4dp</dimen>
     <!-- (contextual_dock_height - (external_padding * 2)) / 2 -->
     <dimen name="contextual_dock_corner_rounding">24dp</dimen>

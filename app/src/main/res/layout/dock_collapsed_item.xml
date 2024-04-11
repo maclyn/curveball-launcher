@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="horizontal"
     android:layout_width="wrap_content"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:paddingVertical="4dp">
 
     <LinearLayout
@@ -20,6 +20,7 @@
             android:layout_width="@dimen/contextual_dock_icon_size"
             android:layout_height="@dimen/contextual_dock_icon_size"
             android:src="@drawable/dock_icon_alarm"
+            android:padding="4dp"
             android:layout_marginVertical="@dimen/contextual_dock_internal_padding"
             android:layout_marginStart="@dimen/contextual_dock_internal_padding_horizontal" />
 
@@ -27,15 +28,15 @@
             android:id="@+id/contextual_dock_item_labels_container"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:orientation="horizontal"
             android:layout_gravity="center"
-            android:layout_marginStart="@dimen/contextual_dock_internal_text_padding" >
+            android:layout_marginHorizontal="@dimen/contextual_dock_internal_text_padding" >
 
             <TextView
                 android:id="@+id/contextual_dock_item_label"
                 android:text="@string/ipsum"
                 android:textColor="@color/primary_text_color"
-                android:textSize="14dp"
+                android:textSize="16dp"
                 android:maxLines="1"
                 android:ellipsize="end"
                 android:maxWidth="120dp"
@@ -44,13 +45,24 @@
                 tools:ignore="SpUsage" />
 
             <TextView
+                android:id="@+id/contextual_dock_item_divider"
+                android:text="-"
+                android:textColor="@color/primary_text_color"
+                android:textSize="16dp"
+                android:maxLines="1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="8dp"
+                tools:ignore="SpUsage" />
+
+            <TextView
                 android:id="@+id/contextual_dock_item_secondary_label"
                 android:text="@string/ipsum"
                 android:textColor="@color/primary_text_color"
-                android:textSize="12dp"
+                android:textSize="16dp"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:maxWidth="120dp"
+                android:maxWidth="72dp"
                 android:gravity="start"
                 android:layout_gravity="center_horizontal"
                 android:layout_width="wrap_content"

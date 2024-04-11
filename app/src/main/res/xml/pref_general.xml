@@ -33,6 +33,12 @@
         android:title="@string/dock_items"
         android:key="dock_items">
 
+        <CheckBoxPreference
+            android:title="Monochrome dock"
+            android:summary="Show dock without color"
+            android:key="mono_dock"
+            />
+
         <Preference
             android:title="@string/manage_hidden_calendars"
             android:summary="@string/manage_hidden_calendars_description"
