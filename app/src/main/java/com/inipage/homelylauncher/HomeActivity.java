@@ -15,6 +15,7 @@ import android.app.WallpaperManager;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -527,6 +528,21 @@ public class HomeActivity extends AppCompatActivity implements
             if (!isOnFirstHomeScreen()) {
                 pagerView.setCurrentItem(1, true);
                 return;
+            } else {
+                // try to handle GestureNavContract
+                @Nullable Bundle navContract = intent.getBundleExtra("gesture_nav_contract_v1");
+                if (navContract != null) {
+                    @Nullable ComponentName componentName = navContract.getParcelable("android.intent.extra.COMPONENT_NAME");
+                    @Nullable Message callback = navContract.getParcelable("android.intent.extra.REMOTE_CALLBACK");
+                    if (componentName != null && callback != null) {
+                        // TODO: set these; see https://android.googlesource.com/platform/packages/apps/Launcher3/+/master/src/com/android/launcher3/GestureNavContract.java#53
+                        /*
+                        public static final String EXTRA_ICON_POSITION = "gesture_nav_contract_icon_position";
+                        public static final String EXTRA_ICON_SURFACE = "gesture_nav_contract_surface_control";
+                        public static final String EXTRA_ON_FINISH_CALLBACK = "gesture_nav_contract_finish_callback";
+                        */
+                    }
+                }
             }
             if (LayoutEditingSingleton.getInstance().isEditing()) {
                 LayoutEditingSingleton.getInstance().setEditing(false);
