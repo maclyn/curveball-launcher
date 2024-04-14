@@ -3,25 +3,25 @@ package com.inipage.homelylauncher.icons
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.content.res.Resources
 import android.content.res.XmlResourceParser
 import android.graphics.drawable.Drawable
 import com.inipage.homelylauncher.persistence.PrefsHelper
 import org.xmlpull.v1.XmlPullParser
 import android.util.Pair as APair
 
-class IconPackLoader(private val context: Context, private val packageName: String) {
-
-    private val iconListCache =  ArrayList<APair<String, Int>>()
-    val iconList: List<APair<String, Int>> = iconListCache
+class IconPackLoader(context: Context, private val packageName: String) {
 
     val resources = context.packageManager.getResourcesForApplication(packageName)
 
-    private val standIns = PrefsHelper.loadStandIns(packageName);
+    private val standIns = PrefsHelper.loadStandIns(packageName)
+    private val knownDrawables = ArrayList<String>()
+    val iconPackDrawables: List<String> = knownDrawables
     private val drawableNameToResId = HashMap<String, Int>()
     private val componentToDrawableName = HashMap<APair<String, String>, String>()
 
     fun loadDrawableByName(drawableName: String): Drawable? {
-        val id = drawableNameToResId[drawableName] ?: return null
+        val id = getResIdFromDrawableName(drawableName) ?: return null
         return resources.getDrawable(id)
     }
 
@@ -38,7 +38,12 @@ class IconPackLoader(private val context: Context, private val packageName: Stri
     fun loadDrawableForComponent(pkg: String, activity: String): Drawable? =
         loadDrawableForComponent(APair.create(pkg, activity))
 
-    fun hasIconForComponent(pkg: String, activity: String): Boolean {
+    /**
+     * "Probably" because we don't do any explicit validation that just because the icon pack
+     * *defines* a mapping between component -> icon, doesn't mean the needed drawable actually
+     * exists.
+     */
+    fun probablyHasIconForComponent(pkg: String, activity: String): Boolean {
         val pair = APair.create(pkg, activity)
         if (standIns.contains(pair)) {
             return true
@@ -46,8 +51,13 @@ class IconPackLoader(private val context: Context, private val packageName: Stri
         return componentToDrawableName.contains(pair)
     }
 
+    /**
+     * This is useful for enumerating all icons in a pack. It is *abysmal* for performance to
+     * actually go from drawable name to resource ID before we need to, so we don't do that ahead of
+     * time.
+     */
     @SuppressLint("DiscouragedApi")
-    private fun loadDrawableNameMap() {
+    private fun loadKnownDrawables() {
         val xmlParser = getXmlForName("drawable") ?: return
 
         // Go through and grab drawable="" components
@@ -59,19 +69,10 @@ class IconPackLoader(private val context: Context, private val packageName: Stri
             }
             val attrValue = xmlParser.getAttributeValue(null, "drawable")
             if (attrValue != null) {
-                val resId = resources.getIdentifier(
-                    attrValue,
-                    "drawable",
-                    packageName
-                )
-                if (resId != 0) {
-                    val name = resources.getResourceEntryName(resId)
-                    drawableNameToResId[name] = resId
-                }
+                knownDrawables.add(attrValue);
             }
             eventType = xmlParser.next()
         }
-
         xmlParser.close()
     }
 
@@ -88,9 +89,6 @@ class IconPackLoader(private val context: Context, private val packageName: Stri
             val drawableValue = xmlParser.getAttributeValue(null, "drawable")
             eventType = xmlParser.next()
             if (componentValue != null && drawableValue != null) {
-                if (!drawableNameToResId.contains(drawableValue)) {
-                    continue
-                }
                 // ComponentInfo{packageName/activity}
                 val startIdx = componentValue.indexOf("{") + 1
                 val endIdx = componentValue.indexOf("}")
@@ -108,6 +106,24 @@ class IconPackLoader(private val context: Context, private val packageName: Stri
         xmlParser.close()
     }
 
+    private fun getResIdFromDrawableName(name: String): Int? {
+        if (drawableNameToResId.contains(name)) {
+            return drawableNameToResId[name]
+        }
+        val resId = resources.getIdentifier(
+            name,
+            "drawable",
+            packageName
+        )
+        if (resId != 0) {
+            try {
+                drawableNameToResId[name] = resId
+                return resId
+            } catch (ignored: Resources.NotFoundException) {}
+        }
+        return null
+    }
+
     @SuppressLint("DiscouragedApi")
     private fun getXmlForName(name: String): XmlResourceParser? {
         val id = resources.getIdentifier(name, "xml", packageName)
@@ -118,11 +134,8 @@ class IconPackLoader(private val context: Context, private val packageName: Stri
     }
 
     init {
-        loadDrawableNameMap()
+        loadKnownDrawables()
         loadComponentLookupMap()
-        drawableNameToResId.entries.forEach {
-            iconListCache.add(APair(it.key, it.value))
-        }
     }
 
     companion object {

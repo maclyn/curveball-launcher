@@ -1,7 +1,6 @@
 package com.inipage.homelylauncher.icons;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
@@ -27,10 +26,8 @@ import com.inipage.homelylauncher.views.DecorViewManager;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
 public class IconPickerBottomSheet {
 
@@ -43,10 +40,8 @@ public class IconPickerBottomSheet {
     private final Spinner mSourceSpinner;
     private final String mAttachmentToken;
 
-    @Nullable
-    private List<Pair<String, Integer>> mIconsResourceAndId;
-    @Nullable
-    private Resources mActiveResources;
+    @Nullable private IconChooserAdapter mAdapter;
+
     @Nullable
     private Runnable mIconFetchRunnable;
     @Nullable private String mFixedPackage;
@@ -94,7 +89,7 @@ public class IconPickerBottomSheet {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                searchIcons(context, s.toString());
+                searchIcons(s.toString());
             }
 
             @Override
@@ -133,15 +128,13 @@ public class IconPickerBottomSheet {
             try {
                 IconPackLoader ipl =
                     IconCacheSync.getInstance(context).getIconPackLoader(packageName);
-                if (ipl.getIconList().isEmpty()) {
+                if (ipl.getIconPackDrawables().isEmpty()) {
                     throw new Exception();
                 }
                 new Handler(Looper.getMainLooper()).post(() -> {
-                    mIconsResourceAndId = ipl.getIconList();
-                    mActiveResources = ipl.getResources();
                     mSearchBox.setEnabled(true);
                     mIconFetchRunnable = null;
-                    setAdapter(context, mIconsResourceAndId);
+                    setAdapter(context, ipl);
                 });
             } catch (Exception fetchFailed) {
                 new Handler(Looper.getMainLooper()).post(() -> {
@@ -155,37 +148,26 @@ public class IconPickerBottomSheet {
         mIconFetchExecutor.execute(mIconFetchRunnable);
     }
 
-    private void searchIcons(Context context, String query) {
-        if (mIconsResourceAndId == null || mIconsResourceAndId.isEmpty()) {
+    private void searchIcons(String query) {
+        if (mAdapter == null) {
             return;
         }
-
-        if (query.length() > 0) {
-            final String cleanedQuery = query.toLowerCase(Locale.US).replace(" ", "_");
-            final List<Pair<String, Integer>> iconResults =
-                mIconsResourceAndId
-                    .parallelStream()
-                    .filter(icon -> icon.first.contains(cleanedQuery))
-                    .collect(Collectors.toList());
-            setAdapter(context, iconResults);
-        } else {
-            setAdapter(context, mIconsResourceAndId);
-        }
+        mAdapter.filter(query);
     }
 
-    private void setAdapter(Context context, List<Pair<String, Integer>> iconData) {
-        final RecyclerView.Adapter<IconChooserAdapter.IconHolder> iconListAdapter =
+    private void setAdapter(Context context, IconPackLoader iconPackLoader) {
+        final IconChooserAdapter iconListAdapter =
             new IconChooserAdapter(
-                iconData,
-                mActiveResources,
+                iconPackLoader,
                 iconResource -> {
                     final String packageName =
                         mFixedPackage == null ?
                         mIconPackPackages.get(mSourceSpinner.getSelectedItemPosition()) :
                         mFixedPackage;
-                    mCallback.onIconPicked(packageName, iconResource.first);
+                    mCallback.onIconPicked(packageName, iconResource);
                     DecorViewManager.get(context).removeView(mAttachmentToken);
                 });
+        mAdapter = iconListAdapter;
         mListView.setAdapter(iconListAdapter);
     }
 

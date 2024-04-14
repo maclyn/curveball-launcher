@@ -9,7 +9,6 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
-import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.preference.CheckBoxPreference;
@@ -417,7 +416,7 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
                 IconCacheSync.getInstance(getContext()).getIconPackLoader(iconPack);
             List<ApplicationIconHideable> apps = AppInfoCache.get().getAllActivities();
             for (ApplicationIconHideable app : apps) {
-                if (!ipl.hasIconForComponent(app.getPackageName(), app.getActivityName())) {
+                if (!ipl.probablyHasIconForComponent(app.getPackageName(), app.getActivityName())) {
                     mMissingIcons.add(app);
                 }
             }

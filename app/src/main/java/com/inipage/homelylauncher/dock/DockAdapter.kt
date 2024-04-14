@@ -2,6 +2,7 @@ package com.inipage.homelylauncher.dock
 
 import android.content.Context
 import android.graphics.Color
+import android.graphics.ColorFilter
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.PorterDuff
@@ -22,9 +23,6 @@ import com.inipage.homelylauncher.utils.ViewUtils
 class DockAdapter(context: Context, val items: List<DockControllerItem>) : RecyclerView.Adapter<DockAdapter.DockItemViewHolder>() {
 
     private val isSquarish: Boolean = ViewUtils.isSquarishDevice(context)
-    private val monoColorFilter: ColorMatrixColorFilter = ColorMatrixColorFilter(ColorMatrix().also {
-        it.setSaturation(0F)
-    })
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DockItemViewHolder =
         DockItemViewHolder(
@@ -57,7 +55,7 @@ class DockAdapter(context: Context, val items: List<DockControllerItem>) : Recyc
         } else if (drawable != null) {
             holder.iconView.setImageDrawable(drawable)
         }
-        holder.iconView.colorFilter = if (isMono) monoColorFilter else null
+        holder.iconView.colorFilter = if (isMono) createMonoColorFilter() else null
 
         // Map text
         val label = item.label
@@ -92,6 +90,11 @@ class DockAdapter(context: Context, val items: List<DockControllerItem>) : Recyc
     }
 
     override fun getItemCount() = items.size
+
+    private fun createMonoColorFilter(): ColorFilter =
+        ColorMatrixColorFilter(ColorMatrix().also {
+            it.setSaturation(0F)
+        })
 
     class DockItemViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val containerView: View = ViewCompat.requireViewById(view, R.id.dock_item_root_container)

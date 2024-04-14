@@ -276,6 +276,7 @@ public class HomeActivity extends AppCompatActivity implements
     private boolean mSyntheticScrolling = false;
 
     //region Android lifecycle
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -290,7 +291,7 @@ public class HomeActivity extends AppCompatActivity implements
             public void onReceive(Context context, Intent intent) {
                 recreate();
             }
-        }, new IntentFilter(Constants.INTENT_ACTION_RESTART), RECEIVER_NOT_EXPORTED);
+        }, new IntentFilter(Constants.INTENT_ACTION_RESTART));
 
         mPager = new HomePager(this, rootView);
         mNonTouchInputCoordinator = new NonTouchInputCoordinator(this, this);

@@ -27,6 +27,9 @@ public class CalendarUtils {
     private static final SimpleDateFormat EVENT_FORMATTER =
         new SimpleDateFormat("h:mm aa", Locale.getDefault());
     private static final long HALF_DAY_IN_MILLIS = 1000L * 60L * 60L * 12L;
+
+    private static final long ONE_DAY_IN_MILLIS = HALF_DAY_IN_MILLIS * 2;
+
     private final static String[] QUERY_COLUMNS = new String[]{
         CalendarContract.Instances.DTSTART,
         CalendarContract.Instances.DTEND,
@@ -51,8 +54,12 @@ public class CalendarUtils {
         final Uri.Builder builder = CalendarContract.Instances.CONTENT_URI.buildUpon();
         ContentUris.appendId(builder, now - HALF_DAY_IN_MILLIS);
         ContentUris.appendId(builder, now + HALF_DAY_IN_MILLIS);
-        final Cursor cursor = resolver.query(builder.build(), QUERY_COLUMNS, null, null,
-                                             CalendarContract.Instances.DTSTART + " asc");
+        final Cursor cursor = resolver.query(
+            builder.build(),
+            QUERY_COLUMNS,
+            null,
+            null,
+            CalendarContract.Instances.DTSTART + " asc");
 
         if (cursor == null || !cursor.moveToFirst()) {
             return null;
@@ -98,6 +105,11 @@ public class CalendarUtils {
             if (status == CalendarContract.Instances.STATUS_CANCELED) {
                 continue;
             }
+            if (endTime - startTime > ONE_DAY_IN_MILLIS) {
+                // Event spans multiple days; ignore
+                continue;
+            }
+            // We don't *like* all day events, but if it's all we have, that's fine
             if (allDay && fallbackEvent == null) {
                 fallbackEvent = new Event(startTime, endTime, allDay, id, calendarId, title, location);
                 cursor.moveToNext();
@@ -181,6 +193,7 @@ public class CalendarUtils {
     }
 
     public static class Event {
+
         private final long mStart;
         private final long mEnd;
         private final boolean mAllDay;
@@ -197,7 +210,8 @@ public class CalendarUtils {
             int id,
             int calendarId,
             String title,
-            @Nullable String location) {
+            @Nullable String location)
+        {
             this.mStart = start;
             this.mEnd = end;
             this.mAllDay = allDay;
@@ -217,6 +231,10 @@ public class CalendarUtils {
 
         public boolean getAllDay() {
             return mAllDay;
+        }
+
+        public boolean getSpansMultipleDays() {
+            return mEnd - mStart > ONE_DAY_IN_MILLIS;
         }
 
         public String getTitle() {

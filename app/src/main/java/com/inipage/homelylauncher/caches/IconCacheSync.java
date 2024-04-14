@@ -109,13 +109,15 @@ public class IconCacheSync {
             Drawable d = null;
             if (mIsUsingIconPack) {
                 IconPackLoader iconLoader = getIconPackLoader(mIconPackPackage);
-                d = iconLoader.loadDrawableForComponent(packageName, activityName);
+                @Nullable String altDrawableName =
+                    mIconPackStandIns.get(Pair.create(packageName, activityName));
+                if (altDrawableName != null) {
+                    d = iconLoader.loadDrawableByName(altDrawableName);
+                } else {
+                    d = iconLoader.loadDrawableForComponent(packageName, activityName);
+                }
                 if (d == null) {
-                    @Nullable String altDrawableName =
-                        mIconPackStandIns.get(Pair.create(packageName, activityName));
-                    if (altDrawableName != null) {
-                        d = iconLoader.loadDrawableByName(altDrawableName);
-                    }
+                    Log.d(TAG, "Missing icon pack icon for " + packageName + " and " + activityName);
                 }
             }
             if (d == null) {

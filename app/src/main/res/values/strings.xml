@@ -254,7 +254,7 @@
     <string name="dock_icon_power">%1$d%%</string>
     <string name="pocket">Pocket</string>
     <string name="all_day">All day</string>
-    <string name="ends_at">Ends at %s</string>
+    <string name="ends_at">Ends %s</string>
     <string name="reorder_pocket_items">Reorder pocket rows</string>
     <string name="choose_calendars_to_hide">Choose calendars to hide</string>
     <string name="dock_items">Dock items</string>
