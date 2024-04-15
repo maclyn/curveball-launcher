@@ -29,6 +29,8 @@ import java.util.stream.Stream;
  */
 public class ContextualAppFetcher {
 
+    private static final int TARGET_COUNT = 10;
+
     private Map<String, Boolean> mHiddenApps;
 
     public ContextualAppFetcher() {
@@ -71,7 +73,7 @@ public class ContextualAppFetcher {
                     ));
     }
 
-    public List<DockControllerItem> getRecentApps(Context context) {
+    public List<DockControllerItem> getRecentApps(Context context, boolean runQuick) {
         final List<DockControllerItem> suggestions = new ArrayList<>();
         final Map<String, Boolean> packagesSeen = new HashMap<>();
 
@@ -104,43 +106,49 @@ public class ContextualAppFetcher {
             }
         }
 
-        // Look at past day
         long previousEndPoint = workingCalendar.getTimeInMillis();
-        workingCalendar.roll(Calendar.DAY_OF_WEEK, -1);
-        start = workingCalendar.getTimeInMillis();
-        end = previousEndPoint;
-        granularOptions =
-            usm.queryUsageStats(UsageStatsManager.INTERVAL_BEST, start, end);
-        for (UsageStats entry : granularOptions) {
-            // Weighed a little more heavily than week
-            long timeUsed = (long) (entry.getTotalTimeInForeground() * 1.5);
-            if (useTimeMap.containsKey(entry.getPackageName())) {
-                useTimeMap.put(
-                    entry.getPackageName(),
-                    useTimeMap.get(entry.getPackageName()) + timeUsed);
-            } else {
-                useTimeMap.put(entry.getPackageName(), timeUsed);
+        if (runQuick && useTimeMap.entrySet().size() < TARGET_COUNT) {
+            // Look at past day
+            workingCalendar.roll(Calendar.DAY_OF_WEEK, -1);
+            start = workingCalendar.getTimeInMillis();
+            end = previousEndPoint;
+            granularOptions =
+                usm.queryUsageStats(UsageStatsManager.INTERVAL_BEST, start, end);
+            for (UsageStats entry : granularOptions) {
+                // Weighed a little more heavily than week
+                long timeUsed = (long) (entry.getTotalTimeInForeground() * 1.5);
+                if (useTimeMap.containsKey(entry.getPackageName())) {
+                    useTimeMap.put(
+                        entry.getPackageName(),
+                        useTimeMap.get(entry.getPackageName()) + timeUsed);
+                } else {
+                    useTimeMap.put(entry.getPackageName(), timeUsed);
+                }
             }
         }
 
+
         //  Look at past week
-        previousEndPoint = workingCalendar.getTimeInMillis();
-        workingCalendar.roll(Calendar.WEEK_OF_YEAR, -1);
-        start = workingCalendar.getTimeInMillis();
-        end = previousEndPoint;
-        List<UsageStats> leastGranularOptions = usm.queryUsageStats(
-            UsageStatsManager.INTERVAL_BEST,
-            start,
-            end);
-        for (UsageStats entry : leastGranularOptions) {
-            // Unweighted hours/day
-            long timeUsed = entry.getTotalTimeInForeground() / 7;
-            if (useTimeMap.containsKey(entry.getPackageName())) {
-                useTimeMap.put(
-                    entry.getPackageName(),
-                    useTimeMap.get(entry.getPackageName()) + timeUsed);
-            } else {
-                useTimeMap.put(entry.getPackageName(), timeUsed);
+        if (runQuick && useTimeMap.entrySet().size() < TARGET_COUNT) {
+
+            previousEndPoint = workingCalendar.getTimeInMillis();
+            workingCalendar.roll(Calendar.WEEK_OF_YEAR, -1);
+            start = workingCalendar.getTimeInMillis();
+            end = previousEndPoint;
+            List<UsageStats> leastGranularOptions = usm.queryUsageStats(
+                UsageStatsManager.INTERVAL_BEST,
+                start,
+                end);
+            for (UsageStats entry : leastGranularOptions) {
+                // Unweighted hours/day
+                long timeUsed = entry.getTotalTimeInForeground() / 7;
+                if (useTimeMap.containsKey(entry.getPackageName())) {
+                    useTimeMap.put(
+                        entry.getPackageName(),
+                        useTimeMap.get(entry.getPackageName()) + timeUsed);
+                } else {
+                    useTimeMap.put(entry.getPackageName(), timeUsed);
+                }
             }
         }
 
@@ -167,7 +175,7 @@ public class ContextualAppFetcher {
             suggestions,
             packagesSeen,
             suggestionApp));
-        return suggestions.subList(0, suggestions.size() > 15 ? 14 : suggestions.size());
+        return suggestions.subList(0, suggestions.size() > TARGET_COUNT ? TARGET_COUNT - 1 : suggestions.size());
     }
 
     private void updateWorkingSet(

@@ -16,12 +16,7 @@ class CalendarMappedDockItem : DockControllerItem() {
     private var event: CalendarUtils.Event? = null
 
     override fun onAttach() {
-        val context = context
-        val event = CalendarUtils.findRelevantEvent(context)
-        if (event != null && event.allDay && event.start - event.end > ONE_DAY_MS) {
-            return
-        }
-        this.event = event?.also { showSelf() }
+        this.event = CalendarUtils.findRelevantEvent(requireContext())?.also { showSelf() }
     }
 
     override fun getIcon(): Int {
@@ -77,12 +72,7 @@ class CalendarMappedDockItem : DockControllerItem() {
         }
     }
 
-    override fun getBasePriority(): Long {
-        return if (event != null && event!!.allDay)
-            DockItemPriorities.PRIORITY_EVENT_ALL_DAY.priority.toLong()
-        else
-            DockItemPriorities.PRIORITY_EVENT_RANGED.priority.toLong()
-    }
+    override fun getBasePriority(): Int = DockItemPriorities.PRIORITY_EVENT.priority
 
     private fun Calendar.formatTime(): String = eventDateFormatter.format(this.time)
 

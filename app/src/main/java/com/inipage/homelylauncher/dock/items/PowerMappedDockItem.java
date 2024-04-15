@@ -93,10 +93,8 @@ public class PowerMappedDockItem extends ConfigurableAppBackedDockItem {
     }
 
     @Override
-    public long getBasePriority() {
-        return mIsLowPower ?
-           DockItemPriorities.PRIORITY_POWER_EVENT_LOW.getPriority() :
-           DockItemPriorities.PRIORITY_POWER_EVENT_CHARGING.getPriority();
+    public int getBasePriority() {
+        return DockItemPriorities.PRIORITY_POWER_EVENT.getPriority();
     }
 
     private void powerValuesChanged() {

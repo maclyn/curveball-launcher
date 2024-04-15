@@ -9,9 +9,11 @@ import android.view.View;
 import androidx.annotation.ColorInt;
 import androidx.annotation.Nullable;
 
+import java.util.Objects;
+
 public abstract class DockControllerItem {
 
-    protected interface Host {
+    public interface Host {
 
         Context getContext();
 
@@ -108,10 +110,10 @@ public abstract class DockControllerItem {
         return null;
     }
 
-    public abstract long getBasePriority();
+    public abstract int getBasePriority();
 
-    public long getSubPriority() {
-        return 0L;
+    public int getSubPriority() {
+        return 0;
     }
 
     @Nullable
@@ -120,5 +122,9 @@ public abstract class DockControllerItem {
             return null;
         }
         return mHost.getContext();
+    }
+
+    protected Context requireContext() {
+        return Objects.requireNonNull(getContext());
     }
 }

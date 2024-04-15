@@ -93,5 +93,5 @@ class WeatherDockItem : DockControllerItem(), WeatherPresenter {
         }
     }
 
-    override fun getBasePriority(): Long = DockItemPriorities.PRIORITY_WEATHER.priority.toLong()
+    override fun getBasePriority(): Int = DockItemPriorities.PRIORITY_WEATHER.priority
 }

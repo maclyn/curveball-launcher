@@ -74,6 +74,16 @@
             android:title="@string/export_database_to_storage"
             android:summary="@string/export_database_to_storage_description"
             android:key="export_database" />
+
+        <Preference
+            android:title="Import settings from storage"
+            android:summary="Perform a settings import from storage."
+            android:key="import_settings" />
+
+        <Preference
+            android:title="Export settings to storage"
+            android:summary="Export non-database settings (icon pack data, options) to phone storage."
+            android:key="export_settings" />
     </PreferenceCategory>
 
     <PreferenceCategory

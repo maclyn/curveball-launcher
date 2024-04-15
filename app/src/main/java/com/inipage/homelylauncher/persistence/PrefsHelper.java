@@ -32,6 +32,13 @@ public class PrefsHelper {
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
     }
 
+    public static String getSharedPrefsPath(Context context) {
+        String rootPath = context.getFilesDir().getPath();
+        String fileName =
+            PreferenceManager.getDefaultSharedPreferencesName(context);
+        return rootPath + "/shared_prefs/" + fileName;
+    }
+
     public static void seed(Context context) {
         if (s_INSTANCE == null) {
             s_INSTANCE = new PrefsHelper(context);

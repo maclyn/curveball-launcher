@@ -91,10 +91,11 @@ class DockAdapter(context: Context, val items: List<DockControllerItem>) : Recyc
 
     override fun getItemCount() = items.size
 
-    private fun createMonoColorFilter(): ColorFilter =
-        ColorMatrixColorFilter(ColorMatrix().also {
-            it.setSaturation(0F)
-        })
+    private fun createMonoColorFilter(): ColorMatrixColorFilter {
+        val colorMatrix = ColorMatrix()
+        colorMatrix.setSaturation(0F)
+        return ColorMatrixColorFilter(colorMatrix)
+    }
 
     class DockItemViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val containerView: View = ViewCompat.requireViewById(view, R.id.dock_item_root_container)

@@ -228,7 +228,7 @@
     <string name="import_database_from_storage">Import database from storage</string>
     <string name="import_database_from_storage_description">Perform a database import from storage.</string>
     <string name="export_database_to_storage">Export database to storage</string>
-    <string name="export_database_to_storage_description">Export database to phone storage.</string>
+    <string name="export_database_to_storage_description">Export database (layout, hidden apps) to phone storage.</string>
     <string name="folder_icon_content_description">Icon for the currently edited folder</string>
     <string name="new_folder_bottom_sheet_title">Create new folder</string>
     <string name="add_to_new_folder">Create new folder</string>

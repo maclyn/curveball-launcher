@@ -61,6 +61,8 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
     private static final int EXPORT_DATABASE_REQUEST_CODE = 1001;
     private static final int IMPORT_DATABASE_REQUEST_CODE = 1002;
     private static final int EXPORT_LOG_REQUEST_CODE = 1003;
+    private static final int EXPORT_SHARED_PREFS_REQUEST_CODE = 1004;
+    private static final int IMPORT_SETTINGS_REQUEST_CODE = 1005;
     private static final SimpleDateFormat DATABASE_TITLE_FORMAT =
         new SimpleDateFormat("hhmma_MM_dd_yyyy", Locale.US);
 
@@ -101,13 +103,23 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
         switch (requestCode) {
             case EXPORT_DATABASE_REQUEST_CODE:
             case EXPORT_LOG_REQUEST_CODE:
+            case EXPORT_SHARED_PREFS_REQUEST_CODE:
                 try {
                     final ParcelFileDescriptor fd =
                         getContentResolver().openFileDescriptor(data.getData(), "rw");
-                    final FileInputStream fis = new FileInputStream(
-                        requestCode == EXPORT_DATABASE_REQUEST_CODE ?
-                        DatabaseEditor.get().getPath() :
-                        LifecycleLogUtils.getLogfilePath(this));
+                    String path = null;
+                    switch (requestCode) {
+                        case EXPORT_DATABASE_REQUEST_CODE:
+                            path = DatabaseEditor.get().getPath();
+                            break;
+                        case EXPORT_LOG_REQUEST_CODE:
+                            path = LifecycleLogUtils.getLogfilePath(this);
+                            break;
+                        case EXPORT_SHARED_PREFS_REQUEST_CODE:
+                            path = PrefsHelper.getSharedPrefsPath(this);
+                            break;
+                    }
+                    final FileInputStream fis = new FileInputStream(path);
                     final FileOutputStream fos = new FileOutputStream(fd.getFileDescriptor());
                     final byte[] chunk = new byte[1024];
                     while (fis.read(chunk) != -1) {
@@ -120,6 +132,32 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
                 } catch (Exception ignored) {
                 }
                 break;
+            case IMPORT_SETTINGS_REQUEST_CODE: {
+                try {
+                    final ParcelFileDescriptor fd =
+                        getContentResolver().openFileDescriptor(data.getData(), "r");
+                    final FileInputStream fis = new FileInputStream(fd.getFileDescriptor());
+                    final String tempFile = new File(getFilesDir(), Constants.SHARED_PREFS_IMPORT_PATH).toString();
+                    final FileOutputStream tmpFileFos = new FileOutputStream(tempFile);
+                    byte[] chunk = new byte[1024];
+                    while (fis.read(chunk) != -1) {
+                        tmpFileFos.write(chunk);
+                    }
+                    fis.close();
+                    tmpFileFos.close();
+                    fd.close();
+
+                    // Overwrite will happen in Application create
+                    ProcessPhoenix.triggerRebirth(this);
+                } catch (Exception ignored) {
+                    Toast.makeText(
+                            this,
+                            "Couldn't import this database.",
+                            Toast.LENGTH_SHORT)
+                        .show();
+                }
+                break;
+            }
             case IMPORT_DATABASE_REQUEST_CODE:
                 try {
                     final ParcelFileDescriptor fd =
@@ -197,25 +235,19 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
                HiddenRecentAppsBottomSheet.INSTANCE::showHiddenRecentAppsBottomSheet);
             bindCheckboxPreference("celcius_pref", Constants.WEATHER_USE_CELCIUS_PREF);
 
+            // Backups
             bindPreference("import_database", context -> {
-                final Activity parent = ViewUtils.requireActivityOf(context);
-                final Intent exportIntent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                exportIntent.setType("*/*");
-                exportIntent.addCategory(Intent.CATEGORY_OPENABLE);
-                parent.startActivityForResult(exportIntent, IMPORT_DATABASE_REQUEST_CODE);
+                launchImportIntent(context, IMPORT_DATABASE_REQUEST_CODE);
             });
             bindPreference("export_database", context -> {
-                final Activity parent = ViewUtils.requireActivityOf(context);
-                final Intent exportIntent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-                exportIntent.setType("*/*");
-                exportIntent.addCategory(Intent.CATEGORY_OPENABLE);
-                exportIntent.putExtra(
-                    Intent.EXTRA_TITLE,
-                    DATABASE_TITLE_FORMAT.format(new Date()) +
-                        "_curveball_launcher_backup.db");
-                parent.startActivityForResult(exportIntent, EXPORT_DATABASE_REQUEST_CODE);
+                launchExportIntent(context, "_curveball_launcher_backup.db", EXPORT_DATABASE_REQUEST_CODE);
             });
-
+            bindPreference("import_settings", context -> {
+                launchImportIntent(context, IMPORT_SETTINGS_REQUEST_CODE);
+            });
+            bindPreference("export_settings", context -> {
+                launchExportIntent(context, "_curveball_settings.xml", EXPORT_SHARED_PREFS_REQUEST_CODE);
+            });
 
             // Attributions
             bindPreference("attrs", context ->
@@ -287,23 +319,12 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
                 }).show();
         }
 
-        private void exportLogs(Context context) {
-            final Activity parent = ViewUtils.requireActivityOf(context);
-            final Intent exportIntent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-            exportIntent.setType("*/*");
-            exportIntent.addCategory(Intent.CATEGORY_OPENABLE);
-            exportIntent.putExtra(
-                Intent.EXTRA_TITLE,
-                DATABASE_TITLE_FORMAT.format(new Date()) + "_logfile.txt");
-            parent.startActivityForResult(exportIntent, EXPORT_LOG_REQUEST_CODE);
-        }
-
         private void setupAdvancedPrefs() {
             final boolean isDevModeEnabled = PrefsHelper.isDevMode();
             bindCheckboxPreference(
                 "dev_mode", Constants.DEV_MODE_PREF, false, context -> setupAdvancedPrefs());
             bindPreference("log_show", this::showLogs);
-            bindPreference("log_export", this::exportLogs);
+            bindPreference("log_export", context -> launchExportIntent(context, "_logfile.txt", EXPORT_LOG_REQUEST_CODE));
             bindPreference("log_clear", __ -> LifecycleLogUtils.clearLog());
             /*
             // TODO: Horribly breaks app right now; need to figure this out
@@ -396,6 +417,25 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
                 restartHomeActivity();
                 return true;
             });
+        }
+
+        private void launchExportIntent(Context context, String filePostfix, int requestCode) {
+            final Activity parent = ViewUtils.requireActivityOf(context);
+            final Intent exportIntent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+            exportIntent.setType("*/*");
+            exportIntent.addCategory(Intent.CATEGORY_OPENABLE);
+            exportIntent.putExtra(
+                Intent.EXTRA_TITLE,
+                DATABASE_TITLE_FORMAT.format(new Date()) + filePostfix);
+            parent.startActivityForResult(exportIntent, requestCode);
+        }
+
+        private void launchImportIntent(Context context, int requestCode) {
+            final Activity parent = ViewUtils.requireActivityOf(context);
+            final Intent exportIntent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            exportIntent.setType("*/*");
+            exportIntent.addCategory(Intent.CATEGORY_OPENABLE);
+            parent.startActivityForResult(exportIntent, requestCode);
         }
 
         private void restartHomeActivity() {

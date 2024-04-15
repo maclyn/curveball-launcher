@@ -49,11 +49,7 @@ class AlarmMappedDockItem : DockControllerItem() {
         }
     }
 
-    override fun getBasePriority(): Long {
-        return DockItemPriorities.PRIORITY_ALARM.priority.toLong()
-    }
-
-    override fun getSubPriority(): Long {
-        return abs(System.currentTimeMillis() - (alarmHandle?.nextAlarmTimeMs ?: 0L))
+    override fun getBasePriority(): Int {
+        return DockItemPriorities.PRIORITY_ALARM.priority
     }
 }

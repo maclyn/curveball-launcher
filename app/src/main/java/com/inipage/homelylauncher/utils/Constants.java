@@ -29,6 +29,8 @@ public class Constants {
 
     public static final String INTENT_ACTION_RESTART = "com.inipage.homelylauncher.RESTART_HOME";
 
+    public static final String SHARED_PREFS_IMPORT_PATH = "tmp_prefs.xml";
+
     public static final Gson DEFAULT_GSON = new Gson();
 
     public static final boolean DEBUG_RENDER = false;

@@ -115,12 +115,12 @@ public class RecentAppDockItem extends DockControllerItem {
     }
 
     @Override
-    public long getBasePriority() {
+    public int getBasePriority() {
         return DockItemPriorities.PRIORITY_RECENT_APP.getPriority();
     }
 
     @Override
-    public long getSubPriority() {
-        return mSuggestionApp.getDurationUsed();
+    public int getSubPriority() {
+        return (int) (mSuggestionApp.getDurationUsed() / 1000);
     }
 }

@@ -12,13 +12,18 @@ import androidx.annotation.Nullable;
 import com.inipage.homelylauncher.caches.AppInfoCache;
 import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.persistence.PrefsHelper;
+import com.inipage.homelylauncher.utils.Constants;
+import com.inipage.homelylauncher.utils.FileUtils;
 import com.inipage.homelylauncher.utils.LifecycleLogUtils;
 
 import static com.inipage.homelylauncher.utils.LifecycleLogUtils.LogType.ERROR;
 import static com.inipage.homelylauncher.utils.LifecycleLogUtils.LogType.LIFECYCLE_CHANGE;
 
+import java.io.File;
+
 public class ApplicationClass extends Application {
 
+    private static final String TAG = "ApplicationClass";
 
     private final ActivityLifecycleCallbacks mActivityLifecycleCallbacks =
         new ActivityLifecycleCallbacks() {
@@ -82,6 +87,17 @@ public class ApplicationClass extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        // This needs to happen before *anything* else can grab a handle to SharedPrefs
+        if (FileUtils.existsInFilesDir(this, Constants.SHARED_PREFS_IMPORT_PATH)) {
+            Log.i(TAG, "Copying imported shared prefs...");
+            FileUtils.copy(
+                FileUtils.filesDirPath(this, Constants.SHARED_PREFS_IMPORT_PATH),
+                PrefsHelper.getSharedPrefsPath(this));
+            FileUtils.deleteFromFilesDir(this, Constants.SHARED_PREFS_IMPORT_PATH);
+            Log.i(TAG, "Copy complete!");
+        }
+
         registerActivityLifecycleCallbacks(mActivityLifecycleCallbacks);
         // This runs on the main thread, so we can just set this up here...
         mUncaughtExceptionHandler.setDefaultHandler(Thread.getDefaultUncaughtExceptionHandler());

@@ -88,7 +88,7 @@ public class PhoneMappedDockItem extends ConfigurableAppBackedDockItem {
     }
 
     @Override
-    public long getBasePriority() {
+    public int getBasePriority() {
         return DockItemPriorities.PRIORITY_CALL.getPriority();
     }
 }

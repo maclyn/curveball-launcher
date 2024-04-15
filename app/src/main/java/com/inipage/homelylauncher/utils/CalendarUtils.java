@@ -103,10 +103,12 @@ public class CalendarUtils {
             final long startTime = cursor.getLong(startCol);
             final long endTime = cursor.getLong(endCol);
             if (status == CalendarContract.Instances.STATUS_CANCELED) {
+                cursor.moveToNext();
                 continue;
             }
             if (endTime - startTime > ONE_DAY_IN_MILLIS) {
                 // Event spans multiple days; ignore
+                cursor.moveToNext();
                 continue;
             }
             // We don't *like* all day events, but if it's all we have, that's fine
