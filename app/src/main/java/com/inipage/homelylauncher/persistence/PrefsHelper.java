@@ -33,10 +33,10 @@ public class PrefsHelper {
     }
 
     public static String getSharedPrefsPath(Context context) {
-        String rootPath = context.getFilesDir().getPath();
+        String rootPath = context.getFilesDir().getParent();
         String fileName =
             PreferenceManager.getDefaultSharedPreferencesName(context);
-        return rootPath + "/shared_prefs/" + fileName;
+        return rootPath + "/shared_prefs/" + fileName + ".xml";
     }
 
     public static void seed(Context context) {
