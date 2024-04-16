@@ -31,6 +31,12 @@ public class Constants {
 
     public static final String SHARED_PREFS_IMPORT_PATH = "tmp_prefs.xml";
 
+    public static final String FONT_OVERRIDES_PATH = "font_overrides";
+
+    public static final String GRID_FONT_PATH = "grid_font.ttf";
+
+    public static final String LIST_FONT_PATH = "list_font.ttf";
+
     public static final Gson DEFAULT_GSON = new Gson();
 
     public static final boolean DEBUG_RENDER = false;

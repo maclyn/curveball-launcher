@@ -44,6 +44,7 @@ import androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback;
 
 import com.inipage.homelylauncher.caches.AppInfoCache;
 import com.inipage.homelylauncher.caches.AppLabelCache;
+import com.inipage.homelylauncher.caches.FontCacheSync;
 import com.inipage.homelylauncher.caches.IconCacheSync;
 import com.inipage.homelylauncher.dock.DockController;
 import com.inipage.homelylauncher.dock.ForwardingContainer;
@@ -283,6 +284,7 @@ public class HomeActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_home);
         ButterKnife.bind(this, this.findViewById(R.id.rootView));
         AttributeApplier.applyDensity(this, this);
+        FontCacheSync.Companion.get().reload(this);
         setRequestedOrientation(ViewUtils.isTablet(this) ?
             ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED :
             ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);

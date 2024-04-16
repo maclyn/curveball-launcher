@@ -1,6 +1,30 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory
+        android:key="home_pages"
+        android:title="Home pages appearance"
+        >
+
+        <Preference
+            android:key="import_grid_font"
+            android:title="Import font for app labels"
+            android:summary="Import a .ttf file to show under apps in the grid"
+            />
+
+        <Preference
+            android:key="import_list_font"
+            android:title="Import font for app list labels"
+            android:summary="Import a .ttf file to show next to app icons in the app list"
+            />
+
+        <Preference
+            android:key="reset_font_overrides"
+            android:title="Reset imported fonts"
+            android:summary="Remove all imported fonts, leaving system defaults in place."
+            />
+    </PreferenceCategory>
+
+    <PreferenceCategory
         android:key="icon_category"
         android:title="Icon packs"
         >

@@ -2,6 +2,7 @@ package com.inipage.homelylauncher.persistence;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Typeface;
 import android.preference.PreferenceManager;
 import android.util.Pair;
 

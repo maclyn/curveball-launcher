@@ -10,11 +10,13 @@ import android.widget.TextView;
 
 import com.inipage.homelylauncher.R;
 import com.inipage.homelylauncher.caches.AppLabelCache;
+import com.inipage.homelylauncher.caches.FontCacheSync;
 import com.inipage.homelylauncher.caches.IconCacheSync;
 import com.inipage.homelylauncher.drawer.BitmapView;
 import com.inipage.homelylauncher.model.ApplicationIcon;
 import com.inipage.homelylauncher.model.ClassicGridItem;
 import com.inipage.homelylauncher.model.GridItem;
+import com.inipage.homelylauncher.utils.Constants;
 import com.inipage.homelylauncher.utils.InstalledAppUtils;
 
 public class AppViewHolder extends GridViewHolder {
@@ -35,6 +37,8 @@ public class AppViewHolder extends GridViewHolder {
                 .getActivityIcon(
                     gridItem.getPackageName(),
                     gridItem.getActivityName()));
+        FontCacheSync.Companion.get().applyTypefaceToTextView(
+            mLabelView, Constants.GRID_FONT_PATH);
         mLabelView.setText(AppLabelCache.getInstance(context).getLabel(
             gridItem.getPackageName(), gridItem.getActivityName()));
         gridIcon.setOnClickListener(v ->

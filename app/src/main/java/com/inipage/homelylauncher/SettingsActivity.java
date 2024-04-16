@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.preference.CheckBoxPreference;
@@ -29,6 +30,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NavUtils;
 
 import com.inipage.homelylauncher.caches.AppInfoCache;
+import com.inipage.homelylauncher.caches.FontCacheSync;
 import com.inipage.homelylauncher.caches.IconCacheSync;
 import com.inipage.homelylauncher.dock.ActivityPickerBottomSheet;
 import com.inipage.homelylauncher.dock.HiddenRecentAppsBottomSheet;
@@ -48,7 +50,9 @@ import com.jakewharton.processphoenix.ProcessPhoenix;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
@@ -63,6 +67,9 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
     private static final int EXPORT_LOG_REQUEST_CODE = 1003;
     private static final int EXPORT_SHARED_PREFS_REQUEST_CODE = 1004;
     private static final int IMPORT_SETTINGS_REQUEST_CODE = 1005;
+    private static final int IMPORT_GRID_FONT_REQUEST_CODE = 1006;
+    private static final int IMPORT_APP_LIST_FONT_REQUEST_CODE = 1007;
+
     private static final SimpleDateFormat DATABASE_TITLE_FORMAT =
         new SimpleDateFormat("hhmma_MM_dd_yyyy", Locale.US);
 
@@ -92,7 +99,7 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode != Activity.RESULT_OK) {
+        if (resultCode != Activity.RESULT_OK || data == null) {
             Toast.makeText(
                 this,
                 "Failed.",
@@ -133,69 +140,74 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
                 }
                 break;
             case IMPORT_SETTINGS_REQUEST_CODE: {
-                try {
-                    final ParcelFileDescriptor fd =
-                        getContentResolver().openFileDescriptor(data.getData(), "r");
-                    final FileInputStream fis = new FileInputStream(fd.getFileDescriptor());
-                    final String tempFile = new File(getFilesDir(), Constants.SHARED_PREFS_IMPORT_PATH).toString();
-                    final FileOutputStream tmpFileFos = new FileOutputStream(tempFile);
-                    byte[] chunk = new byte[1024];
-                    while (fis.read(chunk) != -1) {
-                        tmpFileFos.write(chunk);
-                    }
-                    fis.close();
-                    tmpFileFos.close();
-                    fd.close();
-
+                if (handleImportActivityResult(this, data, Constants.SHARED_PREFS_IMPORT_PATH)) {
                     // Overwrite will happen in Application create
                     ProcessPhoenix.triggerRebirth(this);
-                } catch (Exception ignored) {
+                } else {
                     Toast.makeText(
-                            this,
-                            "Couldn't import this database.",
-                            Toast.LENGTH_SHORT)
-                        .show();
+                        this, "Couldn't import this settings file.", Toast.LENGTH_SHORT).show();
                 }
-                break;
             }
             case IMPORT_DATABASE_REQUEST_CODE:
-                try {
-                    final ParcelFileDescriptor fd =
-                        getContentResolver().openFileDescriptor(data.getData(), "r");
-                    final FileInputStream fis = new FileInputStream(fd.getFileDescriptor());
-                    final String tempFile = new File(getFilesDir(), "/tmp.db").toString();
-                    final FileOutputStream verificationFos = new FileOutputStream(tempFile);
-                    byte[] chunk = new byte[1024];
-                    while (fis.read(chunk) != -1) {
-                        verificationFos.write(chunk);
-                    }
-                    fis.close();
-                    verificationFos.close();
-                    fd.close();
-
+                final String tmpDbFileName = "tmp.db";
+                if (handleImportActivityResult(this, data, tmpDbFileName)) {
+                    File tmpDbFile = new File(getFilesDir(), tmpDbFileName);
                     // Check if the database file is actually readable by us
-                    try {
-                        final DatabaseHelper testHelper = new DatabaseHelper(this, tempFile);
+                    try (final DatabaseHelper testHelper =
+                             new DatabaseHelper(this, tmpDbFile.getPath())) {
                         @Nullable final String problem = testHelper.findProblemsWithDatabase();
                         if (problem != null) {
                             throw new Exception(problem);
                         }
                     } catch (Exception cantRead) {
                         Toast.makeText(
-                            this,
-                            cantRead.getMessage(),
-                            Toast.LENGTH_SHORT)
+                                this,
+                                cantRead.getMessage(),
+                                Toast.LENGTH_SHORT)
                             .show();
                         return;
                     }
-                    FileUtils.copy(tempFile, DatabaseEditor.get().getPath());
+                    FileUtils.copy(tmpDbFile.getPath(), DatabaseEditor.get().getPath());
+                    tmpDbFile.delete();
                     ProcessPhoenix.triggerRebirth(this);
-                } catch (Exception ignored) {
+                } else {
                     Toast.makeText(
-                        this,
-                        "Couldn't import this database.",
-                        Toast.LENGTH_SHORT)
-                        .show();
+                        this, "Couldn't import this database file.", Toast.LENGTH_SHORT).show();
+                }
+                break;
+            case IMPORT_GRID_FONT_REQUEST_CODE:
+            case IMPORT_APP_LIST_FONT_REQUEST_CODE:
+                final String tmpFontFile = "tmp_font.ttf";
+                try {
+                    if (!handleImportActivityResult(this, data, tmpFontFile)) {
+                        throw new Exception();
+                    }
+                    File fontFile = new File(getFilesDir(), tmpFontFile);
+                    Typeface.createFromFile(fontFile);
+
+                    String fontSubPath = "";
+                    switch (requestCode) {
+                        case IMPORT_GRID_FONT_REQUEST_CODE:
+                            fontSubPath = Constants.GRID_FONT_PATH;
+                            break;
+                        case IMPORT_APP_LIST_FONT_REQUEST_CODE:
+                            fontSubPath = Constants.LIST_FONT_PATH;
+                            break;
+                    }
+                    File fontOverrides = new File(getFilesDir(), Constants.FONT_OVERRIDES_PATH);
+                    if (!fontOverrides.exists()) {
+                        fontOverrides.mkdir();
+                    }
+                    File fontDstPath = new File(fontOverrides, fontSubPath);
+                    if (fontDstPath.exists()) {
+                        fontDstPath.delete();
+                    }
+                    FileUtils.copy(fontFile.toString(), fontDstPath.toString());
+                    fontFile.delete();
+                    FontCacheSync.Companion.get().clear();
+                    restartHomeActivity();
+                } catch (Exception e) {
+                    Toast.makeText(this, "Failed to open font file.", Toast.LENGTH_SHORT).show();
                 }
                 break;
         }
@@ -213,6 +225,38 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
         return new Rect(view.getLeft(), view.getTop(), view.getRight(), view.getBottom());
     }
 
+    private boolean handleImportActivityResult(Context context, Intent data, String dstFilesPath) {
+        try {
+            @Nullable Uri dataUri = data.getData();
+            if (dataUri == null) {
+                return false;
+            }
+            @Nullable
+            final ParcelFileDescriptor fd =
+                context.getContentResolver().openFileDescriptor(dataUri, "r");
+            if (fd == null) {
+                return false;
+            }
+            final FileInputStream fis = new FileInputStream(fd.getFileDescriptor());
+            final String tempFile = new File(context.getFilesDir(), dstFilesPath).toString();
+            final FileOutputStream tmpFileFos = new FileOutputStream(tempFile);
+            byte[] chunk = new byte[1024];
+            while (fis.read(chunk) != -1) {
+                tmpFileFos.write(chunk);
+            }
+            fis.close();
+            tmpFileFos.close();
+            fd.close();
+        } catch (IOException ignored) {
+            return false;
+        }
+        return true;
+    }
+
+    private void restartHomeActivity() {
+        sendBroadcast(new Intent(Constants.INTENT_ACTION_RESTART));
+    }
+
     public static class MainFragment extends PreferenceFragment {
 
         private String mMissingIconPackage = "unset";
@@ -224,6 +268,7 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.pref_general);
 
+            setupAppearancePrefs();
             setupAdvancedPrefs();
             setupIconPackPrefs();
 
@@ -317,6 +362,36 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
                         LifecycleLogUtils.dumpLog()));
                     Toast.makeText(getActivity(), "Copied to clipboard", Toast.LENGTH_SHORT).show();
                 }).show();
+        }
+
+        private void setupAppearancePrefs() {
+            bindPreference("import_grid_font", context -> launchImportIntent(context, IMPORT_GRID_FONT_REQUEST_CODE));
+            bindPreference("import_list_font", context -> launchImportIntent(context, IMPORT_APP_LIST_FONT_REQUEST_CODE));
+            bindPreference("reset_font_overrides", context -> {
+                File fontOverrides = new File(context.getFilesDir(), Constants.FONT_OVERRIDES_PATH);
+                boolean deleted = false;
+                if (fontOverrides.exists()) {
+                    @Nullable File[] contents = fontOverrides.listFiles();
+                    if (contents != null) {
+                        for (File fontOverride : contents) {
+                            fontOverride.delete();
+                        }
+                        if (fontOverrides.delete()) {
+                            deleted = true;
+                        }
+                    }
+                }
+                if (deleted) {
+                    FontCacheSync.Companion.get().clear();
+                    getContext().sendBroadcast(new Intent(Constants.INTENT_ACTION_RESTART));
+                }
+                Toast.makeText(
+                    context,
+                    deleted ?
+                        "Font overrides removed." :
+                        "No font overrides removed.",
+                    Toast.LENGTH_SHORT).show();
+            });
         }
 
         private void setupAdvancedPrefs() {

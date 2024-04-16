@@ -26,6 +26,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.common.base.Preconditions;
 import com.inipage.homelylauncher.R;
 import com.inipage.homelylauncher.caches.AppInfoCache;
+import com.inipage.homelylauncher.caches.FontCacheSync;
 import com.inipage.homelylauncher.caches.IconCacheSync;
 import com.inipage.homelylauncher.grid.AppViewHolder;
 import com.inipage.homelylauncher.model.ApplicationIcon;
@@ -34,6 +35,7 @@ import com.inipage.homelylauncher.model.ClassicGridItem;
 import com.inipage.homelylauncher.model.SwipeFolder;
 import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.state.LayoutEditingSingleton;
+import com.inipage.homelylauncher.utils.Constants;
 import com.inipage.homelylauncher.utils.DebugLogUtils;
 import com.inipage.homelylauncher.utils.InstalledAppUtils;
 import com.inipage.homelylauncher.utils.LifecycleLogUtils;
@@ -552,7 +554,10 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                     (ApplicationIconLayout)
                         LayoutInflater.from(viewGroup.getContext())
                             .inflate(R.layout.application_icon, viewGroup, false);
-                return new AppIconHolder(rootView);
+                final AppIconHolder holder = new AppIconHolder(rootView);
+                FontCacheSync.Companion.get().applyTypefaceToTextView(
+                    holder.title, Constants.LIST_FONT_PATH);
+                return holder;
             }
             case ITEM_VIEW_TYPE_HEADER: {
                 final View rootView =
