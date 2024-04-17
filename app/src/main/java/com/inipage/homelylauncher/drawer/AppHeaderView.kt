@@ -12,6 +12,8 @@ import android.view.View
 import androidx.core.graphics.BlendModeCompat
 import androidx.core.graphics.setBlendMode
 import com.inipage.homelylauncher.R
+import com.inipage.homelylauncher.caches.FontCacheSync
+import com.inipage.homelylauncher.utils.Constants
 import java.util.*
 import kotlin.properties.Delegates
 
@@ -127,6 +129,7 @@ class AppHeaderView : View {
             textAlign = Paint.Align.CENTER
             textSize = (letterCircleRadius * 1.25).toFloat()
             typeface = Typeface.DEFAULT_BOLD
+            FontCacheSync.get().applyTypefaceToPaint(this, Constants.LIST_FONT_PATH)
         }
     }
 

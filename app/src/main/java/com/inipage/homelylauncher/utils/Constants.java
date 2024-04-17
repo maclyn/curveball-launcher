@@ -37,6 +37,8 @@ public class Constants {
 
     public static final String LIST_FONT_PATH = "list_font.ttf";
 
+    public static final String DOCK_FONT_PATH = "dock_font.ttf";
+
     public static final Gson DEFAULT_GSON = new Gson();
 
     public static final boolean DEBUG_RENDER = false;

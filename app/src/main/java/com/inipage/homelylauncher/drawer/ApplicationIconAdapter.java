@@ -563,6 +563,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 final View rootView =
                         LayoutInflater.from(viewGroup.getContext())
                             .inflate(R.layout.letter_header_row, viewGroup, false);
+                final LetterHolder lh = new LetterHolder(rootView);
                 return new LetterHolder(rootView);
             }
             case ITEM_VIEW_TYPE_SPACER: {
@@ -574,7 +575,10 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 final View rootView =
                         LayoutInflater.from(viewGroup.getContext())
                             .inflate(R.layout.application_header_row, viewGroup, false);
-                return new TopHeaderHolder(rootView);
+                final TopHeaderHolder thh = new TopHeaderHolder(rootView);
+                FontCacheSync.Companion.get().applyTypefaceToTextView(
+                    thh.installCount, Constants.LIST_FONT_PATH);
+                return thh;
             }
         }
     }

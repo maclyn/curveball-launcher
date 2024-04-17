@@ -38,6 +38,7 @@ import com.inipage.homelylauncher.NewUserBottomSheet;
 import com.inipage.homelylauncher.R;
 import com.inipage.homelylauncher.SettingsActivity;
 import com.inipage.homelylauncher.caches.AppInfoCache;
+import com.inipage.homelylauncher.caches.FontCacheSync;
 import com.inipage.homelylauncher.caches.PackageModifiedEvent;
 import com.inipage.homelylauncher.caches.PackagesBulkModifiedEvent;
 import com.inipage.homelylauncher.grid.AppViewHolder;
@@ -47,6 +48,7 @@ import com.inipage.homelylauncher.model.SwipeFolder;
 import com.inipage.homelylauncher.pager.BasePageController;
 import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.persistence.PrefsHelper;
+import com.inipage.homelylauncher.utils.Constants;
 import com.inipage.homelylauncher.utils.InstalledAppUtils;
 import com.inipage.homelylauncher.utils.ViewUtils;
 import com.inipage.homelylauncher.views.BottomSheetHelper;
@@ -265,6 +267,8 @@ public class AppDrawerController implements BasePageController, FastScrollContro
                 enterSearch();
             }
         });
+        FontCacheSync.Companion.get().applyTypefaceToTextView(searchBox, Constants.LIST_FONT_PATH);
+        FontCacheSync.Companion.get().applyTypefaceToTextView(storeSearchButton, Constants.LIST_FONT_PATH);
         bottomSheetSettingsButton.setOnClickListener(this::showOptionsBottomSheet);
         scrollToTopButton.setOnClickListener(v -> {
             appRecyclerView.smoothScrollToPosition(0);

@@ -69,6 +69,7 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
     private static final int IMPORT_SETTINGS_REQUEST_CODE = 1005;
     private static final int IMPORT_GRID_FONT_REQUEST_CODE = 1006;
     private static final int IMPORT_APP_LIST_FONT_REQUEST_CODE = 1007;
+    private static final int IMPORT_DOCK_FONT_REQUEST_CODE = 1008;
 
     private static final SimpleDateFormat DATABASE_TITLE_FORMAT =
         new SimpleDateFormat("hhmma_MM_dd_yyyy", Locale.US);
@@ -177,6 +178,7 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
                 break;
             case IMPORT_GRID_FONT_REQUEST_CODE:
             case IMPORT_APP_LIST_FONT_REQUEST_CODE:
+            case IMPORT_DOCK_FONT_REQUEST_CODE:
                 final String tmpFontFile = "tmp_font.ttf";
                 try {
                     if (!handleImportActivityResult(this, data, tmpFontFile)) {
@@ -192,6 +194,9 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
                             break;
                         case IMPORT_APP_LIST_FONT_REQUEST_CODE:
                             fontSubPath = Constants.LIST_FONT_PATH;
+                            break;
+                        case IMPORT_DOCK_FONT_REQUEST_CODE:
+                            fontSubPath = Constants.DOCK_FONT_PATH;
                             break;
                     }
                     File fontOverrides = new File(getFilesDir(), Constants.FONT_OVERRIDES_PATH);
@@ -367,6 +372,8 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
         private void setupAppearancePrefs() {
             bindPreference("import_grid_font", context -> launchImportIntent(context, IMPORT_GRID_FONT_REQUEST_CODE));
             bindPreference("import_list_font", context -> launchImportIntent(context, IMPORT_APP_LIST_FONT_REQUEST_CODE));
+            bindPreference("import_dock_font", context -> launchImportIntent(context, IMPORT_DOCK_FONT_REQUEST_CODE));
+
             bindPreference("reset_font_overrides", context -> {
                 File fontOverrides = new File(context.getFilesDir(), Constants.FONT_OVERRIDES_PATH);
                 boolean deleted = false;

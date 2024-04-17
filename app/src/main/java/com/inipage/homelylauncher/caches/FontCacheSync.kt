@@ -1,6 +1,7 @@
 package com.inipage.homelylauncher.caches
 
 import android.content.Context
+import android.graphics.Paint
 import android.graphics.Typeface
 import android.widget.TextView
 import com.inipage.homelylauncher.utils.Constants
@@ -14,6 +15,7 @@ class FontCacheSync {
     fun reload(ctx: Context) {
         maybeLoadTypeface(ctx, Constants.GRID_FONT_PATH)
         maybeLoadTypeface(ctx, Constants.LIST_FONT_PATH)
+        maybeLoadTypeface(ctx, Constants.DOCK_FONT_PATH)
     }
 
     @Synchronized
@@ -25,6 +27,12 @@ class FontCacheSync {
     fun applyTypefaceToTextView(tv: TextView, fontOverridePath: String) {
         val tf = fontOverrideToTypeface[fontOverridePath] ?: return
         tv.typeface = tf
+    }
+
+    @Synchronized
+    fun applyTypefaceToPaint(paint: Paint, fontOverridePath: String) {
+        val tf = fontOverrideToTypeface[fontOverridePath] ?: return
+        paint.typeface = tf
     }
 
     private fun maybeLoadTypeface(ctx: Context, path: String) {

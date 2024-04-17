@@ -12,6 +12,8 @@ import android.widget.ScrollView
 import android.widget.TextView
 import androidx.core.view.marginTop
 import com.inipage.homelylauncher.R
+import com.inipage.homelylauncher.caches.FontCacheSync
+import com.inipage.homelylauncher.utils.Constants
 import com.inipage.homelylauncher.utils.ViewUtils
 import com.inipage.homelylauncher.views.DecorViewManager
 import com.inipage.homelylauncher.views.ProvidesOverallDimensions
@@ -85,6 +87,7 @@ class FastScrollController(private val host: Host) {
             val key = alphabet[idx].toString()
             val hasMapping = host.getHeaderToCountMap().containsKey(key)
             val letter = TextView(context)
+            FontCacheSync.get().applyTypefaceToTextView(letter, Constants.LIST_FONT_PATH)
             letter.text = key
             letter.setTextColor(context.getColor(R.color.primary_text_color))
             letter.gravity = Gravity.CENTER

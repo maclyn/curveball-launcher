@@ -14,7 +14,13 @@
         <Preference
             android:key="import_list_font"
             android:title="Import font for app list labels"
-            android:summary="Import a .ttf file to show next to app icons in the app list"
+            android:summary="Import a .ttf file to show next to icons in the app list"
+            />
+
+        <Preference
+            android:key="import_dock_font"
+            android:title="Import font for labels in dock"
+            android:summary="Import a .ttf file for labels in the dock"
             />
 
         <Preference

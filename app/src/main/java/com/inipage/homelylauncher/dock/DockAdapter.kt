@@ -15,6 +15,8 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.view.ViewCompat
 import com.inipage.homelylauncher.R
+import com.inipage.homelylauncher.caches.FontCacheSync
+import com.inipage.homelylauncher.utils.Constants
 import com.inipage.homelylauncher.utils.ViewUtils
 
 /**
@@ -24,10 +26,14 @@ class DockAdapter(context: Context, val items: List<DockControllerItem>) : Recyc
 
     private val isSquarish: Boolean = ViewUtils.isSquarishDevice(context)
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DockItemViewHolder =
-        DockItemViewHolder(
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DockItemViewHolder {
+        val divh = DockItemViewHolder(
             LayoutInflater.from(parent.context).inflate(
                 R.layout.dock_collapsed_item, parent, false))
+        FontCacheSync.get().applyTypefaceToTextView(divh.primaryLabel, Constants.DOCK_FONT_PATH)
+        FontCacheSync.get().applyTypefaceToTextView(divh.secondaryLabel, Constants.DOCK_FONT_PATH)
+        return divh
+    }
 
     override fun onBindViewHolder(holder: DockItemViewHolder, position: Int) {
         val item = items[position]
