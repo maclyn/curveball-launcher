@@ -218,7 +218,7 @@
     <string name="ipsum_short">1</string>
     <string name="hidden_apps_setting_title">Manage hidden apps</string>
     <string name="wallpaper_settings_title">Change wallpaper</string>
-    <string name="database_management">Database Management</string>
+    <string name="database_management">Database management</string>
     <string name="reset_database">Reset database</string>
     <string name="reset_database_description">Drop all database data and restart the app.</string>
     <string name="move_database_to_b_slot">Move database to backup slot</string>

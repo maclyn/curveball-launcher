@@ -22,11 +22,9 @@ public abstract class DockControllerItem {
         void hideHostedItem();
 
         void tintLoaded(int color);
-
-        boolean hasMonoDock();
     }
 
-    Host mHost;
+    private Host mHost;
     private boolean mIsLoaded;
 
     public void attach(Host host) {

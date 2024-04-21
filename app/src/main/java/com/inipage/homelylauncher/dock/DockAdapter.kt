@@ -22,7 +22,11 @@ import com.inipage.homelylauncher.utils.ViewUtils
 /**
  * Renders dock items with padding on the left and right.
  */
-class DockAdapter(context: Context, val items: List<DockControllerItem>) : RecyclerView.Adapter<DockAdapter.DockItemViewHolder>() {
+class DockAdapter(
+    context: Context,
+    private val items: List<DockControllerItem>,
+    private val isMonoDock: Boolean
+) : RecyclerView.Adapter<DockAdapter.DockItemViewHolder>() {
 
     private val isSquarish: Boolean = ViewUtils.isSquarishDevice(context)
 
@@ -37,7 +41,6 @@ class DockAdapter(context: Context, val items: List<DockControllerItem>) : Recyc
 
     override fun onBindViewHolder(holder: DockItemViewHolder, position: Int) {
         val item = items[position]
-        val isMono = item.mHost.hasMonoDock()
 
         holder.containerView.visibility = if (item.isLoaded) View.VISIBLE else View.GONE
         if (!item.isLoaded) {
@@ -46,7 +49,7 @@ class DockAdapter(context: Context, val items: List<DockControllerItem>) : Recyc
 
         // Setup background color
         holder.containerView.background.colorFilter = PorterDuffColorFilter(
-            if (isMono) Color.WHITE else item.tint,
+            if (isMonoDock) Color.WHITE else item.tint,
             PorterDuff.Mode.SRC_IN
         )
 
@@ -61,7 +64,7 @@ class DockAdapter(context: Context, val items: List<DockControllerItem>) : Recyc
         } else if (drawable != null) {
             holder.iconView.setImageDrawable(drawable)
         }
-        holder.iconView.colorFilter = if (isMono) createMonoColorFilter() else null
+        holder.iconView.colorFilter = if (isMonoDock) createMonoColorFilter() else null
 
         // Map text
         val label = item.label

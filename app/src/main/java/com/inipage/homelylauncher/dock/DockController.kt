@@ -101,7 +101,7 @@ class DockController(val container: RecyclerView) {
     }
 
     private fun attachDockItemsToView() {
-        container.adapter = DockAdapter(container.context, activeDockItems)
+        container.adapter = DockAdapter(container.context, activeDockItems, isMono)
         activeDockItems.forEachIndexed { index, item ->
             backgroundExecutor.submit {
                 item.attach(object : DockControllerItem.Host {
@@ -125,8 +125,6 @@ class DockController(val container: RecyclerView) {
                             adapter?.notifyItemChanged(index) ?: Unit
                         }
                     }
-
-                    override fun hasMonoDock() = isMono
                 })
             }
         }
