@@ -5,6 +5,12 @@ import android.content.Context;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.nio.file.CopyOption;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 
 public class FileUtils {
 
@@ -35,5 +41,11 @@ public class FileUtils {
             fos.close();
         } catch (Exception ignored) {
         }
+    }
+
+    public static void copyFromInputStreamToPath(InputStream is, String path) {
+        try {
+            Files.copy(is, Paths.get(path), StandardCopyOption.REPLACE_EXISTING);
+        } catch (Exception ignored) {}
     }
 }

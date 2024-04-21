@@ -53,12 +53,18 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 public class SettingsActivity extends AppCompatActivity implements ProvidesOverallDimensions {
 
@@ -70,6 +76,8 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
     private static final int IMPORT_GRID_FONT_REQUEST_CODE = 1006;
     private static final int IMPORT_APP_LIST_FONT_REQUEST_CODE = 1007;
     private static final int IMPORT_DOCK_FONT_REQUEST_CODE = 1008;
+    private static final int EXPORT_FULL_REQUEST_CODE = 1009;
+    private static final int IMPORT_FULL_REQUEST_CODE = 1010;
 
     private static final SimpleDateFormat DATABASE_TITLE_FORMAT =
         new SimpleDateFormat("hhmma_MM_dd_yyyy", Locale.US);
@@ -127,18 +135,90 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
                             path = PrefsHelper.getSharedPrefsPath(this);
                             break;
                     }
-                    final FileInputStream fis = new FileInputStream(path);
                     final FileOutputStream fos = new FileOutputStream(fd.getFileDescriptor());
-                    final byte[] chunk = new byte[1024];
-                    while (fis.read(chunk) != -1) {
-                        fos.write(chunk);
-                    }
-                    fis.close();
+                    copyFromPathToOutputStream(path, fos);
                     fos.close();
                     fd.close();
                     Toast.makeText(this, "File exported.", Toast.LENGTH_SHORT).show();
                 } catch (Exception ignored) {
                 }
+                break;
+            case EXPORT_FULL_REQUEST_CODE:
+                try {
+                    final ParcelFileDescriptor fd =
+                        getContentResolver().openFileDescriptor(data.getData(), "rw");
+                    final FileOutputStream fos = new FileOutputStream(fd.getFileDescriptor());
+                    final ZipOutputStream zipOut = new ZipOutputStream(fos);
+
+                    // SharedPrefs
+                    zipOut.putNextEntry(new ZipEntry("settings.xml"));
+                    copyFromPathToOutputStream(PrefsHelper.getSharedPrefsPath(this), zipOut);
+                    zipOut.closeEntry();
+                    // Fonts
+                    File fontOverrides = new File(getFilesDir(), Constants.FONT_OVERRIDES_PATH);
+                    if (fontOverrides.exists()) {
+                        @Nullable File[] contents = fontOverrides.listFiles();
+                        if (contents != null) {
+                            // These are copied with their individual names
+                            for (File fontOverride : contents) {
+                                String fontOverrideName = fontOverride.getName();
+                                zipOut.putNextEntry(new ZipEntry(fontOverrideName));
+                                copyFromPathToOutputStream(fontOverride.toString(), zipOut);
+                                zipOut.closeEntry();
+                            }
+                        }
+                    }
+                    // DB
+                    zipOut.putNextEntry(new ZipEntry("database.db"));
+                    copyFromPathToOutputStream(DatabaseEditor.get().getPath(), zipOut);
+                    zipOut.closeEntry();
+
+                    zipOut.close();
+                    Toast.makeText(this, "All settings exported.", Toast.LENGTH_SHORT).show();
+                } catch (Exception ignored) {
+
+                }
+                break;
+            case IMPORT_FULL_REQUEST_CODE:
+                final String tmpZipFileName = "tmp.zip";
+                if (handleImportActivityResult(this, data, tmpZipFileName)) {
+                    try {
+                        File tmpZipFile = new File(getFilesDir(), tmpZipFileName);
+                        ZipInputStream zis = new ZipInputStream(new FileInputStream(tmpZipFile));
+                        @Nullable ZipEntry zipEntry;
+                        while ((zipEntry = zis.getNextEntry()) != null) {
+                            String entryName = zipEntry.getName();
+                            switch (entryName) {
+                                case "database.db":
+                                    FileUtils.copyFromInputStreamToPath(
+                                        zis, DatabaseEditor.get().getPath());
+                                    break;
+                                case "settings.xml":
+                                    FileUtils.copyFromInputStreamToPath(
+                                        zis,
+                                        FileUtils.filesDirPath(
+                                            this, Constants.SHARED_PREFS_IMPORT_PATH));
+                                    break;
+                                case Constants.GRID_FONT_PATH:
+                                case Constants.LIST_FONT_PATH:
+                                case Constants.DOCK_FONT_PATH:
+                                    File fontOverrides = new File(getFilesDir(), Constants.FONT_OVERRIDES_PATH);
+                                    if (!fontOverrides.exists()) {
+                                        fontOverrides.mkdir();
+                                    }
+                                    Path fontDst =
+                                        Paths.get(getFilesDir().toString(),
+                                                  Constants.FONT_OVERRIDES_PATH,
+                                                  entryName);
+                                    FileUtils.copyFromInputStreamToPath(zis, fontDst.toString());
+                                    break;
+                            }
+                        }
+                        zis.close();
+                        tmpZipFile.delete();
+                    } catch (Exception ignored) {}
+                }
+                ProcessPhoenix.triggerRebirth(this);
                 break;
             case IMPORT_SETTINGS_REQUEST_CODE: {
                 if (handleImportActivityResult(this, data, Constants.SHARED_PREFS_IMPORT_PATH)) {
@@ -258,6 +338,21 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
         return true;
     }
 
+    /**
+     * Callers MUST close the output stream themselves.
+     */
+    private void copyFromPathToOutputStream(String path, OutputStream os) {
+        try {
+            final FileInputStream fis = new FileInputStream(path);
+            final byte[] chunk = new byte[1024];
+            while (fis.read(chunk) != -1) {
+                os.write(chunk);
+            }
+            fis.close();
+        } catch (Exception ignored) {}
+    }
+
+
     private void restartHomeActivity() {
         sendBroadcast(new Intent(Constants.INTENT_ACTION_RESTART));
     }
@@ -286,17 +381,11 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
             bindCheckboxPreference("celcius_pref", Constants.WEATHER_USE_CELCIUS_PREF);
 
             // Backups
-            bindPreference("import_database", context -> {
-                launchImportIntent(context, IMPORT_DATABASE_REQUEST_CODE);
+            bindPreference("full_backup", context -> {
+                launchExportIntent(context, "_curveball_full_backup.zip", EXPORT_FULL_REQUEST_CODE);
             });
-            bindPreference("export_database", context -> {
-                launchExportIntent(context, "_curveball_launcher_backup.db", EXPORT_DATABASE_REQUEST_CODE);
-            });
-            bindPreference("import_settings", context -> {
-                launchImportIntent(context, IMPORT_SETTINGS_REQUEST_CODE);
-            });
-            bindPreference("export_settings", context -> {
-                launchExportIntent(context, "_curveball_settings.xml", EXPORT_SHARED_PREFS_REQUEST_CODE);
+            bindPreference("full_restore", context -> {
+                launchImportIntent(context, IMPORT_FULL_REQUEST_CODE);
             });
 
             // Attributions
@@ -436,7 +525,23 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
                     DatabaseEditor.get().getPath());
                 ProcessPhoenix.triggerRebirth(context);
             });
+            bindPreference("import_database", context -> {
+                launchImportIntent(context, IMPORT_DATABASE_REQUEST_CODE);
+            });
+            bindPreference("export_database", context -> {
+                launchExportIntent(context, "_curveball_launcher_backup.db", EXPORT_DATABASE_REQUEST_CODE);
+            });
+            bindPreference("import_settings", context -> {
+                launchImportIntent(context, IMPORT_SETTINGS_REQUEST_CODE);
+            });
+            bindPreference("export_settings", context -> {
+                launchExportIntent(context, "_curveball_settings.xml", EXPORT_SHARED_PREFS_REQUEST_CODE);
+            });
 
+            findPreference("import_database").setEnabled(isDevModeEnabled);
+            findPreference("export_database").setEnabled(isDevModeEnabled);
+            findPreference("import_settings").setEnabled(isDevModeEnabled);
+            findPreference("export_settings").setEnabled(isDevModeEnabled);
             findPreference("vertical_scroller_design").setEnabled(isDevModeEnabled);
             findPreference("reset_database").setEnabled(isDevModeEnabled);
             findPreference("move_database_to_b").setEnabled(isDevModeEnabled);

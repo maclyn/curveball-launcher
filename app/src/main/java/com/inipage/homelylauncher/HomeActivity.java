@@ -10,6 +10,7 @@ import static com.inipage.homelylauncher.utils.DebugLogUtils.TAG_POCKET_ANIMATIO
 import static com.inipage.homelylauncher.utils.DebugLogUtils.TAG_WALLPAPER_OFFSET;
 
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.WallpaperManager;
 import android.appwidget.AppWidgetManager;
@@ -22,15 +23,20 @@ import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
+import android.util.Log;
 import android.util.Pair;
 import android.view.DragEvent;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
@@ -92,6 +98,30 @@ public class HomeActivity extends AppCompatActivity implements
     HomePager.Host,
     NonTouchInputCoordinator.Host,
     ProvidesOverallDimensions {
+
+    private static class NavContractClosedReceiver implements Handler.Callback {
+        private static final int MSG_CLOSE_LAST_TARGET = 0;
+        private final Messenger mMessenger = new Messenger(new Handler(Looper.getMainLooper(), this));
+
+        @Override
+        public boolean handleMessage(@NonNull Message message) {
+            if (message.what == MSG_CLOSE_LAST_TARGET) {
+                // TODO: Close the floating view that we added
+                return true;
+            }
+            return false;
+        }
+
+        public Message buildMessage() {
+            Message msg = Message.obtain();
+            msg.replyTo = mMessenger;
+            msg.what = MSG_CLOSE_LAST_TARGET;
+            return msg;
+        }
+    }
+
+    private static NavContractClosedReceiver sNavContractClosedReceiver = null;
+
 
     public static final int REQUEST_BIND_APP_WIDGET = 300;
     public static final int REQUEST_CONFIGURE_WIDGET = 400;
@@ -524,7 +554,11 @@ public class HomeActivity extends AppCompatActivity implements
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        if (intent.getAction().equals(Intent.ACTION_MAIN)) {
+        @Nullable String action = intent.getAction();
+        if (action == null) {
+            return;
+        }
+        if (action.equals(Intent.ACTION_MAIN)) {
             if (DecorViewManager.get(this).detachAllViews()) {
                 return;
             }
@@ -534,17 +568,8 @@ public class HomeActivity extends AppCompatActivity implements
             } else {
                 // try to handle GestureNavContract
                 @Nullable Bundle navContract = intent.getBundleExtra("gesture_nav_contract_v1");
-                if (navContract != null) {
-                    @Nullable ComponentName componentName = navContract.getParcelable("android.intent.extra.COMPONENT_NAME");
-                    @Nullable Message callback = navContract.getParcelable("android.intent.extra.REMOTE_CALLBACK");
-                    if (componentName != null && callback != null) {
-                        // TODO: set these; see https://android.googlesource.com/platform/packages/apps/Launcher3/+/master/src/com/android/launcher3/GestureNavContract.java#53
-                        /*
-                        public static final String EXTRA_ICON_POSITION = "gesture_nav_contract_icon_position";
-                        public static final String EXTRA_ICON_SURFACE = "gesture_nav_contract_surface_control";
-                        public static final String EXTRA_ON_FINISH_CALLBACK = "gesture_nav_contract_finish_callback";
-                        */
-                    }
+                if (navContract != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    handleGestureNavContract(navContract);
                 }
             }
             if (LayoutEditingSingleton.getInstance().isEditing()) {
@@ -552,6 +577,31 @@ public class HomeActivity extends AppCompatActivity implements
                 return;
             }
             dockView.scrollTo(0, 0);
+        }
+    }
+
+    @TargetApi(Build.VERSION_CODES.Q)
+    private void handleGestureNavContract(Bundle navContract) {
+        @Nullable ComponentName componentName = navContract.getParcelable("android.intent.extra.COMPONENT_NAME");
+        @Nullable Message callback = navContract.getParcelable("android.intent.extra.REMOTE_CALLBACK");
+        if (componentName != null && callback != null) {
+            Bundle result = new Bundle();
+            result.putParcelable("gesture_nav_contract_icon_position", new RectF(5.0F, 5.0F, 50.F, 50.F));
+            result.putParcelable("gesture_nav_contract_surface_control", new SurfaceView(this).getSurfaceControl());
+            if (sNavContractClosedReceiver == null) {
+                sNavContractClosedReceiver = new NavContractClosedReceiver();
+            }
+            result.putParcelable(
+                "gesture_nav_contract_finish_callback",
+                sNavContractClosedReceiver.buildMessage());
+
+            Message response = Message.obtain();
+            response.setData(result);
+            try {
+                callback.replyTo.send(response);
+            } catch (RemoteException e) {
+                Log.e("HomeActivity", "GestureNavContract error", e);
+            }
         }
     }
 

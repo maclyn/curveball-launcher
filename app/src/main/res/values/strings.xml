@@ -168,9 +168,9 @@
     <string name="manage_suggestions">Manage suggestions</string>
     <string name="debug">Debug</string>
     <string name="show_debug_log">Show debug log</string>
-    <string name="show_debug_log_summary">Show the debugging log.</string>
+    <string name="show_debug_log_summary">Show the log in a dialog</string>
     <string name="clear_debug_log">Clear debug log</string>
-    <string name="clear_debug_log_summary">Reset the debug log.</string>
+    <string name="clear_debug_log_summary">Reset the debug log</string>
     <string name="export_log">Export log</string>
     <string name="search_store">Search the store</string>
     <string name="loading">Loading…</string>
@@ -218,7 +218,7 @@
     <string name="ipsum_short">1</string>
     <string name="hidden_apps_setting_title">Manage hidden apps</string>
     <string name="wallpaper_settings_title">Change wallpaper</string>
-    <string name="database_management">Database management</string>
+    <string name="database_management">Backups</string>
     <string name="reset_database">Reset database</string>
     <string name="reset_database_description">Drop all database data and restart the app.</string>
     <string name="move_database_to_b_slot">Move database to backup slot</string>
@@ -226,9 +226,9 @@
     <string name="overwrite_from_b_slot">Overwrite active database from the backup slot</string>
     <string name="overwrite_from_b_slot_description">Take the database saved in the backup slot, and overwrite the active database.</string>
     <string name="import_database_from_storage">Import database from storage</string>
-    <string name="import_database_from_storage_description">Perform a database import from storage.</string>
+    <string name="import_database_from_storage_description">Import a database from storage</string>
     <string name="export_database_to_storage">Export database to storage</string>
-    <string name="export_database_to_storage_description">Export database (layout, hidden apps) to phone storage.</string>
+    <string name="export_database_to_storage_description">Export database (layout, hidden apps) to phone storage</string>
     <string name="folder_icon_content_description">Icon for the currently edited folder</string>
     <string name="new_folder_bottom_sheet_title">Create new folder</string>
     <string name="add_to_new_folder">Create new folder</string>
@@ -260,10 +260,10 @@
     <string name="dock_items">Dock items</string>
     <string name="manage_hidden_calendars">Manage hidden calendars</string>
     <string name="manage_hidden_apps">Manage hidden recent apps</string>
-    <string name="manage_hidden_calendars_description">Choose the calendars that won\'t show up in dock suggestions.</string>
-    <string name="manage_hidden_recents_description">Choose the apps that won\'t show up in dock suggestions. Apps that are hidden from the app list or on a page will never show up in dock suggestions.</string>
+    <string name="manage_hidden_calendars_description">Choose the calendars to hide from dock suggestions</string>
+    <string name="manage_hidden_recents_description">Choose apps to hide in dock suggestions</string>
     <string name="apps_installed">apps</string>
-    <string name="export_log_description">Export log to storage.</string>
+    <string name="export_log_description">Export log to storage</string>
     <string name="splice_test">Splice test</string>
     <string name="run_preset_splice_test">Run splice test from clipboard</string>
     <string name="show_new_user_bottom_sheet">Show new user bottom sheet</string>

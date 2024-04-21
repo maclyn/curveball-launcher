@@ -2,7 +2,7 @@
 
     <PreferenceCategory
         android:key="home_pages"
-        android:title="Home pages appearance"
+        android:title="Fonts"
         >
 
         <Preference
@@ -26,13 +26,13 @@
         <Preference
             android:key="reset_font_overrides"
             android:title="Reset imported fonts"
-            android:summary="Remove all imported fonts, leaving system defaults in place."
+            android:summary="Remove all imported fonts, reverting to the defaults"
             />
     </PreferenceCategory>
 
     <PreferenceCategory
         android:key="icon_category"
-        android:title="Icon packs"
+        android:title="Icon pack"
         >
 
         <ListPreference
@@ -50,7 +50,7 @@
         <Preference
             android:key="replace_one_icon"
             android:title="Replace a single icon"
-            android:summary="Use icon as stand-in for any app icon"
+            android:summary="Use an icon from the chosen icon pack as a stand-in for any app icon"
             />
 
         <Preference
@@ -65,7 +65,7 @@
 
         <CheckBoxPreference
             android:title="Monochrome dock"
-            android:summary="Show dock without color"
+            android:summary="Show dock with white icons on translucent white backgrounds"
             android:key="mono_dock"
             />
 
@@ -96,29 +96,36 @@
         android:title="@string/database_management">
 
         <Preference
-            android:title="@string/import_database_from_storage"
-            android:summary="@string/import_database_from_storage_description"
-            android:key="import_database" />
+            android:title="Create full backup"
+            android:summary="Backup all settings to one file"
+            android:key="full_backup"
+            />
 
         <Preference
-            android:title="@string/export_database_to_storage"
-            android:summary="@string/export_database_to_storage_description"
-            android:key="export_database" />
-
-        <Preference
-            android:title="Import settings from storage"
-            android:summary="Perform a settings import from storage."
-            android:key="import_settings" />
-
-        <Preference
-            android:title="Export settings to storage"
-            android:summary="Export non-database settings (icon pack data, options) to phone storage."
-            android:key="export_settings" />
+            android:title="Import full backup"
+            android:summary="Import a full settings backup"
+            android:key="full_restore"
+            />
     </PreferenceCategory>
 
     <PreferenceCategory
         android:title="@string/advanced"
         android:key="pref_advanced">
+
+        <Preference
+            android:title="@string/export_log"
+            android:summary="@string/export_log_description"
+            android:key="log_export" />
+
+        <Preference
+            android:title="@string/show_debug_log"
+            android:summary="@string/show_debug_log_summary"
+            android:key="log_show"/>
+
+        <Preference
+            android:title="@string/clear_debug_log"
+            android:summary="@string/clear_debug_log_summary"
+            android:key="log_clear"/>
 
         <CheckBoxPreference
             android:title="Set dev mode"
@@ -148,19 +155,24 @@
             android:key="overwrite_from_b" />
 
         <Preference
-            android:title="@string/export_log"
-            android:summary="@string/export_log_description"
-            android:key="log_export" />
+            android:title="@string/import_database_from_storage"
+            android:summary="@string/import_database_from_storage_description"
+            android:key="import_database" />
 
         <Preference
-            android:title="@string/show_debug_log"
-            android:summary="@string/show_debug_log_summary"
-            android:key="log_show"/>
+            android:title="@string/export_database_to_storage"
+            android:summary="@string/export_database_to_storage_description"
+            android:key="export_database" />
 
         <Preference
-            android:title="@string/clear_debug_log"
-            android:summary="@string/clear_debug_log_summary"
-            android:key="log_clear"/>
+            android:title="Import settings from storage"
+            android:summary="Perform a settings import from storage."
+            android:key="import_settings" />
+
+        <Preference
+            android:title="Export settings to storage"
+            android:summary="Export non-database settings (icon pack data, checkboxes) to phone storage."
+            android:key="export_settings" />
     </PreferenceCategory>
 
     <PreferenceCategory
