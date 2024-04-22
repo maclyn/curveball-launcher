@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Build;
@@ -306,6 +307,8 @@ public class HomeActivity extends AppCompatActivity implements
     @Nullable private String mPendingGridPageId;
     private boolean mSyntheticScrolling = false;
 
+    private SurfaceView testView;
+
     //region Android lifecycle
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     @Override
@@ -324,6 +327,9 @@ public class HomeActivity extends AppCompatActivity implements
                 recreate();
             }
         }, new IntentFilter(Constants.INTENT_ACTION_RESTART));
+
+        testView = new SurfaceView(this);
+        // rootView.addView(testView);
 
         mPager = new HomePager(this, rootView);
         mNonTouchInputCoordinator = new NonTouchInputCoordinator(this, this);
@@ -587,7 +593,7 @@ public class HomeActivity extends AppCompatActivity implements
         if (componentName != null && callback != null) {
             Bundle result = new Bundle();
             result.putParcelable("gesture_nav_contract_icon_position", new RectF(5.0F, 5.0F, 50.F, 50.F));
-            result.putParcelable("gesture_nav_contract_surface_control", new SurfaceView(this).getSurfaceControl());
+            result.putParcelable("gesture_nav_contract_surface_control", testView.getSurfaceControl());
             if (sNavContractClosedReceiver == null) {
                 sNavContractClosedReceiver = new NavContractClosedReceiver();
             }
@@ -596,6 +602,7 @@ public class HomeActivity extends AppCompatActivity implements
                 sNavContractClosedReceiver.buildMessage());
 
             Message response = Message.obtain();
+            response.copyFrom(callback);
             response.setData(result);
             try {
                 callback.replyTo.send(response);
