@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -16,11 +17,18 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 
 import com.inipage.homelylauncher.R;
+import com.inipage.homelylauncher.state.GestureNavContractSingleton;
 
 /**
  * Helper functions interfacing with Android apps.
  */
 public class InstalledAppUtils {
+
+    public enum AppLaunchSource {
+        APP_LIST,
+        GRID_PAGE,
+        DOCK
+    }
 
     public static void launchUninstallPackageIntent(Context context, String packageName) {
         try {
@@ -29,6 +37,7 @@ public class InstalledAppUtils {
             uninstallIntent.setFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_TASK_ON_HOME);
             context.startActivity(uninstallIntent);
+            GestureNavContractSingleton.INSTANCE.clearComponentLaunch();
         } catch (Exception ignored) {
         }
     }
@@ -51,11 +60,20 @@ public class InstalledAppUtils {
                 Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_TASK_ON_HOME);
             appInfoIntent.setData(uri);
             context.startActivity(appInfoIntent);
+            GestureNavContractSingleton.INSTANCE.clearComponentLaunch();
         } catch (Exception ignored) {
         }
     }
 
-    public static void launchApp(View anchor, String packageName, String activityName) {
+    /**
+     * This is used by the home grid pages and the app list.
+     */
+    public static void launchApp(
+        View anchor,
+        String packageName,
+        String activityName,
+        AppLaunchSource source
+    ) {
         final ActivityOptions options =
             ActivityOptions.makeScaleUpAnimation(
                 anchor,
@@ -65,14 +83,41 @@ public class InstalledAppUtils {
                 0);
         // There isn't an obvious way to speed this up, which is is unfortunate because it feels
         // pokey to me
-        launchApp(anchor.getContext(), packageName, activityName, options.toBundle());
+        launchApp(anchor.getContext(), packageName, activityName, options.toBundle(), anchor, source);
     }
 
-    public static boolean launchApp(
+    /**
+     * Activity options, frustratingly enough, only accepts a View for the anchor, not an arbitrary
+     * x/y, so rather than fake an anchor we just construct the Bundle ourselves.
+     * This is used by the dock.
+     */
+    public static boolean launchAppWithIrregularAnchor(
+        View view,
+        String packageName,
+        String activityName,
+        AppLaunchSource source
+    ) {
+        int[] out = new int[2];
+        view.getLocationOnScreen(out);
+
+        // See ActivityOptions#toBundle() for reference on these magic values
+        final Bundle bundle = new Bundle();
+        bundle.putString("android:activity.packageName", view.getContext().getPackageName());
+        bundle.putInt("android:activity.animType", 2);
+        bundle.putInt("android:activity.animStartX", out[0]);
+        bundle.putInt("android:activity.animStartY", out[1]);
+        bundle.putInt("android:activity.animWidth", view.getWidth());
+        bundle.putInt("android:activity.animHeight", view.getHeight());
+        return launchApp(view.getContext(), packageName, activityName, bundle, view, source);
+    }
+
+    private static boolean launchApp(
         Context context,
         String packageName,
         String activityName,
-        @Nullable Bundle b) {
+        @Nullable Bundle b,
+        View sourceView,
+        AppLaunchSource source) {
         try {
             final Intent launchIntent = new Intent();
             launchIntent.setComponent(new ComponentName(packageName, activityName));
@@ -80,33 +125,28 @@ public class InstalledAppUtils {
             launchIntent.addCategory(Intent.CATEGORY_DEFAULT);
             launchIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(launchIntent, b);
+
+            if (source == AppLaunchSource.GRID_PAGE) {
+                int[] pts = new int[2];
+                sourceView.getLocationOnScreen(pts);
+                final RectF position =
+                    new RectF(
+                        pts[0],
+                        pts[1],
+                        pts[0] + sourceView.getWidth(),
+                        pts[1] + sourceView.getHeight());
+                GestureNavContractSingleton.INSTANCE.onAppLaunchRequest(
+                    packageName,
+                    activityName,
+                    position);
+            } else {
+                GestureNavContractSingleton.INSTANCE.clearComponentLaunch();
+            }
+
             return true;
         } catch (Exception appNotInstalled) {
             Toast.makeText(context, R.string.cant_start, Toast.LENGTH_SHORT).show();
             return false;
         }
-    }
-
-    /**
-     * Activity options, frustratingly enough, only accepts a View for the anchor, not an arbitrary
-     * x/y, so rather than fake an anchor we just construct the Bundle ourselves.
-     */
-    public static boolean launchApp(
-        int startX,
-        int startY,
-        int width,
-        int height,
-        Context context,
-        String packageName,
-        String activityName) {
-        // See ActivityOptions#toBundle() for reference on these magic values
-        final Bundle bundle = new Bundle();
-        bundle.putString("android:activity.packageName", context.getPackageName());
-        bundle.putInt("android:activity.animType", 2);
-        bundle.putInt("android:activity.animStartX", startX);
-        bundle.putInt("android:activity.animStartY", startY);
-        bundle.putInt("android:activity.animWidth", width);
-        bundle.putInt("android:activity.animHeight", height);
-        return launchApp(context, packageName, activityName, bundle);
     }
 }

@@ -26,6 +26,7 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
 import android.graphics.Point;
+import android.graphics.RectF;
 import android.util.Pair;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
@@ -48,6 +49,7 @@ import com.inipage.homelylauncher.model.GridPage;
 import com.inipage.homelylauncher.pager.BasePageController;
 import com.inipage.homelylauncher.pager.GesturePageLayout;
 import com.inipage.homelylauncher.state.EditingEvent;
+import com.inipage.homelylauncher.state.GestureNavContractSingleton;
 import com.inipage.homelylauncher.state.GridDropFailedEvent;
 import com.inipage.homelylauncher.state.LayoutEditingSingleton;
 import com.inipage.homelylauncher.utils.AttributeApplier;
@@ -527,6 +529,10 @@ public abstract class BaseGridPageController implements BasePageController {
         DebugLogUtils.needle(tag, "page=" + getPageId(), contents);
     }
 
+    public void getLastLaunchedItem() {
+        // TODO
+    }
+
     public interface Host {
         Activity getContext();
 
@@ -781,16 +787,8 @@ public abstract class BaseGridPageController implements BasePageController {
         public boolean onLongPress(final int rawX, final int rawY) {
             mRootContainer.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
 
-            // x/y are rawX/rawY the gesture page layout; translate to container-relative
-            // coordinates
-            final int[] out = new int[2];
-            mContainer.getLocationOnScreen(out);
-            int x = rawX - out[0];
-            int y = rawY - out[1];
-
-            @Nullable final GridViewHolder gridViewHolder =
-                mHolderMap.getItemAtPositionPx(x, y, mMetrics);
             final boolean isEditing = LayoutEditingSingleton.getInstance().isEditing();
+            @Nullable final GridViewHolder gridViewHolder = getItemAtPosition(rawX, rawY);
 
             // Nothing there? Flip editing mode
             if (gridViewHolder == null) {
@@ -807,6 +805,7 @@ public abstract class BaseGridPageController implements BasePageController {
                     mShowingMenu = true;
 
                     // Center on the menu on center of the app icon
+                    final int[] out = new int[2];
                     appViewHolder.getDragView().getLocationOnScreen(out);
                     int viewWidth = appViewHolder.getDragView().getMeasuredWidth();
                     int viewHeight = appViewHolder.getDragView().getMeasuredHeight();
@@ -877,6 +876,33 @@ public abstract class BaseGridPageController implements BasePageController {
                 beginDragOnHolder(Objects.requireNonNull(mHolder), mStartX, mStartY);
                 mShowingMenu = false;
             }
+        }
+
+        @Override
+        public void onUnhandledTouchUp(MotionEvent event) {
+            @Nullable final GridViewHolder gridViewHolder =
+                getItemAtPosition((int) event.getRawX(), (int) event.getRawY());
+            if (!(gridViewHolder instanceof WidgetViewHolder)) {
+                return;
+            }
+            final WidgetViewHolder widgetViewHolder = (WidgetViewHolder) gridViewHolder;
+            final View view = gridViewHolder.getDragView();
+            final int[] out = new int[2];
+            view.getLocationOnScreen(out);
+            GestureNavContractSingleton.INSTANCE.onWidgetLaunchRequest(
+                widgetViewHolder.getProviderInfo().provider.getPackageName(),
+                new RectF(out[0], out[1], out[1] + view.getWidth(), out[1] + view.getHeight()));
+        }
+
+        @Nullable
+        private GridViewHolder getItemAtPosition(int rawX, int rawY) {
+            // x/y are rawX/rawY the gesture page layout; translate to container-relative
+            // coordinates
+            final int[] out = new int[2];
+            mContainer.getLocationOnScreen(out);
+            int x = rawX - out[0];
+            int y = rawY - out[1];
+            return mHolderMap.getItemAtPositionPx(x, y, mMetrics);
         }
 
         private void beginDragOnHolder(GridViewHolder gridViewHolder, int startX, int startY) {

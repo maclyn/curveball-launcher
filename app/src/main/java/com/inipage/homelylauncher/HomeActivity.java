@@ -3,10 +3,7 @@ package com.inipage.homelylauncher;
 import static android.view.DragEvent.ACTION_DRAG_ENDED;
 import static android.view.DragEvent.ACTION_DRAG_ENTERED;
 import static android.view.DragEvent.ACTION_DRAG_LOCATION;
-import static android.view.View.GONE;
-import static android.view.View.VISIBLE;
 import static com.inipage.homelylauncher.utils.DebugLogUtils.TAG_PAGE_SCROLL;
-import static com.inipage.homelylauncher.utils.DebugLogUtils.TAG_POCKET_ANIMATION;
 import static com.inipage.homelylauncher.utils.DebugLogUtils.TAG_WALLPAPER_OFFSET;
 
 import android.annotation.SuppressLint;
@@ -22,7 +19,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
-import android.graphics.Color;
+import android.gesture.Gesture;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Build;
@@ -37,7 +34,6 @@ import android.util.Pair;
 import android.view.DragEvent;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
-import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
@@ -45,6 +41,7 @@ import android.widget.RelativeLayout;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 import androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback;
@@ -54,7 +51,6 @@ import com.inipage.homelylauncher.caches.AppLabelCache;
 import com.inipage.homelylauncher.caches.FontCacheSync;
 import com.inipage.homelylauncher.caches.IconCacheSync;
 import com.inipage.homelylauncher.dock.DockController;
-import com.inipage.homelylauncher.dock.ForwardingContainer;
 import com.inipage.homelylauncher.drawer.HideAppEvent;
 import com.inipage.homelylauncher.grid.BaseGridPageController;
 import com.inipage.homelylauncher.grid.ClassicGridPageController;
@@ -71,6 +67,7 @@ import com.inipage.homelylauncher.persistence.PrefsHelper;
 import com.inipage.homelylauncher.pocket.PocketController;
 import com.inipage.homelylauncher.pocket.PocketControllerDropView;
 import com.inipage.homelylauncher.state.EditingEvent;
+import com.inipage.homelylauncher.state.GestureNavContractSingleton;
 import com.inipage.homelylauncher.state.GridDropFailedEvent;
 import com.inipage.homelylauncher.state.LayoutEditingSingleton;
 import com.inipage.homelylauncher.state.PagesChangedEvent;
@@ -78,12 +75,12 @@ import com.inipage.homelylauncher.utils.AttributeApplier;
 import com.inipage.homelylauncher.utils.Constants;
 import com.inipage.homelylauncher.utils.DebugLogUtils;
 import com.inipage.homelylauncher.utils.SizeDimenAttribute;
-import com.inipage.homelylauncher.utils.SizeValAttribute;
 import com.inipage.homelylauncher.utils.StatusBarUtils;
 import com.inipage.homelylauncher.utils.ViewUtils;
 import com.inipage.homelylauncher.views.DecorViewDragger;
 import com.inipage.homelylauncher.views.DecorViewManager;
 import com.inipage.homelylauncher.views.ProvidesOverallDimensions;
+import com.inipage.homelylauncher.views.SurfaceViewWrapper;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -100,14 +97,15 @@ public class HomeActivity extends AppCompatActivity implements
     NonTouchInputCoordinator.Host,
     ProvidesOverallDimensions {
 
-    private static class NavContractClosedReceiver implements Handler.Callback {
+    private class NavContractClosedReceiver implements Handler.Callback {
         private static final int MSG_CLOSE_LAST_TARGET = 0;
+
         private final Messenger mMessenger = new Messenger(new Handler(Looper.getMainLooper(), this));
 
         @Override
         public boolean handleMessage(@NonNull Message message) {
             if (message.what == MSG_CLOSE_LAST_TARGET) {
-                // TODO: Close the floating view that we added
+                mSurfaceViewWrapper.hide();
                 return true;
             }
             return false;
@@ -121,8 +119,7 @@ public class HomeActivity extends AppCompatActivity implements
         }
     }
 
-    private static NavContractClosedReceiver sNavContractClosedReceiver = null;
-
+    private NavContractClosedReceiver mNavContractClosedReceiver = null;
 
     public static final int REQUEST_BIND_APP_WIDGET = 300;
     public static final int REQUEST_CONFIGURE_WIDGET = 400;
@@ -307,7 +304,7 @@ public class HomeActivity extends AppCompatActivity implements
     @Nullable private String mPendingGridPageId;
     private boolean mSyntheticScrolling = false;
 
-    private SurfaceView testView;
+    private SurfaceViewWrapper mSurfaceViewWrapper;
 
     //region Android lifecycle
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
@@ -328,8 +325,7 @@ public class HomeActivity extends AppCompatActivity implements
             }
         }, new IntentFilter(Constants.INTENT_ACTION_RESTART));
 
-        testView = new SurfaceView(this);
-        // rootView.addView(testView);
+        mSurfaceViewWrapper = new SurfaceViewWrapper(this);
 
         mPager = new HomePager(this, rootView);
         mNonTouchInputCoordinator = new NonTouchInputCoordinator(this, this);
@@ -402,17 +398,21 @@ public class HomeActivity extends AppCompatActivity implements
     protected void onStart() {
         super.onStart();
         AppInfoCache.get().getAppWidgetHost().startListening();
+        // Dock has its own animation
         mDockController.loadDock();
 
-        // Animate everything in a little, so the dock animation in doesn't feel so jarring
+        // Animate everything in a little
+        // Start at transparent and a little smaller
         scrimGradient.setAlpha(0);
         pagerIndicatorView.setAlpha(0);
         pagerView.setAlpha(0F);
         pagerView.setScaleX(0.9F);
         pagerView.setScaleY(0.9F);
 
+        // 0 -> 1 alpha on these components
         scrimGradient.animate().alpha(1F).start();
         pagerIndicatorView.animate().alpha(1F).start();
+        // Grow the pager in
         pagerView.animate()
             .alpha(1F)
             .scaleX(1F)
@@ -429,12 +429,10 @@ public class HomeActivity extends AppCompatActivity implements
         super.onStop();
         AppInfoCache.get().getAppWidgetHost().stopListening();
         mDockController.destroyDock();
-        if (!LayoutEditingSingleton.getInstance().isEditing()) {
-            pagerView.setCurrentItem(1);
-        }
         if (EventBus.getDefault().isRegistered(this)) {
             EventBus.getDefault().unregister(this);
         }
+        GestureNavContractSingleton.INSTANCE.onHomeActivityStopped();
     }
 
     @Override
@@ -568,48 +566,69 @@ public class HomeActivity extends AppCompatActivity implements
             if (DecorViewManager.get(this).detachAllViews()) {
                 return;
             }
+
+            // Bring dock to start
+            @Nullable RecyclerView.LayoutManager layoutManager = dockView.getLayoutManager();
+            if (layoutManager instanceof LinearLayoutManager) {
+                ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(0, 0);
+            }
+
+            // try to handle GestureNavContract
+            @Nullable Bundle navContract = intent.getBundleExtra("gesture_nav_contract_v1");
+            boolean handledNavContract = false;
+            if (navContract != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                handledNavContract = handleGestureNavContract(navContract);
+            }
+            if (handledNavContract) {
+                return;
+            }
+
+            // Otherwise, cascade to resetting everything
             if (!isOnFirstHomeScreen()) {
                 pagerView.setCurrentItem(1, true);
                 return;
-            } else {
-                // try to handle GestureNavContract
-                @Nullable Bundle navContract = intent.getBundleExtra("gesture_nav_contract_v1");
-                if (navContract != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    handleGestureNavContract(navContract);
-                }
             }
             if (LayoutEditingSingleton.getInstance().isEditing()) {
                 LayoutEditingSingleton.getInstance().setEditing(false);
-                return;
             }
-            dockView.scrollTo(0, 0);
         }
     }
 
     @TargetApi(Build.VERSION_CODES.Q)
-    private void handleGestureNavContract(Bundle navContract) {
+    private boolean handleGestureNavContract(Bundle navContract) {
         @Nullable ComponentName componentName = navContract.getParcelable("android.intent.extra.COMPONENT_NAME");
         @Nullable Message callback = navContract.getParcelable("android.intent.extra.REMOTE_CALLBACK");
         if (componentName != null && callback != null) {
+            // Check if we have a likely launch
+            @Nullable GestureNavContractSingleton.ComponentLaunch componentLaunch =
+                GestureNavContractSingleton.INSTANCE.lastValidComponentLaunch();
+            if (componentLaunch == null) {
+                return false;
+            }
+
             Bundle result = new Bundle();
-            result.putParcelable("gesture_nav_contract_icon_position", new RectF(5.0F, 5.0F, 50.F, 50.F));
-            result.putParcelable("gesture_nav_contract_surface_control", testView.getSurfaceControl());
-            if (sNavContractClosedReceiver == null) {
-                sNavContractClosedReceiver = new NavContractClosedReceiver();
+            result.putParcelable("gesture_nav_contract_icon_position", componentLaunch.getPosition());
+            result.putParcelable(
+                "gesture_nav_contract_surface_control",
+                mSurfaceViewWrapper.show().getSurfaceControl());
+            if (mNavContractClosedReceiver == null) {
+                mNavContractClosedReceiver = new NavContractClosedReceiver();
             }
             result.putParcelable(
                 "gesture_nav_contract_finish_callback",
-                sNavContractClosedReceiver.buildMessage());
+                mNavContractClosedReceiver.buildMessage());
 
             Message response = Message.obtain();
             response.copyFrom(callback);
             response.setData(result);
             try {
                 callback.replyTo.send(response);
+                return true;
             } catch (RemoteException e) {
                 Log.e("HomeActivity", "GestureNavContract error", e);
             }
         }
+        return false;
     }
 
     private void switchPageLeft() {

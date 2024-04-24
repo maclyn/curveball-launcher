@@ -39,14 +39,11 @@ public abstract class ConfigurableAppBackedDockItem extends DockControllerItem {
             if (mBackingItem.hasValidComponent()) {
                 int[] out = new int[2];
                 view.getLocationOnScreen(out);
-                final boolean success = InstalledAppUtils.launchApp(
-                    out[0],
-                    out[1],
-                    view.getWidth(),
-                    view.getWidth(),
-                    view.getContext(),
+                final boolean success = InstalledAppUtils.launchAppWithIrregularAnchor(
+                    view,
                     mBackingItem.getPackageName(),
-                    mBackingItem.getActivityName());
+                    mBackingItem.getActivityName(),
+                    InstalledAppUtils.AppLaunchSource.DOCK);
                 if (success) {
                     return;
                 }

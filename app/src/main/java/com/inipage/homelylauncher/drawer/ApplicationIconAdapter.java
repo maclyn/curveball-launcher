@@ -38,6 +38,7 @@ import com.inipage.homelylauncher.state.LayoutEditingSingleton;
 import com.inipage.homelylauncher.utils.Constants;
 import com.inipage.homelylauncher.utils.DebugLogUtils;
 import com.inipage.homelylauncher.utils.InstalledAppUtils;
+import com.inipage.homelylauncher.utils.InstalledAppUtils.AppLaunchSource;
 import com.inipage.homelylauncher.utils.LifecycleLogUtils;
 import com.inipage.homelylauncher.utils.Prewarmer;
 import com.inipage.homelylauncher.utils.ViewUtils;
@@ -650,7 +651,8 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         viewHolder.mainView.setClickable(true);
         viewHolder.mainView.setAlpha(1F);
         viewHolder.mainView.setOnClickListener(
-            v -> InstalledAppUtils.launchApp(viewHolder.icon, ai.getPackageName(), ai.getActivityName()));
+            v -> InstalledAppUtils.launchApp(
+                viewHolder.icon, ai.getPackageName(), ai.getActivityName(), AppLaunchSource.APP_LIST));
         viewHolder.mainView.attachListener(new ApplicationIconLayout.Listener() {
 
             @Override

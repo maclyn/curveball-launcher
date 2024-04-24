@@ -55,6 +55,7 @@ public class GesturePageLayout extends FrameLayout {
         mListener = listener;
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         log("onTouchEvent");
@@ -174,6 +175,9 @@ public class GesturePageLayout extends FrameLayout {
                         (event.getAction() == ACTION_UP ? "ACTION_UP" : "ACTION_CANCEL"));
                 mFinishedParsing = false;
                 mHandler.removeMessages(GESTURE_LONG_PRESS);
+                if (event.getAction() == ACTION_UP) {
+                    mListener.onUnhandledTouchUp(event);
+                }
                 return false;
             default:
                 return false;
@@ -188,6 +192,8 @@ public class GesturePageLayout extends FrameLayout {
         void onSwipeDown();
 
         void onAdditionalEvent(MotionEvent event, float deltaX, float deltaY);
+
+        void onUnhandledTouchUp(MotionEvent event);
     }
 
     @SuppressLint("HandlerLeak")

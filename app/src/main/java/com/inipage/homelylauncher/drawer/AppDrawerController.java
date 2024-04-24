@@ -50,6 +50,7 @@ import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.persistence.PrefsHelper;
 import com.inipage.homelylauncher.utils.Constants;
 import com.inipage.homelylauncher.utils.InstalledAppUtils;
+import com.inipage.homelylauncher.utils.InstalledAppUtils.AppLaunchSource;
 import com.inipage.homelylauncher.utils.ViewUtils;
 import com.inipage.homelylauncher.views.BottomSheetHelper;
 import com.inipage.homelylauncher.views.DecorViewDragger;
@@ -526,7 +527,8 @@ public class AppDrawerController implements BasePageController, FastScrollContro
             child = ((ApplicationIconAdapter.AppIconHolder) vh).icon;
         }
         ApplicationIcon app = mAdapter.getFirstApp();
-        InstalledAppUtils.launchApp(child, app.getPackageName(), app.getActivityName());
+        InstalledAppUtils.launchApp(
+            child, app.getPackageName(), app.getActivityName(), AppLaunchSource.APP_LIST);
         return true;
     }
 

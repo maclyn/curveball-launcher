@@ -61,7 +61,8 @@ public class DecorViewManager {
         int width,
         int height,
         int x,
-        int y) {
+        int y
+    ) {
         final FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(width, height);
         layoutParams.setMargins(x, y, 0, 0);
         return attachViewImpl(view, layoutParams, callback);
@@ -132,10 +133,16 @@ public class DecorViewManager {
 
     @Nullable
     private FrameLayout getDecorView() {
-        if (mActivityRef.get() == null) {
+        @Nullable Activity activity = mActivityRef.get();
+        if (activity == null) {
             return null;
         }
-        View decorView = mActivityRef.get().getWindow().getDecorView();
+        return getDecorView(activity);
+    }
+
+    @Nullable
+    public static FrameLayout getDecorView(Activity activity) {
+        View decorView = activity.getWindow().getDecorView();
         if (!(decorView instanceof FrameLayout)) {
             return null;
         }

@@ -68,14 +68,11 @@ public class RecentAppDockItem extends DockControllerItem {
         return () -> {
             final int[] out = new int[2];
             view.getLocationOnScreen(out);
-            InstalledAppUtils.launchApp(
-                out[0],
-                out[1],
-                view.getWidth(),
-                view.getWidth(),
-                view.getContext(),
+            InstalledAppUtils.launchAppWithIrregularAnchor(
+                view,
                 mSuggestionApp.getPackageName(),
-                mSuggestionApp.getActivityName());
+                mSuggestionApp.getActivityName(),
+                InstalledAppUtils.AppLaunchSource.DOCK);
         };
     }
 
