@@ -265,7 +265,6 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     private final Delegate mDelegate;
     private final List<ApplicationIconHideable> mApps;
-    private final List<SwipeFolder> mGroups;
     private final PatriciaTrie<ApplicationIconHideable> mAppsTree = new PatriciaTrie<>();
     private final Map<String, Integer> mHeaderToCount = new HashMap<>();
     private final Activity mActivity;
@@ -279,7 +278,6 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
 
     public ApplicationIconAdapter(Delegate delegate, Activity activity, int columnCount) {
         this.mApps = AppInfoCache.get().getAppDrawerActivities();
-        this.mGroups = DatabaseEditor.get().getGestureFavorites();
         for (ApplicationIconHideable icon : mApps) {
             mAppsTree.put(icon.getName().toLowerCase(Locale.getDefault()), icon);
             Prewarmer.getInstance().prewarm(() ->
@@ -603,28 +601,6 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 String.valueOf(mApps.size()).length(),
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             headerHolder.installCount.setText(headerText);
-
-            // Group selection view
-            headerHolder.groupContainer.removeAllViews();
-            int addedCount = 0;
-            LinearLayout currentContainer =
-                getGroupViewHorizontalLayout(headerHolder.groupContainer);
-            for (SwipeFolder folder : mGroups) {
-                currentContainer.addView(getGroupView(currentContainer, folder, folder == mSelectedFolder));
-                addedCount++;
-                // >5, break off a new row
-                if (addedCount > GROUP_ITEM_ROW_COUNT - 1) {
-                    // headerHolder.groupContainer.addView(currentContainer);
-                    currentContainer = getGroupViewHorizontalLayout(headerHolder.groupContainer);
-                    addedCount = 0;
-                }
-            }
-            int remainder = GROUP_ITEM_ROW_COUNT - (addedCount % GROUP_ITEM_ROW_COUNT);
-            while (remainder > 0) {
-                currentContainer.addView(getGroupView(currentContainer, null, false));
-                remainder--;
-            }
-            // headerHolder.groupContainer.addView(currentContainer);
             return;
         }
         if (itemViewType == ITEM_VIEW_TYPE_HEADER) {
@@ -879,23 +855,12 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         return itemContainer;
     }
 
-    private LinearLayout getGroupViewHorizontalLayout(View parent) {
-        LinearLayout linearLayout = new LinearLayout(parent.getContext());
-        linearLayout.setOrientation(LinearLayout.HORIZONTAL);
-        linearLayout.setLayoutParams(
-            new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        return linearLayout;
-    }
-
     public static class TopHeaderHolder extends AnimatableViewHolder {
         TextView installCount;
-        LinearLayout groupContainer;
 
         public TopHeaderHolder(View view) {
             super(view);
             this.installCount = ViewCompat.requireViewById(view, R.id.installed_apps_count);
-            this.groupContainer = ViewCompat.requireViewById(view, R.id.group_container);
         }
     }
 

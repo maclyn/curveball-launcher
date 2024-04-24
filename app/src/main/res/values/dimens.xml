@@ -8,7 +8,6 @@
     <dimen name="home_activity_margin">16dp</dimen>
     <dimen name="home_activity_squarish">8dp</dimen>
     <dimen name="grid_horizontal_margin">8dp</dimen>
-    <dimen name="byline_text_size">18sp</dimen>
     <dimen name="log_text_size">4sp</dimen>
     <dimen name="scale_button_size">36dp</dimen>
     <dimen name="dist_from_edge_to_switch">24dp</dimen>

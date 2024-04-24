@@ -497,11 +497,6 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
             bindPreference("log_show", this::showLogs);
             bindPreference("log_export", context -> launchExportIntent(context, "_logfile.txt", EXPORT_LOG_REQUEST_CODE));
             bindPreference("log_clear", __ -> LifecycleLogUtils.clearLog());
-            /*
-            // TODO: Horribly breaks app right now; need to figure this out
-            bindCheckboxPreference(
-                "vertical_scroller_design", Constants.VERTICAL_SCROLLER_PREF, true, null);
-             */
 
             // Dangerous DB options
             bindPreference("reset_database", context -> {

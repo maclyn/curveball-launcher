@@ -21,12 +21,4 @@
         android:textColor="@color/primary_text_color"
         android:fontFamily="sans-serif-thin"
         android:textSize="28sp" />
-
-    <LinearLayout
-        android:id="@+id/group_container"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="8dp"
-        android:orientation="vertical"
-        />
 </LinearLayout>

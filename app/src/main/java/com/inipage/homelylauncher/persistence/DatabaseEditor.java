@@ -13,10 +13,8 @@ import com.inipage.homelylauncher.model.ApplicationIconHideable;
 import com.inipage.homelylauncher.model.DockItem;
 import com.inipage.homelylauncher.model.ClassicGridItem;
 import com.inipage.homelylauncher.model.ClassicGridPage;
-import com.inipage.homelylauncher.model.GridItem;
 import com.inipage.homelylauncher.model.SwipeApp;
 import com.inipage.homelylauncher.model.SwipeFolder;
-import com.inipage.homelylauncher.model.VerticalGridPage;
 import com.inipage.homelylauncher.utils.Constants;
 
 import java.util.ArrayList;
@@ -28,22 +26,17 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_ACTIVITY_NAME;
-import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_DATA;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_DATA_INT_1;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_DATA_STRING_1;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_DATA_STRING_2;
-import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_GRAPHIC;
-import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_GRAPHIC_PACKAGE;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_GRID_ITEM_TYPE;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_HEIGHT;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_INDEX;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_ITEM_ID;
-import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_ORDER;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_PACKAGE;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_PAGE_ID;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_POSITION_X;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_POSITION_Y;
-import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_TITLE;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_WHEN_TO_SHOW;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_WIDTH;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLES;
@@ -51,7 +44,6 @@ import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLE_DOCK;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLE_GRID_ITEM;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLE_GRID_PAGE;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLE_HIDDEN_APPS;
-import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLE_ROWS;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLE_VERTICAL_GRID_ITEM;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLE_VERTICAL_GRID_PAGE;
 
@@ -151,60 +143,6 @@ public class DatabaseEditor {
             .collect(Collectors.toList());
     }
 
-    @Nullable
-    public VerticalGridPage getVerticalGridPage() {
-        @Nullable VerticalGridPage page = null;
-        Cursor cursor = mDB.rawQuery("SELECT * FROM " + TABLE_VERTICAL_GRID_PAGE, null);
-        if (cursor.moveToFirst()) {
-            final int widthColumn = cursor.getColumnIndex(COLUMN_WIDTH);
-            final int heightColumn = cursor.getColumnIndex(COLUMN_HEIGHT);
-            final int width = cursor.getInt(widthColumn);
-            final int height = cursor.getInt(heightColumn);
-            page = new VerticalGridPage(new ArrayList<>(), width, height);
-        }
-        cursor.close();
-        if (page == null) {
-            return null;
-        }
-
-        cursor = mDB.rawQuery("SELECT * FROM " + TABLE_VERTICAL_GRID_ITEM, null);
-        getItems:
-        {
-            if (!cursor.moveToFirst()) {
-                break getItems;
-            }
-
-            final int xColumn = cursor.getColumnIndex(COLUMN_POSITION_X);
-            final int yColumn = cursor.getColumnIndex(COLUMN_POSITION_Y);
-            final int itemIdColumn = cursor.getColumnIndex(COLUMN_ITEM_ID);
-            final int widthColumn = cursor.getColumnIndex(COLUMN_WIDTH);
-            final int heightColumn = cursor.getColumnIndex(COLUMN_HEIGHT);
-            final int typeColumn = cursor.getColumnIndex(COLUMN_GRID_ITEM_TYPE);
-            final int dataStringOneColumn =
-                cursor.getColumnIndex(COLUMN_DATA_STRING_1);
-            final int dataStringTwoColumn =
-                cursor.getColumnIndex(COLUMN_DATA_STRING_2);
-            final int dataIntColumn =
-                cursor.getColumnIndex(COLUMN_DATA_INT_1);
-            while (!cursor.isAfterLast()) {
-                final GridItem gridItem = new GridItem(
-                    cursor.getString(itemIdColumn),
-                    cursor.getInt(xColumn),
-                    cursor.getInt(yColumn),
-                    cursor.getInt(widthColumn),
-                    cursor.getInt(heightColumn),
-                    cursor.getInt(typeColumn),
-                    cursor.getString(dataStringOneColumn),
-                    cursor.getString(dataStringTwoColumn),
-                    cursor.getInt(dataIntColumn));
-                page.getItems().add(gridItem);
-                cursor.moveToNext();
-            }
-        }
-        cursor.close();
-        return page;
-    }
-
     public void saveGridPages(List<ClassicGridPage> gridPages) {
         mDB.beginTransaction();
         mDB.delete(TABLE_GRID_PAGE, null, null);
@@ -212,15 +150,6 @@ public class DatabaseEditor {
         for (ClassicGridPage gridPage : gridPages) {
             writePage(gridPage);
         }
-        mDB.setTransactionSuccessful();
-        mDB.endTransaction();
-    }
-
-    public void saveVerticalGridPage(VerticalGridPage gridPage) {
-        mDB.beginTransaction();
-        mDB.delete(TABLE_VERTICAL_GRID_PAGE, null, null);
-        mDB.delete(TABLE_VERTICAL_GRID_ITEM, null, null);
-        writeVerticalPage(gridPage);
         mDB.setTransactionSuccessful();
         mDB.endTransaction();
     }
@@ -251,28 +180,6 @@ public class DatabaseEditor {
         mDB.insert(TABLE_GRID_PAGE, null, pageCV);
     }
 
-    private void writeVerticalPage(VerticalGridPage gridPage) {
-        dropVerticalPage();
-        for (GridItem gridItem : gridPage.getItems()) {
-            final ContentValues itemCV = new ContentValues();
-            itemCV.put(COLUMN_ITEM_ID, gridItem.getID());
-            itemCV.put(COLUMN_POSITION_X, gridItem.getX());
-            itemCV.put(COLUMN_POSITION_Y, gridItem.getY());
-            itemCV.put(COLUMN_HEIGHT, gridItem.getHeight());
-            itemCV.put(COLUMN_WIDTH, gridItem.getWidth());
-            itemCV.put(COLUMN_GRID_ITEM_TYPE, gridItem.getType());
-            itemCV.put(COLUMN_DATA_STRING_1, gridItem.getDS1());
-            itemCV.put(COLUMN_DATA_STRING_2, gridItem.getDS2());
-            itemCV.put(COLUMN_DATA_INT_1, gridItem.getDI());
-            mDB.insert(TABLE_VERTICAL_GRID_ITEM, null, itemCV);
-        }
-
-        final ContentValues pageCV = new ContentValues();
-        pageCV.put(COLUMN_WIDTH, gridPage.getWidth());
-        pageCV.put(COLUMN_HEIGHT, gridPage.getHeight());
-        mDB.insert(TABLE_VERTICAL_GRID_PAGE, null, pageCV);
-    }
-
     public void dropPage(String pageId) {
         mDB.delete(TABLE_GRID_PAGE, COLUMN_PAGE_ID + "=?", new String[]{pageId});
         mDB.delete(TABLE_GRID_ITEM, COLUMN_PAGE_ID + "=?", new String[]{pageId});
@@ -286,13 +193,6 @@ public class DatabaseEditor {
     public void updatePage(ClassicGridPage page) {
         mDB.beginTransaction();
         writePage(page);
-        mDB.setTransactionSuccessful();
-        mDB.endTransaction();
-    }
-
-    public void updateVerticalPage(VerticalGridPage page) {
-        mDB.beginTransaction();
-        writeVerticalPage(page);
         mDB.setTransactionSuccessful();
         mDB.endTransaction();
     }
@@ -426,71 +326,7 @@ public class DatabaseEditor {
         return hiddenApps;
     }
 
-    // Gesture apps
-
-    public List<SwipeFolder> getGestureFavorites() {
-        List<SwipeFolder> samples = new ArrayList<>(10);
-        loadRows:
-        {
-            Cursor loadItems = mDB.query(
-                TABLE_ROWS, null, null, null, null, null, null);
-            if (loadItems.moveToFirst()) {
-                int dataColumn = loadItems.getColumnIndex(COLUMN_DATA);
-                int graphicColumn = loadItems.getColumnIndex(COLUMN_GRAPHIC);
-                int graphicPackageColumn =
-                    loadItems.getColumnIndex(COLUMN_GRAPHIC_PACKAGE);
-                int titleColumn = loadItems.getColumnIndex(COLUMN_TITLE);
-                if (dataColumn == -1 ||
-                    graphicColumn == -1 ||
-                    graphicPackageColumn == -1 ||
-                    titleColumn == -1) {
-                    loadItems.close();
-                    break loadRows;
-                }
-                while (!loadItems.isAfterLast()) {
-                    String data = loadItems.getString(dataColumn);
-                    String graphicPackage = loadItems.getString(graphicPackageColumn);
-                    String title = loadItems.getString(titleColumn);
-                    String graphic = loadItems.getString(graphicColumn);
-                    // Generate package/activity pairs by splitting data
-                    ImmutableList.Builder<SwipeApp> cardApps = new ImmutableList.Builder<>();
-                    String[] pairs = data.split(",");
-                    for (String pair : pairs) {
-                        String[] packAndAct = pair.split("\\|");
-                        cardApps.add(new SwipeApp(packAndAct[0], packAndAct[1]));
-                    }
-                    samples.add(new SwipeFolder(title, graphicPackage, graphic, cardApps.build()));
-                    loadItems.moveToNext();
-                }
-            }
-            loadItems.close();
-        }
-        return samples;
-    }
-
-    public void saveGestureFavorites(List<SwipeFolder> swipeFolders) {
-        mDB.delete(TABLE_ROWS, null, null);
-        for (int i = 0; i < swipeFolders.size(); i++) {
-            ContentValues cv = new ContentValues();
-            cv.put(COLUMN_GRAPHIC, swipeFolders.get(i).getDrawableName());
-            cv.put(COLUMN_GRAPHIC_PACKAGE, swipeFolders.get(i).getDrawablePackage());
-            cv.put(COLUMN_TITLE, swipeFolders.get(i).getTitle());
-            cv.put(COLUMN_ORDER, i);
-            String data;
-            StringBuilder dataBuilder = new StringBuilder();
-            for (SwipeApp app : swipeFolders.get(i).getShortcutApps()) {
-                dataBuilder
-                    .append(app.getComponent().first)
-                    .append("|")
-                    .append(app.getComponent().second)
-                    .append(",");
-            }
-            data = dataBuilder.toString();
-            data = data.substring(0, data.length() - 1);
-            cv.put(COLUMN_DATA, data);
-            mDB.insert(TABLE_ROWS, null, cv);
-        }
-    }
+    // TODO: Grid folders
 
     public String getPath() {
         return mDB.getPath();

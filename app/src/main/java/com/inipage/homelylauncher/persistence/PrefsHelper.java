@@ -77,10 +77,6 @@ public class PrefsHelper {
         return true;
     }
 
-    public static boolean usingVScroll() {
-        return get().mSharedPreferences.getBoolean(Constants.VERTICAL_SCROLLER_PREF, false);
-    }
-
     public static boolean useGWeather() {
         return get().mSharedPreferences.getBoolean(Constants.USE_G_WEATHER_PREF, false);
     }

@@ -276,7 +276,6 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         });
         setSearchDrawable();
         reloadAppList();
-        reloadFolders();
     }
 
     @Override
@@ -294,13 +293,6 @@ public class AppDrawerController implements BasePageController, FastScrollContro
             mUsingGridLayoutByDefault ? GRID_LAYOUT_COLUMN_COUNT : 1);
         mAdapter.setHasStableIds(true);
         appRecyclerView.setAdapter(mAdapter);
-    }
-
-    private void reloadFolders() {
-        List<SwipeFolder> groups = DatabaseEditor.get().getGestureFavorites();
-        for (SwipeFolder folder : groups) {
-
-        }
     }
 
     public void quitSearch() {

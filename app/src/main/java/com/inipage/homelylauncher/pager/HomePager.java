@@ -13,11 +13,8 @@ import com.inipage.homelylauncher.R;
 import com.inipage.homelylauncher.drawer.AppDrawerController;
 import com.inipage.homelylauncher.grid.BaseGridPageController;
 import com.inipage.homelylauncher.grid.ClassicGridPageController;
-import com.inipage.homelylauncher.grid.VerticalGridPageController;
 import com.inipage.homelylauncher.model.ClassicGridPage;
-import com.inipage.homelylauncher.model.VerticalGridPage;
 import com.inipage.homelylauncher.persistence.DatabaseEditor;
-import com.inipage.homelylauncher.persistence.PrefsHelper;
 import com.inipage.homelylauncher.state.EditingEvent;
 import com.inipage.homelylauncher.state.PagesChangedEvent;
 import com.inipage.homelylauncher.utils.ViewUtils;
@@ -47,39 +44,25 @@ public class HomePager extends RecyclerView.Adapter<HomePager.PagerHolder> {
     private final AppDrawerController mAppDrawerController;
 
     // Classic design
-    private List<ClassicGridPage> mGridPages;
-    private List<ClassicGridPageController> mGridPageControllers;
-    private Map<String, ClassicGridPageController> mGridPageIdToController;
-
-    // Vertical scroller design
-    private VerticalGridPage mVerticalGridPage;
-    private BaseGridPageController mVerticalPageController;
+    private final List<ClassicGridPage> mGridPages;
+    private final List<ClassicGridPageController> mGridPageControllers;
+    private final Map<String, ClassicGridPageController> mGridPageIdToController;
 
     public HomePager(final Host host, final ViewGroup rootView) {
         mHost = host;
         mAppDrawerController = new AppDrawerController(host, rootView);
-
-        if (usingVScrollDesign()) {
-            mVerticalGridPage = DatabaseEditor.get().getVerticalGridPage();
-            if (mVerticalGridPage == null) {
-                mVerticalGridPage = VerticalGridPage.getInitialPage();
-                DatabaseEditor.get().saveVerticalGridPage(mVerticalGridPage);
-            }
-            mVerticalPageController = new VerticalGridPageController(host, mVerticalGridPage);
-        } else {
-            mGridPages = DatabaseEditor.get().getGridPages();
-            if (mGridPages.isEmpty()) {
-                mGridPages.add(ClassicGridPage.getInitialPage());
-                DatabaseEditor.get().saveGridPages(mGridPages);
-            }
-            mGridPageControllers = new ArrayList<>();
-            mGridPageIdToController = new HashMap<>();
-            for (ClassicGridPage page : mGridPages) {
-                final ClassicGridPageController gridPageController =
-                    new ClassicGridPageController(host, page, false);
-                mGridPageIdToController.put(page.getID(), gridPageController);
-                mGridPageControllers.add(gridPageController);
-            }
+        mGridPages = DatabaseEditor.get().getGridPages();
+        if (mGridPages.isEmpty()) {
+            mGridPages.add(ClassicGridPage.getInitialPage());
+            DatabaseEditor.get().saveGridPages(mGridPages);
+        }
+        mGridPageControllers = new ArrayList<>();
+        mGridPageIdToController = new HashMap<>();
+        for (ClassicGridPage page : mGridPages) {
+            final ClassicGridPageController gridPageController =
+                new ClassicGridPageController(host, page, false);
+            mGridPageIdToController.put(page.getID(), gridPageController);
+            mGridPageControllers.add(gridPageController);
         }
 
         if (!EventBus.getDefault().isRegistered(this)) {
@@ -88,9 +71,6 @@ public class HomePager extends RecyclerView.Adapter<HomePager.PagerHolder> {
     }
 
     public void spawnNewPage() {
-        if (PrefsHelper.usingVScroll()) {
-            return;
-        }
         final ClassicGridPage newPage =
             ClassicGridPage.spawnNewPage(mGridPages.get(mGridPages.size() - 1));
         mGridPages.add(newPage);
@@ -106,9 +86,6 @@ public class HomePager extends RecyclerView.Adapter<HomePager.PagerHolder> {
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEditingEvent(EditingEvent event) {
         if (event.isEditing()) {
-            return;
-        }
-        if (PrefsHelper.usingVScroll()) {
             return;
         }
 
@@ -159,7 +136,7 @@ public class HomePager extends RecyclerView.Adapter<HomePager.PagerHolder> {
             holder.attachPageController(getAppDrawerController());
             return;
         }
-        final BaseGridPageController relevantController = usingVScrollDesign() ? mVerticalPageController : mGridPageControllers.get(position - 1);
+        final BaseGridPageController relevantController = mGridPageControllers.get(position - 1);
         relevantController.bind(holder.mainView);
         holder.attachPageController(relevantController);
     }
@@ -174,7 +151,7 @@ public class HomePager extends RecyclerView.Adapter<HomePager.PagerHolder> {
 
     @Override
     public int getItemCount() {
-        return usingVScrollDesign() ? 2 : mGridPageControllers.size() + 1;
+        return mGridPageControllers.size() + 1;
     }
 
     @Override
@@ -200,14 +177,14 @@ public class HomePager extends RecyclerView.Adapter<HomePager.PagerHolder> {
     }
 
     public BaseGridPageController getGridController(@Nullable String id) {
-        return usingVScrollDesign() ? mVerticalPageController : mGridPageIdToController.get(id);
+        return mGridPageIdToController.get(id);
     }
 
     public BasePageController getPageController(int index) {
         if (index == 0) {
             return mAppDrawerController;
         }
-        return usingVScrollDesign() ? mVerticalPageController : mGridPageControllers.get(index - 1);
+        return mGridPageControllers.get(index - 1);
     }
 
     public float getWallpaperOffsetSteps() {
@@ -217,10 +194,6 @@ public class HomePager extends RecyclerView.Adapter<HomePager.PagerHolder> {
     public float getWallpaperOffset(int selectedItem, float offset) {
         final float delta = getItemCount();
         return (selectedItem * delta) + (offset * delta);
-    }
-
-    private boolean usingVScrollDesign() {
-        return PrefsHelper.usingVScroll();
     }
 
     public static class PagerHolder extends RecyclerView.ViewHolder {

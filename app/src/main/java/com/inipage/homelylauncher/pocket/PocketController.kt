@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableList
 import com.inipage.homelylauncher.utils.*
 import java.util.*
 import java.util.stream.Collectors
+import kotlin.collections.ArrayList
 import kotlin.math.abs
 
 /**
@@ -39,7 +40,7 @@ class PocketController(
         fun clearActiveDragTarget()
     }
 
-    private var folders: MutableList<SwipeFolder> = DatabaseEditor.get().gestureFavorites
+    private var folders: MutableList<SwipeFolder> = ArrayList()
 
     fun editFolderOrder() {
         ReorderFolderBottomSheet.show(
@@ -47,7 +48,7 @@ class PocketController(
             folders
         ) { reorderedFolders: MutableList<SwipeFolder> ->
             folders = reorderedFolders
-            DatabaseEditor.get().saveGestureFavorites(folders)
+            // DatabaseEditor.get().saveGestureFavorites(folders)
             // TODO: rebind
         }
     }
@@ -77,7 +78,7 @@ class PocketController(
 
     override fun onAppAddedToFolder(folderIdx: Int, app: ApplicationIcon) {
         folders[folderIdx].addApp(Pair(app.packageName, app.activityName))
-        DatabaseEditor.get().saveGestureFavorites(folders)
+        // DatabaseEditor.get().saveGestureFavorites(folders)
         host.clearActiveDragTarget()
         // TODO: rebind
     }
@@ -106,7 +107,7 @@ class PocketController(
                     newFolder.title = title
                     newFolder.setDrawable(iconDrawable, iconPackage)
                     folders.add(newFolder)
-                    DatabaseEditor.get().saveGestureFavorites(folders)
+                    // DatabaseEditor.get().saveGestureFavorites(folders)
                     // TODO: rebind
                 }
 
@@ -133,13 +134,13 @@ class PocketController(
                     folders[row].title = title
                     folders[row].setDrawable(iconDrawable, iconPackage)
                     folders[row].replaceApps(reorderedApps)
-                    DatabaseEditor.get().saveGestureFavorites(folders)
+                    // DatabaseEditor.get().saveGestureFavorites(folders)
                     // TODO: rebind
                 }
 
                 override fun onFolderDeleted() {
                     folders.removeAt(row)
-                    DatabaseEditor.get().saveGestureFavorites(folders)
+                    // DatabaseEditor.get().saveGestureFavorites(folders)
                     // TODO: rebind
                 }
             })

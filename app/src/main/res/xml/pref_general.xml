@@ -133,12 +133,6 @@
             android:key="dev_mode"
             />
 
-        <CheckBoxPreference
-            android:title="@string/vertical_scroller_title"
-            android:summary="@string/vertical_scroller_description"
-            android:key="vertical_scroller_design"
-            />
-
         <Preference
             android:title="@string/reset_database"
             android:summary="@string/reset_database_description"

@@ -18,18 +18,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // Database basics
     static final String TAG = "DatabaseHelper";
     static final String DATABASE_NAME = "database.db";
-    static final int DATABASE_VERSION = 17;
+    static final int DATABASE_VERSION = 18;
 
     // Common columns
     static final String COLUMN_ID = "_id";
-
-    // Gesture favorites table
-    static final String TABLE_ROWS = "rows_table";
-    static final String COLUMN_DATA = "data_string";
-    static final String COLUMN_GRAPHIC = "graphic_res";
-    static final String COLUMN_GRAPHIC_PACKAGE = "graphic_package";
-    static final String COLUMN_ORDER = "ordering";
-    static final String COLUMN_TITLE = "title";
 
     // Hidden apps table
     static final String TABLE_HIDDEN_APPS = "hidden_apps_table";
@@ -38,12 +30,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     // Dock table
     static final String TABLE_DOCK = "smartapps_table";
-    // Re-uses: COLUMN_PACKAGE, COLUMN_ACTIVITY_NAME, COLUMN_WIDGET_ID
+    // Re-uses: COLUMN_ID, COLUMN_PACKAGE, COLUMN_ACTIVITY_NAME, COLUMN_WIDGET_ID
     static final String COLUMN_WHEN_TO_SHOW = "when_to_show";
-    static final String COLUMN_WIDGET_ID = "widget_id";
 
     // Grid pages
-    // Re-uses: COLUMN_INDEX
+    // Re-uses: COLUMN_ID
     static final String TABLE_GRID_PAGE = "grid_page_table";
     static final String COLUMN_PAGE_ID = "page_id";
     static final String COLUMN_INDEX = "idx";
@@ -61,42 +52,55 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     static final String COLUMN_DATA_STRING_2 = "ds2";
     static final String COLUMN_DATA_INT_1 = "di1";
 
-    // Vertical grid page
-    // Re-uses: HEIGHT, WIDTH
-    static final String TABLE_VERTICAL_GRID_PAGE = "vertical_grid_page_table";
+    // Grid item folder table
+    static final String TABLE_GRID_FOLDER = "grid_folder_table";
+    // Re-uses: COLUMN_INDEX, COLUMN_HEIGHT, COLUMN_WIDTH
+    static final String COLUMN_GRID_ITEM_ID = "grid_item_id";
+    static final String COLUMN_WIDGET_ID = "widget_id";
 
-    // Vertical grid item
-    // Re-uses: HEIGHT, WIDTH, ITEM_IT, GRID_ITEM_TYPE, POSITION_X, POSITION_Y, DATA_STRING_1, DATA_STRING_2, DATA_INT_1
+    // Grid item folder table
+    static final String TABLE_GRID_FOLDER_APPS = "grid_folder_apps_table";
+    // Re-uses: COLUMN_DATA_STRING_1, COLUMN_DATA_STRING_2, COLUMN_INDEX
+    static final String COLUMN_GRID_FOLDER_ID = "grid_folder_id";
+
+    // Deprecated tables
+    static final String TABLE_ROWS = "rows_table";
+    static final String TABLE_VERTICAL_GRID_PAGE = "vertical_grid_page_table";
     static final String TABLE_VERTICAL_GRID_ITEM = "vertical_grid_item_table";
+
+    //endregion
 
     static final String[] TABLES = new String[]{
         TABLE_GRID_PAGE,
         TABLE_GRID_ITEM,
+        TABLE_HIDDEN_APPS,
+        TABLE_DOCK,
+
+        // Deprecated
         TABLE_VERTICAL_GRID_PAGE,
         TABLE_VERTICAL_GRID_ITEM,
-        TABLE_HIDDEN_APPS,
         TABLE_ROWS,
-        TABLE_DOCK
     };
-    private static final String ROWS_TABLE_CREATE = "create table "
-        + TABLE_ROWS +
-        "(" + COLUMN_ID + " integer primary key autoincrement, "
-        + COLUMN_DATA + " text not null, "
-        + COLUMN_GRAPHIC + " text not null, "
-        + COLUMN_GRAPHIC_PACKAGE + " text not null, "
-        + COLUMN_ORDER + " integer not null, "
-        + COLUMN_TITLE + " text not null);";
+
+    static final String[] DEPRECATED_TABLES = new String[] {
+        TABLE_VERTICAL_GRID_PAGE,
+        TABLE_VERTICAL_GRID_ITEM,
+        TABLE_ROWS,
+    };
+
     private static final String HIDDEN_APPS_TABLE_CREATE = "create table "
         + TABLE_HIDDEN_APPS +
         "(" + COLUMN_ID + " integer primary key autoincrement, "
         + COLUMN_PACKAGE + " text not null, "
         + COLUMN_ACTIVITY_NAME + " text not null);";
+
     private static final String DOCK_TABLE_CREATE = "create table "
         + TABLE_DOCK +
         "(" + COLUMN_ID + " integer primary key autoincrement, "
         + COLUMN_PACKAGE + " text not null, "
         + COLUMN_ACTIVITY_NAME + " text not null, "
         + COLUMN_WHEN_TO_SHOW + " integer not null" + ");";
+
     private static final String GRID_PAGE_TABLE_CREATE = "CREATE TABLE "
         + TABLE_GRID_PAGE
         + "(" + COLUMN_ID + " INTEGER PRIMARY KEY autoincrement, "
@@ -104,11 +108,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         + COLUMN_INDEX + " integer not null, "
         + COLUMN_WIDTH + " integer not null, "
         + COLUMN_HEIGHT + " integer not null);";
-    private static final String VERTICAL_GRID_PAGE_TABLE_CREATE = "CREATE TABLE "
-        + TABLE_VERTICAL_GRID_PAGE
-        + "(" + COLUMN_ID + " INTEGER PRIMARY KEY autoincrement, "
-        + COLUMN_WIDTH + " integer not null, "
-        + COLUMN_HEIGHT + " integer not null);";
+
     private static final String GRID_ITEM_TABLE_CREATE = "CREATE TABLE "
         + TABLE_GRID_ITEM
         + "(" + COLUMN_ID + " INTEGER PRIMARY KEY autoincrement,"
@@ -122,26 +122,30 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         + COLUMN_DATA_STRING_1 + " text, "
         + COLUMN_DATA_STRING_2 + " text, "
         + COLUMN_DATA_INT_1 + " integer);";
-    private static final String VERTICAL_GRID_ITEM_TABLE_CREATE = "CREATE TABLE "
-        + TABLE_VERTICAL_GRID_ITEM
+
+    private static final String GRID_FOLDER_TABLE_CREATE = "CREATE TABLE "
+        + TABLE_GRID_FOLDER
         + "(" + COLUMN_ID + " INTEGER PRIMARY KEY autoincrement,"
-        + COLUMN_ITEM_ID + " text not null, "
-        + COLUMN_POSITION_X + " integer not null, "
-        + COLUMN_POSITION_Y + " integer not null, "
+        + COLUMN_GRID_ITEM_ID + " INTEGER not null, "
+        + COLUMN_WIDGET_ID + " INTEGER not null, "
         + COLUMN_HEIGHT + " integer not null, "
-        + COLUMN_WIDTH + " integer not null, "
-        + COLUMN_GRID_ITEM_TYPE + " integer not null, "
+        + COLUMN_WIDTH + " integer not null);";
+
+    private static final String GRID_FOLDER_APPS_TABLE_CREATE = "CREATE TABLE "
+        + TABLE_GRID_FOLDER_APPS
+        + "(" + COLUMN_ID + " INTEGER PRIMARY KEY autoincrement,"
+        + COLUMN_GRID_FOLDER_ID + " INTEGER not null, "
         + COLUMN_DATA_STRING_1 + " text, "
         + COLUMN_DATA_STRING_2 + " text, "
-        + COLUMN_DATA_INT_1 + " integer);";
+        + COLUMN_INDEX + " integer not null);";
 
     private static final String[] CREATION_BLOCKS = {
         GRID_PAGE_TABLE_CREATE,
         GRID_ITEM_TABLE_CREATE,
-        VERTICAL_GRID_ITEM_TABLE_CREATE,
-        HIDDEN_APPS_TABLE_CREATE,
-        ROWS_TABLE_CREATE,
+        GRID_FOLDER_TABLE_CREATE,
+        GRID_FOLDER_APPS_TABLE_CREATE,
         DOCK_TABLE_CREATE,
+        HIDDEN_APPS_TABLE_CREATE
     };
 
     public DatabaseHelper(Context context) {
@@ -159,18 +163,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // 15 -> 16/17 migration
-        if (oldVersion == 15) {
-            LifecycleLogUtils.logEvent(LifecycleLogUtils.LogType.LOG, TAG + " upgrading from 15 to newer");
-            db.execSQL(VERTICAL_GRID_ITEM_TABLE_CREATE);
-            db.execSQL(VERTICAL_GRID_PAGE_TABLE_CREATE);
-            return;
-        }
-
         // 16 -> 17 migration
-        if (oldVersion == 16) {
-            LifecycleLogUtils.logEvent(LifecycleLogUtils.LogType.LOG, TAG + " upgrading from 16 to newer");
-            db.execSQL(VERTICAL_GRID_PAGE_TABLE_CREATE);
+        if (oldVersion == 17) {
+            LifecycleLogUtils.logEvent(
+                LifecycleLogUtils.LogType.LOG,
+                TAG + " upgrading from 17 by adding grid item folders");
+            for (String table : DEPRECATED_TABLES) {
+                try {
+                    db.execSQL("DROP TABLE " + table);
+                } catch (Exception ignored) {
+                }
+            }
+            db.execSQL(GRID_FOLDER_TABLE_CREATE);
+            db.execSQL(GRID_FOLDER_APPS_TABLE_CREATE);
             return;
         }
 

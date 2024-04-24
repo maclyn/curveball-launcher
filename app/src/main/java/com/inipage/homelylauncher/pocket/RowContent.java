@@ -6,7 +6,7 @@ import android.graphics.Bitmap;
 import com.inipage.homelylauncher.caches.IconColorCache;
 
 /**
- * Helper for content rendered in an {@linkplain AccordionRow}.
+ * TODO: Delete this.
  */
 public abstract class RowContent {
 
