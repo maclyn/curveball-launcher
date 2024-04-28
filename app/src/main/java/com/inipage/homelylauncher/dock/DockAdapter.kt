@@ -2,7 +2,6 @@ package com.inipage.homelylauncher.dock
 
 import android.content.Context
 import android.graphics.Color
-import android.graphics.ColorFilter
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.PorterDuff
@@ -33,7 +32,7 @@ class DockAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DockItemViewHolder {
         val divh = DockItemViewHolder(
             LayoutInflater.from(parent.context).inflate(
-                R.layout.dock_collapsed_item, parent, false))
+                R.layout.dock_item, parent, false))
         FontCacheSync.get().applyTypefaceToTextView(divh.primaryLabel, Constants.DOCK_FONT_PATH)
         FontCacheSync.get().applyTypefaceToTextView(divh.secondaryLabel, Constants.DOCK_FONT_PATH)
         return divh

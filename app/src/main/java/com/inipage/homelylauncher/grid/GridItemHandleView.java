@@ -154,7 +154,7 @@ public class GridItemHandleView extends FrameLayout {
                 }
                 final float xDelta = event.getRawX() - mStartX;
                 final float yDelta = event.getRawY() - mStartY;
-                if (!ViewUtils.exceedsSlop(event, mStartX, mStartY, getContext(), 0.8)) {
+                if (!ViewUtils.exceedsSlop_DEPRECATED_FAILS_WHEN_MULTIPLE_POINTERS_DOWN(event, mStartX, mStartY, getContext(), 0.8)) {
                     log("Move motion wasn't far enough for grid item");
                     return true;
                 }

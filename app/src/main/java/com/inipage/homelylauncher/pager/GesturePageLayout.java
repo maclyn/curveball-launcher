@@ -138,7 +138,7 @@ public class GesturePageLayout extends FrameLayout {
                     log("Move, but finished parsing");
                     return mForwardPostProcessEvents;
                 }
-                if (!ViewUtils.exceedsSlop(event, mStartX, mStartY, getContext(), SLOP_SCALAR)) {
+                if (!ViewUtils.exceedsSlop_DEPRECATED_FAILS_WHEN_MULTIPLE_POINTERS_DOWN(event, mStartX, mStartY, getContext(), SLOP_SCALAR)) {
                     log("Move motion wasn't far enough");
                     return false;
                 }

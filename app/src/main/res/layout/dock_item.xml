@@ -60,9 +60,7 @@
                 android:text="@string/ipsum"
                 android:textColor="@color/primary_text_color"
                 android:textSize="16dp"
-                android:ellipsize="end"
                 android:maxLines="1"
-                android:maxWidth="80dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 tools:ignore="SpUsage" />

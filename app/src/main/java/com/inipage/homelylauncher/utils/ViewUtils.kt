@@ -14,7 +14,7 @@ import androidx.core.content.ContextCompat
 import com.inipage.homelylauncher.R
 import java.io.IOException
 import java.lang.IllegalArgumentException
-import java.lang.Math.pow
+import kotlin.math.hypot
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -50,15 +50,62 @@ object ViewUtils {
 
     @JvmStatic
     @JvmOverloads
-    fun exceedsSlop(
-        event: MotionEvent, startX: Double, startY: Double, ctx: Context?, slopFactor: Double = 1.0
+    fun exceedsSlop_DEPRECATED_FAILS_WHEN_MULTIPLE_POINTERS_DOWN(
+        event: MotionEvent,
+        startX: Double,
+        startY: Double,
+        ctx: Context,
+        slopFactor: Double = 1.0
     ): Boolean {
         if (event.action == MotionEvent.ACTION_CANCEL) {
             return false
         }
         val dist = Math.hypot(event.rawX - startX, event.rawY - startY)
-        val ctx = ctx ?: return false
         return dist > ViewConfiguration.get(ctx).scaledTouchSlop * slopFactor
+    }
+
+    @JvmStatic
+    @JvmOverloads
+    fun exceedsSlopInActionMove(
+        event: MotionEvent,
+        pointerId: Int,
+        startRawX: Double,
+        startRawY: Double,
+        view: View,
+        slopFactor: Double = 1.0
+    ): Boolean {
+        val dist = hypot(
+            getRawXWithPointerId(view, event, pointerId) - startRawX,
+            getRawYWithPointerId(view, event, pointerId) - startRawY)
+        return dist > ViewConfiguration.get(view.context).scaledTouchSlop * slopFactor
+    }
+
+    @JvmStatic
+    fun getRawXWithPointerId(view: View, event: MotionEvent, ptrId: Int): Float {
+        val ptrIdx = event.findPointerIndex(ptrId)
+        if (ptrIdx == -1) {
+            DebugLogUtils.complain(
+                view,
+                "Tried to getRawX() for $ptrId, but it wasn't in this event")
+            return 0F
+        }
+        val location = IntArray(2)
+        view.getLocationOnScreen(location)
+        return event.getX(ptrIdx) + location[0]
+    }
+
+    @JvmStatic
+    fun getRawYWithPointerId(view: View, event: MotionEvent, ptrId: Int): Float {
+        val ptrIdx = event.findPointerIndex(ptrId)
+        if (ptrIdx == -1) {
+            DebugLogUtils.complain(
+                view,
+                "Tried to getRawY() for $ptrId, but it wasn't in this event")
+            return 0F
+        }
+        val location = IntArray(2)
+        view.getLocationOnScreen(location)
+        return event.getY(ptrIdx) + location[1]
     }
 
     @JvmStatic

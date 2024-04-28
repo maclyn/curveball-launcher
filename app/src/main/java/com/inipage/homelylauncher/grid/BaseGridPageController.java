@@ -885,7 +885,7 @@ public abstract class BaseGridPageController implements BasePageController {
             // to be a swipe up
             if (!mShowingMenu) {
                 mHost.forwardSwipeUp(event, deltaY);
-            } else if (ViewUtils.exceedsSlop(event, mStartX, mStartY, mContainer.getContext(), 1F)) {
+            } else if (ViewUtils.exceedsSlop_DEPRECATED_FAILS_WHEN_MULTIPLE_POINTERS_DOWN(event, mStartX, mStartY, mContainer.getContext(), 1F)) {
                 // If we ARE showing the menu (i.e. long press has happened), we are allowed to
                 // start a drag event
                 DecorViewManager.get(mRootContainer.getContext()).detachAllViews();

@@ -656,20 +656,13 @@ public class AppDrawerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             }
 
             @Override
-            public void onDragStarted(final int rawX, final int rawY) {
-                DebugLogUtils.needle(
-                    DebugLogUtils.TAG_DRAG_OFFSET,
-                    "LongPressAndDragHandler rawX=" + rawX + "; rawY=" + rawY);
+            public ApplicationIcon getHostedApp() {
+                return ai;
+            }
 
-                DecorViewManager.get(mActivity).detachAllViews();
-                LayoutEditingSingleton.getInstance().setEditing(true);
-                final AppViewHolder appViewHolder =
-                    new AppViewHolder(
-                        mActivity,
-                        ClassicGridItem.getNewAppItem(ai));
-                final View draggingView = viewHolder.icon;
-                DecorViewDragger.get(mActivity).startDrag(
-                    draggingView, appViewHolder, true, rawX, rawY);
+            @Override
+            public View getAppIconView() {
+                return viewHolder.icon;
             }
         });
     }

@@ -265,9 +265,6 @@ public class DecorViewDragger {
     }
 
     public synchronized boolean onDragMoveEvent(int currentX, int currentY) {
-        if (!isValidDragEventOngoing()) {
-            return false;
-        }
         mCurrentX = currentX;
         mCurrentY = currentY;
         recalculate();
@@ -297,39 +294,6 @@ public class DecorViewDragger {
         log("Drag cancelled forwarded");
         mDragComplete = true;
         mDragSuccessful = false;
-        recalculate();
-        return true;
-    }
-
-    /**
-     * Forward an event from another source.
-     */
-    public synchronized boolean forwardTouchEvent(MotionEvent event) {
-        if (!mInDrag) {
-            log("Forward touch event dropped; not in drag...");
-            return false;
-        }
-
-        switch (event.getActionMasked()) {
-            case ACTION_DOWN:
-            case ACTION_MOVE:
-                log("ACTION_MOVE forwarded");
-                mCurrentX = (int) event.getRawX();
-                mCurrentY = (int) event.getRawY();
-                break;
-            case ACTION_UP:
-                log("ACTION_UP forwarded");
-                mCurrentX = (int) event.getRawX();
-                mCurrentY = (int) event.getRawY();
-                mDragComplete = true;
-                mDragSuccessful = true;
-                break;
-            case ACTION_CANCEL:
-                log("ACTION_CANCEL forwarded");
-                mDragComplete = true;
-                mDragSuccessful = false;
-                break;
-        }
         recalculate();
         return true;
     }

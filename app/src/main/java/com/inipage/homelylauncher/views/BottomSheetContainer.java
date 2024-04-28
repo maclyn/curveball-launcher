@@ -68,7 +68,7 @@ public class BottomSheetContainer extends LinearLayout {
                 mDroppedEvent = false;
                 return false;
             case ACTION_MOVE:
-                if (mDroppedEvent || !ViewUtils.exceedsSlop(ev, mStartX, mStartY, getContext())) {
+                if (mDroppedEvent || !ViewUtils.exceedsSlop_DEPRECATED_FAILS_WHEN_MULTIPLE_POINTERS_DOWN(ev, mStartX, mStartY, getContext())) {
                     return false;
                 }
                 final float xDist = mStartX - ev.getRawX();
