@@ -20,6 +20,10 @@ import com.inipage.homelylauncher.views.ProvidesOverallDimensions
 import java.util.*
 import kotlin.collections.HashMap
 
+/**
+ * Controller that shows #?-Z grid of items that can be jumped to. Only really works for Latin (and
+ * really mostly English) languages, though it could *probably* be trivially adapted.
+ */
 class FastScrollController(private val host: Host) {
 
     interface Host {
@@ -36,16 +40,9 @@ class FastScrollController(private val host: Host) {
     }
 
     var inFastScroll = false
+
     private val languageMap = HashMap<String, Array<Char>>()
     private val lettersPerRow = 5
-
-    init {
-        // There appears to be no good way of pulling the alphabet for each language, so hard coding
-        // this per language for now
-        languageMap.put(Locale.US.language, arrayOf(
-            '#', '?', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
-            'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'))
-    }
 
     fun enterFastScroll() {
         inFastScroll = true
@@ -144,5 +141,13 @@ class FastScrollController(private val host: Host) {
         val drawable = attributes.getDrawable(0)
         attributes.recycle()
         return drawable
+    }
+
+    init {
+        // There appears to be no good way of pulling the alphabet for each language, so hard coding
+        // this per language for now
+        languageMap[Locale.US.language] = arrayOf(
+            '#', '?', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+            'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z')
     }
 }
