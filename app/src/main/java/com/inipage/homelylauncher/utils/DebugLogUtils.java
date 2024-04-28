@@ -30,7 +30,7 @@ public class DebugLogUtils {
     public static final String TAG_POCKET_ANIMATION = "tag_pocket_animation";
     public static final String TAG_VIRTUAL_TRACKPAD = "tag_virtual_trackpad";
 
-    private static final String NEEDLED = TAG_CUSTOM_TOUCHEVENTS;
+    private static final String NEEDLED = TAG_BOTTOM_SHEET;
 
     public static void complain(Context context, String complaint) {
         if (!PrefsHelper.isDevMode() && !BuildConfig.DEBUG) {

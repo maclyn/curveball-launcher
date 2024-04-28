@@ -65,8 +65,8 @@ public class BottomSheetHelper {
 
     public String show(Context context, String title) {
         final LayoutInflater inflater = LayoutInflater.from(context);
-        final BottomSheetContainer rootView =
-            (BottomSheetContainer) inflater.inflate(R.layout.bottom_sheet_container, null);
+        final BottomSheetContainerLayout rootView =
+            (BottomSheetContainerLayout) inflater.inflate(R.layout.bottom_sheet_container, null);
         final LinearLayout containerView = rootView.findViewById(R.id.bottom_sheet_container);
         final LinearLayout actionContainerView =
             rootView.findViewById(R.id.bottom_sheet_action_container);
