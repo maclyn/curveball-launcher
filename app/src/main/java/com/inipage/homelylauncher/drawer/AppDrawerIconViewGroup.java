@@ -1,6 +1,5 @@
 package com.inipage.homelylauncher.drawer;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
@@ -14,15 +13,26 @@ import androidx.annotation.Nullable;
 
 import com.inipage.homelylauncher.utils.DebugLogUtils;
 import com.inipage.homelylauncher.utils.ViewUtils;
+import com.inipage.homelylauncher.views.DecorViewDragger;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.WeakReference;
+
 /**
- * Confusingly, this is a *container* for views holding applications. Yikes.
+ * The ViewGroup holds icons in the app drawer. It's just a standard LinearLayout with some special
+ * touch handling logic to support drag-and-drop to home screen pages.
  */
-public class ApplicationIconLayout extends LinearLayout {
+public class AppDrawerIconViewGroup extends LinearLayout {
+
+    public interface Listener {
+        void onLongPress(int startX, int startY);
+
+        void onDragStarted(final int startX, final int startY);
+    }
 
     private static final int MESSAGE_LONG_PRESS = 1;
+
     private final LongPressHandler mLongPressHandler;
     private final int mLongPressTimeout;
     @Nullable
@@ -34,18 +44,18 @@ public class ApplicationIconLayout extends LinearLayout {
     private boolean mHasTriggeredLongPress;
     private boolean mHasTriggeredDrag;
 
-    public ApplicationIconLayout(Context context) {
+    public AppDrawerIconViewGroup(Context context) {
         this(context, null);
     }
 
-    public ApplicationIconLayout(Context context, @Nullable AttributeSet attrs) {
+    public AppDrawerIconViewGroup(Context context, @Nullable AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public ApplicationIconLayout(
+    public AppDrawerIconViewGroup(
         Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        mLongPressHandler = new LongPressHandler();
+        mLongPressHandler = new LongPressHandler(this);
         mLongPressTimeout = ViewConfiguration.getLongPressTimeout();
     }
 
@@ -61,7 +71,7 @@ public class ApplicationIconLayout extends LinearLayout {
 
         if (isTerminalEvent(event)) {
             if (mHasTriggeredDrag) {
-                mListener.onDragEvent(event);
+                DecorViewDragger.get(getContext()).forwardTouchEvent(event);
             }
             final boolean didHitCustomLogic =
                 mHasTriggeredLongPress || mHasTriggeredDrag;
@@ -73,7 +83,7 @@ public class ApplicationIconLayout extends LinearLayout {
         } else if (mHasDroppedEvent) {
             return false;
         } else if (mHasTriggeredDrag) {
-            mListener.onDragEvent(event);
+            DecorViewDragger.get(getContext()).forwardTouchEvent(event);
             return true;
         } else if (mHasTriggeredLongPress) {
             if (hasExceededSlop(event)) {
@@ -128,33 +138,38 @@ public class ApplicationIconLayout extends LinearLayout {
         DebugLogUtils.needle(DebugLogUtils.TAG_CUSTOM_TOUCHEVENTS, vals);
     }
 
-    public interface Listener {
-        void onLongPress(int startX, int startY);
+    private static class LongPressHandler extends Handler {
 
-        void onDragStarted(final int startX, final int startY);
+        WeakReference<AppDrawerIconViewGroup> mParent;
 
-        void onDragEvent(MotionEvent motionEvent);
-    }
-
-    @SuppressLint("HandlerLeak")
-    private class LongPressHandler extends Handler {
-
-        LongPressHandler() {
+        LongPressHandler(AppDrawerIconViewGroup parent) {
             super(Looper.getMainLooper());
+            mParent = new WeakReference<>(parent);
         }
 
         @Override
         public void handleMessage(@NotNull Message msg) {
-            if (mListener == null) {
+            @Nullable
+            AppDrawerIconViewGroup parent = mParent.get();
+            if (parent == null) {
                 return;
             }
-            log("Long press handler triggered");
-            setPressed(false);
+            @Nullable Listener listener = parent.mListener;
+            if (listener == null) {
+                return;
+            }
+            parent.log("Long press handler triggered");
+            parent.setPressed(false);
+
             // Potentially needed in the adjustPan soft input case
-            int x = (int) (getLeft() + getRootWindowInsets().getStableInsetLeft() + mStartX);
-            int y = (int) (getTop() + getRootWindowInsets().getStableInsetTop() + mStartY);
-            mListener.onLongPress(x, y);
-            mHasTriggeredLongPress = true;
+            final int left = parent.getLeft(),
+                top = parent.getTop(),
+                stableInsetLeft = parent.getRootWindowInsets().getStableInsetLeft(),
+                stableInsetTop = parent.getRootWindowInsets().getStableInsetTop();
+            int x = left + stableInsetLeft + (int) parent.mStartX;
+            int y = top + stableInsetTop + (int) parent.mStartY;
+            listener.onLongPress(x, y);
+            parent.mHasTriggeredLongPress = true;
         }
     }
 }

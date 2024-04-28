@@ -863,14 +863,31 @@ public abstract class BaseGridPageController implements BasePageController {
 
         @Override
         public void onAdditionalEvent(MotionEvent event, float deltaX, float deltaY) {
-            if (DecorViewDragger.get(mHost.getContext()).forwardTouchEvent(event)) {
+            // If we're in an ongoing drag -> forward to drag manager to move icon/widget
+            // around the screen
+            DecorViewDragger dragger = DecorViewDragger.get(mHost.getContext());
+            if (dragger.isDragActive()) {
+                switch (event.getAction()) {
+                    case ACTION_MOVE:
+                        dragger.onDragMoveEvent(event.getRawX(), event.getRawY());
+                        break;
+                    case ACTION_UP:
+                        dragger.onDragEndEvent(event.getRawX(), event.getRawY());
+                        break;
+                    case ACTION_CANCEL:
+                        dragger.onDragCancelEvent();
+                        break;
+                }
                 return;
             }
+
+            // If we're not showing a menu, we can't transition to a drag event, so this has
+            // to be a swipe up
             if (!mShowingMenu) {
                 mHost.forwardSwipeUp(event, deltaY);
-                return;
-            }
-            if (ViewUtils.exceedsSlop(event, mStartX, mStartY, mContainer.getContext(), 1F)) {
+            } else if (ViewUtils.exceedsSlop(event, mStartX, mStartY, mContainer.getContext(), 1F)) {
+                // If we ARE showing the menu (i.e. long press has happened), we are allowed to
+                // start a drag event
                 DecorViewManager.get(mRootContainer.getContext()).detachAllViews();
                 LayoutEditingSingleton.getInstance().setEditing(true);
                 beginDragOnHolder(Objects.requireNonNull(mHolder), mStartX, mStartY);

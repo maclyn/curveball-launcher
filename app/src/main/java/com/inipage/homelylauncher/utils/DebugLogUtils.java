@@ -1,11 +1,17 @@
 package com.inipage.homelylauncher.utils;
 
+import android.app.Activity;
+import android.content.Context;
 import android.util.Log;
+import android.view.View;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
 import com.inipage.homelylauncher.BuildConfig;
+import com.inipage.homelylauncher.persistence.PrefsHelper;
 
+import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,6 +31,25 @@ public class DebugLogUtils {
     public static final String TAG_VIRTUAL_TRACKPAD = "tag_virtual_trackpad";
 
     private static final String NEEDLED = TAG_PAGE_SCROLL;
+
+    public static void complain(Context context, String complaint) {
+        if (!PrefsHelper.isDevMode() && !BuildConfig.DEBUG) {
+            return;
+        }
+        Toast.makeText(context, complaint, Toast.LENGTH_SHORT).show();
+    }
+
+    public static void complain(View view, String complaint) {
+        complain(view.getContext(), complaint);
+    }
+
+    public static void complain(WeakReference<Activity> ref, String complaint) {
+        @Nullable Context context = ref.get();
+        if (context == null) {
+            return;
+        }
+        complain(context, complaint);
+    }
 
     public static void needle(String tag, Object... out) {
         String[] array = Arrays.stream(out).map(Object::toString).toArray(String[]::new);

@@ -112,7 +112,7 @@ public class AppDrawerController implements BasePageController, FastScrollContro
     @BindView(R.id.search_pull_layout)
     SwipeRefreshLayout searchPullLayout;
 
-    private ApplicationIconAdapter mAdapter;
+    private AppDrawerAdapter mAdapter;
     // This flag isn't necessarily synced with mMode == SEARCH_RESULTS in the adapter; this flag
     // indicates a visible search box but not per se text entered and search results displayed
     private boolean mIsSearching = false;
@@ -150,7 +150,7 @@ public class AppDrawerController implements BasePageController, FastScrollContro
             }
         };
 
-    private final ApplicationIconAdapter.Delegate mAdapterDelegate = new ApplicationIconAdapter.Delegate() {
+    private final AppDrawerAdapter.Delegate mAdapterDelegate = new AppDrawerAdapter.Delegate() {
 
         @Override
         public void enterFastScrollMode(View v) {
@@ -287,7 +287,7 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         if (mIsSearching) {
             quitSearch();
         }
-        mAdapter = new ApplicationIconAdapter(
+        mAdapter = new AppDrawerAdapter(
             mAdapterDelegate,
             ViewUtils.requireActivityOf(mContext),
             mUsingGridLayoutByDefault ? GRID_LAYOUT_COLUMN_COUNT : 1);
@@ -515,8 +515,8 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         }
         View child = appRecyclerView.getChildAt(0);
         RecyclerView.ViewHolder vh = appRecyclerView.getChildViewHolder(appRecyclerView.getChildAt(0));
-        if (vh instanceof ApplicationIconAdapter.AppIconHolder) {
-            child = ((ApplicationIconAdapter.AppIconHolder) vh).icon;
+        if (vh instanceof AppDrawerAdapter.AppIconHolder) {
+            child = ((AppDrawerAdapter.AppIconHolder) vh).icon;
         }
         ApplicationIcon app = mAdapter.getFirstApp();
         InstalledAppUtils.launchApp(

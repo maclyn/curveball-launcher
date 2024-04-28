@@ -4,12 +4,15 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.os.Debug;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
 import com.inipage.homelylauncher.drawer.BitmapView;
+import com.inipage.homelylauncher.persistence.PrefsHelper;
 import com.inipage.homelylauncher.utils.DebugLogUtils;
 import com.inipage.homelylauncher.utils.ViewUtils;
 
@@ -40,6 +43,105 @@ import static android.view.View.VISIBLE;
  */
 public class DecorViewDragger {
 
+    /**
+     * Android-esque event representing a drag and drop operation.
+     */
+    public static class DragEvent {
+
+        private final int[] mTempOut = new int[2];
+        private final Object mLocalState;
+        private final int mAction;
+        private final int mX;
+        private final int mY;
+        private final int mOffsetX;
+        private final int mOffsetY;
+
+        private DragEvent(
+            Object localState,
+            int action,
+            int x,
+            int y,
+            int offsetX,
+            int offsetY) {
+            mLocalState = localState;
+            mAction = action;
+            mX = x;
+            mY = y;
+            mOffsetX = offsetX;
+            mOffsetY = offsetY;
+        }
+
+        public Object getLocalState() {
+            return mLocalState;
+        }
+
+        public int getAction() {
+            return mAction;
+        }
+
+        public int getOffsetX() {
+            return mOffsetX;
+        }
+
+        public int getOffsetY() {
+            return mOffsetY;
+        }
+
+        public int getX(View v) {
+            v.getLocationOnScreen(mTempOut);
+            return getRawX() - mTempOut[0];
+        }
+
+        public int getRawX() {
+            return mX;
+        }
+
+        public int getY(View v) {
+            v.getLocationOnScreen(mTempOut);
+            return getRawY() - mTempOut[1];
+        }
+
+        public int getRawY() {
+            return mY;
+        }
+    }
+
+    /**
+     * Some system component that wants to know about ongoing drag events (e.g. to change visual
+     * appearance or collapse some menu) but doesn't expect the drag event to end on a surface it
+     * manages.
+     */
+    public interface DragAwareComponent {
+
+        /**
+         * @param v     The target view.
+         * @param event The "DragEvent".
+         */
+        void onDrag(View v, DragEvent event);
+    }
+
+    /**
+     * Component that expects a view to be dropped on top of it. These components are logically
+     * but not ViewGroup-wise z-index aware, so components with higher values returned from
+     * {@linkplain TargetedDragAwareComponent#getPriority()} will receive the events first
+     * regardless of whether they are beneath another component in the view hierarchy.
+     */
+    public interface TargetedDragAwareComponent extends DragAwareComponent {
+
+        /**
+         * @return The view that's supposed to receive these drags.
+         */
+        @Nullable
+        View getDragAwareTargetView();
+
+        /**
+         * @return The priority of this drag-aware view. Higher numbers represent lower priorities.
+         */
+        default int getPriority() {
+            return DRAG_PRIORITY_DEFAULT;
+        }
+    }
+
     public static final int DRAG_PRIORITY_HIGHEST = -100;
     public static final int DRAG_PRIORITY_DEFAULT = 0;
     public static final int DRAG_PRIORITY_LOWEST = 100;
@@ -49,7 +151,7 @@ public class DecorViewDragger {
 
     private final WeakReference<Activity> mActivityRef;
     private final List<TargetedDragAwareComponent> mRegisteredComponents = new ArrayList<>();
-    private final List<BaseDragAwareComponent> mBackgroundComponents = new ArrayList<>();
+    private final List<DragAwareComponent> mBackgroundComponents = new ArrayList<>();
     private boolean mInDrag;
     private boolean mDragComplete;
     private boolean mDragSuccessful;
@@ -85,8 +187,10 @@ public class DecorViewDragger {
         Object localState,
         boolean centerTouchOnView,
         final int startX,
-        final int startY) {
+        final int startY
+    ) {
         if (mInDrag) {
+            DebugLogUtils.complain(view, "[debug] Drag started when one is ongoing!");
             return;
         }
 
@@ -152,54 +256,53 @@ public class DecorViewDragger {
         }
     }
 
-    private void log(String... vals) {
-        DebugLogUtils.needle(DebugLogUtils.TAG_DECOR_DRAGGER, 1, getClass().getSimpleName(), vals);
+    public boolean isDragActive() {
+        return mInDrag;
     }
 
-    private void sendDragEvent(TargetedDragAwareComponent component, int action) {
-        component.onDrag(
-            component.getDragAwareTargetView(),
-            new DragEvent(mLocalState, action, mCurrentX, mCurrentY, mOffsetX, mOffsetY));
+    public synchronized boolean onDragMoveEvent(float currentX, float currentY) {
+        return onDragMoveEvent((int) currentX, (int) currentY);
     }
 
-    private void broadcastBackgroundDragEvent(int action) {
-        for (BaseDragAwareComponent component : mBackgroundComponents) {
-            sendBackgroundDragEvent(component, action);
+    public synchronized boolean onDragMoveEvent(int currentX, int currentY) {
+        if (!isValidDragEventOngoing()) {
+            return false;
         }
+        mCurrentX = currentX;
+        mCurrentY = currentY;
+        recalculate();
+        return true;
     }
 
-    private void sendBackgroundDragEvent(BaseDragAwareComponent component, int action) {
-        component.onDrag(
-            null,
-            new DragEvent(mLocalState, action, mCurrentX, mCurrentY, mOffsetX, mOffsetY));
+    public synchronized boolean onDragEndEvent(float currentX, float currentY) {
+        return onDragEndEvent((int) currentX, (int) currentY);
     }
 
-    @Nullable
-    private TargetedDragAwareComponent findRelevantComponent() {
-        final int[] locationOut = new int[2];
-        for (TargetedDragAwareComponent component : mRegisteredComponents) {
-            final View targetView = component.getDragAwareTargetView();
-            if (targetView == null) {
-                continue;
-            }
-            if (targetView.getVisibility() != VISIBLE) {
-                continue;
-            }
-            targetView.getLocationOnScreen(locationOut);
-            final int xStart = locationOut[0];
-            final int yStart = locationOut[1];
-            final int xEnd = xStart + targetView.getWidth();
-            final int yEnd = yStart + targetView.getHeight();
-            if ((xStart <= mCurrentX && xEnd >= mCurrentX) &&
-                (yStart < mCurrentY && yEnd >= mCurrentY)) {
-                return component;
-            }
+    public synchronized boolean onDragEndEvent(int currentX, int currentY) {
+        if (!isValidDragEventOngoing()) {
+            return false;
         }
-        return null;
+        mCurrentX = currentX;
+        mCurrentY = currentY;
+        mDragComplete = true;
+        mDragSuccessful = true;
+        recalculate();
+        return true;
+    }
+
+    public synchronized boolean onDragCancelEvent() {
+        if (!isValidDragEventOngoing()) {
+            return false;
+        }
+        log("Drag cancelled forwarded");
+        mDragComplete = true;
+        mDragSuccessful = false;
+        recalculate();
+        return true;
     }
 
     /**
-     * Forward an event.
+     * Forward an event from another source.
      */
     public synchronized boolean forwardTouchEvent(MotionEvent event) {
         if (!mInDrag) {
@@ -229,52 +332,6 @@ public class DecorViewDragger {
         }
         recalculate();
         return true;
-    }
-
-    private void recalculate() {
-        log("Recalculating w/ " + mCurrentX + ", " + mCurrentY);
-        if (!mInDrag) {
-            log("Recalculate dropped; not in drag anymore...");
-            return;
-        }
-
-        @Nullable final TargetedDragAwareComponent relevantComponent = findRelevantComponent();
-        if (relevantComponent != mLastComponent) {
-            log("Found new target view mid-drag");
-            if (mLastComponent != null) {
-                sendDragEvent(mLastComponent, ACTION_DRAG_EXITED);
-            }
-            if (relevantComponent != null) {
-                sendDragEvent(relevantComponent, ACTION_DRAG_ENTERED);
-            }
-            mLastComponent = relevantComponent;
-        } else {
-            if (relevantComponent != null) {
-                sendDragEvent(relevantComponent, ACTION_DRAG_LOCATION);
-            }
-        }
-        broadcastBackgroundDragEvent(ACTION_DRAG_LOCATION);
-
-        if (mDragComplete) {
-            DecorViewManager.get(mActivityRef.get()).removeView(mDragKey);
-            mDragKey = null;
-            mInDrag = mDragComplete = false;
-
-            // Post a _DROP event if there's a relevant component and we dropped on it
-            if (mDragSuccessful && relevantComponent != null) {
-                sendDragEvent(relevantComponent, ACTION_DROP);
-            }
-
-            // Post an _ENDED event to every component
-            for (TargetedDragAwareComponent component : mRegisteredComponents) {
-                sendDragEvent(component, ACTION_DRAG_ENDED);
-            }
-            broadcastBackgroundDragEvent(ACTION_DRAG_ENDED);
-            mInDrag = false;
-        } else {
-            DecorViewManager.get(mActivityRef.get()).updateViewPosition(
-                mDragKey, mCurrentX + mOffsetX, mCurrentY + mOffsetY);
-        }
     }
 
     /**
@@ -323,7 +380,7 @@ public class DecorViewDragger {
      *                           event is happening on screen, for things such as knowing when to
      *                           switch screen pages.
      */
-    public synchronized void registerBackgroundDragAwareComponent(BaseDragAwareComponent dragAwareComponent) {
+    public synchronized void registerBackgroundDragAwareComponent(DragAwareComponent dragAwareComponent) {
         log("Adding background listener");
         mBackgroundComponents.add(dragAwareComponent);
         if (mInDrag) {
@@ -332,93 +389,112 @@ public class DecorViewDragger {
         recalculate();
     }
 
-    public synchronized void unregisterBackgroundDragAwareComponent(BaseDragAwareComponent dragAwareComponent) {
+    public synchronized void unregisterBackgroundDragAwareComponent(DragAwareComponent dragAwareComponent) {
         log("Removing background listener");
         mBackgroundComponents.remove(dragAwareComponent);
     }
 
-    public interface BaseDragAwareComponent {
-
-        /**
-         * @param v     The target view.
-         * @param event The "DragEvent".
-         */
-        void onDrag(View v, DragEvent event);
+    private boolean isValidDragEventOngoing() {
+        if (!mInDrag) {
+            log("Forward touch event dropped; not in drag...");
+            DebugLogUtils.complain(
+                mActivityRef,
+                "Checked for valid drag event but none were present!");
+            return false;
+        }
+        return true;
     }
 
-    public interface TargetedDragAwareComponent extends BaseDragAwareComponent {
 
-        /**
-         * @return The view that's supposed to receive these drags.
-         */
-        @Nullable
-        View getDragAwareTargetView();
+    private void log(String... vals) {
+        DebugLogUtils.needle(DebugLogUtils.TAG_DECOR_DRAGGER, 1, getClass().getSimpleName(), vals);
+    }
 
-        /**
-         * @return The priority of this drag-aware view. Higher numbers represent lower priorities.
-         */
-        default int getPriority() {
-            return DRAG_PRIORITY_DEFAULT;
+    private void sendDragEvent(TargetedDragAwareComponent component, int action) {
+        component.onDrag(
+            component.getDragAwareTargetView(),
+            new DragEvent(mLocalState, action, mCurrentX, mCurrentY, mOffsetX, mOffsetY));
+    }
+
+    private void broadcastBackgroundDragEvent(int action) {
+        for (DragAwareComponent component : mBackgroundComponents) {
+            sendBackgroundDragEvent(component, action);
         }
     }
 
-    public static class DragEvent {
+    private void sendBackgroundDragEvent(DragAwareComponent component, int action) {
+        component.onDrag(
+            null,
+            new DragEvent(mLocalState, action, mCurrentX, mCurrentY, mOffsetX, mOffsetY));
+    }
 
-        private final int[] mTempOut = new int[2];
-        private final Object mLocalState;
-        private final int mAction;
-        private final int mX;
-        private final int mY;
-        private final int mOffsetX;
-        private final int mOffsetY;
+    @Nullable
+    private TargetedDragAwareComponent findRelevantComponent() {
+        final int[] locationOut = new int[2];
+        for (TargetedDragAwareComponent component : mRegisteredComponents) {
+            final View targetView = component.getDragAwareTargetView();
+            if (targetView == null) {
+                continue;
+            }
+            if (targetView.getVisibility() != VISIBLE) {
+                continue;
+            }
+            targetView.getLocationOnScreen(locationOut);
+            final int xStart = locationOut[0];
+            final int yStart = locationOut[1];
+            final int xEnd = xStart + targetView.getWidth();
+            final int yEnd = yStart + targetView.getHeight();
+            if ((xStart <= mCurrentX && xEnd >= mCurrentX) &&
+                (yStart < mCurrentY && yEnd >= mCurrentY)) {
+                return component;
+            }
+        }
+        return null;
+    }
 
-        private DragEvent(
-            Object localState,
-            int action,
-            int x,
-            int y,
-            int offsetX,
-            int offsetY) {
-            mLocalState = localState;
-            mAction = action;
-            mX = x;
-            mY = y;
-            mOffsetX = offsetX;
-            mOffsetY = offsetY;
+    private void recalculate() {
+        log("Recalculating w/ " + mCurrentX + ", " + mCurrentY);
+        if (!mInDrag) {
+            log("Recalculate dropped; not in drag anymore...");
+            return;
         }
 
-        public Object getLocalState() {
-            return mLocalState;
+        @Nullable final TargetedDragAwareComponent relevantComponent = findRelevantComponent();
+        if (relevantComponent != mLastComponent) {
+            log("Found new target view mid-drag");
+            if (mLastComponent != null) {
+                sendDragEvent(mLastComponent, ACTION_DRAG_EXITED);
+            }
+            if (relevantComponent != null) {
+                sendDragEvent(relevantComponent, ACTION_DRAG_ENTERED);
+            }
+            mLastComponent = relevantComponent;
+        } else {
+            if (relevantComponent != null) {
+                sendDragEvent(relevantComponent, ACTION_DRAG_LOCATION);
+            }
         }
+        broadcastBackgroundDragEvent(ACTION_DRAG_LOCATION);
 
-        public int getAction() {
-            return mAction;
-        }
+        if (mDragComplete) {
+            DecorViewManager.get(mActivityRef.get()).removeView(mDragKey);
+            mDragKey = null;
+            mInDrag = mDragComplete = false;
 
-        public int getOffsetX() {
-            return mOffsetX;
-        }
+            // Post a _DROP event if there's a relevant component and we dropped on it
+            if (mDragSuccessful && relevantComponent != null) {
+                sendDragEvent(relevantComponent, ACTION_DROP);
+            }
 
-        public int getOffsetY() {
-            return mOffsetY;
-        }
-
-        public int getX(View v) {
-            v.getLocationOnScreen(mTempOut);
-            return getRawX() - mTempOut[0];
-        }
-
-        public int getRawX() {
-            return mX;
-        }
-
-        public int getY(View v) {
-            v.getLocationOnScreen(mTempOut);
-            return getRawY() - mTempOut[1];
-        }
-
-        public int getRawY() {
-            return mY;
+            // Post an _ENDED event to every component
+            for (TargetedDragAwareComponent component : mRegisteredComponents) {
+                sendDragEvent(component, ACTION_DRAG_ENDED);
+            }
+            broadcastBackgroundDragEvent(ACTION_DRAG_ENDED);
+            mInDrag = false;
+        } else {
+            DecorViewManager.get(mActivityRef.get()).updateViewPosition(
+                mDragKey, mCurrentX + mOffsetX, mCurrentY + mOffsetY);
         }
     }
 }

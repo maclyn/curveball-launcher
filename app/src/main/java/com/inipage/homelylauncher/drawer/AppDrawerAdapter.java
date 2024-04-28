@@ -10,7 +10,6 @@ import android.util.Pair;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -33,7 +32,6 @@ import com.inipage.homelylauncher.model.ApplicationIcon;
 import com.inipage.homelylauncher.model.ApplicationIconHideable;
 import com.inipage.homelylauncher.model.ClassicGridItem;
 import com.inipage.homelylauncher.model.SwipeFolder;
-import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.state.LayoutEditingSingleton;
 import com.inipage.homelylauncher.utils.Constants;
 import com.inipage.homelylauncher.utils.DebugLogUtils;
@@ -41,7 +39,6 @@ import com.inipage.homelylauncher.utils.InstalledAppUtils;
 import com.inipage.homelylauncher.utils.InstalledAppUtils.AppLaunchSource;
 import com.inipage.homelylauncher.utils.LifecycleLogUtils;
 import com.inipage.homelylauncher.utils.Prewarmer;
-import com.inipage.homelylauncher.utils.ViewUtils;
 import com.inipage.homelylauncher.views.AppPopupMenu;
 import com.inipage.homelylauncher.views.DecorViewDragger;
 import com.inipage.homelylauncher.views.DecorViewManager;
@@ -51,7 +48,6 @@ import org.greenrobot.eventbus.EventBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.annotation.ElementType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -67,7 +63,7 @@ import java.util.stream.Collectors;
 /**
  * Renders application icons and performs searches for the app list.
  */
-public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public class AppDrawerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     public interface Delegate {
 
@@ -276,7 +272,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     private List<ApplicationIconHideable> mLastSearchResult;
     private Mode mMode;
 
-    public ApplicationIconAdapter(Delegate delegate, Activity activity, int columnCount) {
+    public AppDrawerAdapter(Delegate delegate, Activity activity, int columnCount) {
         this.mApps = AppInfoCache.get().getAppDrawerActivities();
         for (ApplicationIconHideable icon : mApps) {
             mAppsTree.put(icon.getName().toLowerCase(Locale.getDefault()), icon);
@@ -549,8 +545,8 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     public RecyclerView.ViewHolder onCreateViewHolder(@NotNull ViewGroup viewGroup, int type) {
         switch (type) {
             case ITEM_VIEW_TYPE_APP: {
-                final ApplicationIconLayout rootView =
-                    (ApplicationIconLayout)
+                final AppDrawerIconViewGroup rootView =
+                    (AppDrawerIconViewGroup)
                         LayoutInflater.from(viewGroup.getContext())
                             .inflate(R.layout.application_icon, viewGroup, false);
                 final AppIconHolder holder = new AppIconHolder(rootView);
@@ -629,7 +625,7 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
         viewHolder.mainView.setOnClickListener(
             v -> InstalledAppUtils.launchApp(
                 viewHolder.icon, ai.getPackageName(), ai.getActivityName(), AppLaunchSource.APP_LIST));
-        viewHolder.mainView.attachListener(new ApplicationIconLayout.Listener() {
+        viewHolder.mainView.attachListener(new AppDrawerIconViewGroup.Listener() {
 
             @Override
             public void onLongPress(final int startX, final int startY) {
@@ -674,11 +670,6 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
                 final View draggingView = viewHolder.icon;
                 DecorViewDragger.get(mActivity).startDrag(
                     draggingView, appViewHolder, true, rawX, rawY);
-            }
-
-            @Override
-            public void onDragEvent(MotionEvent event) {
-                DecorViewDragger.get(mActivity).forwardTouchEvent(event);
             }
         });
     }
@@ -881,11 +872,11 @@ public class ApplicationIconAdapter extends RecyclerView.Adapter<RecyclerView.Vi
     }
 
     public static class AppIconHolder extends AnimatableViewHolder {
-        ApplicationIconLayout mainView;
+        AppDrawerIconViewGroup mainView;
         BitmapView icon;
         TextView title;
 
-        public AppIconHolder(ApplicationIconLayout mainView) {
+        public AppIconHolder(AppDrawerIconViewGroup mainView) {
             super(mainView);
             this.mainView = mainView;
             this.title = mainView.findViewById(R.id.app_icon_label);

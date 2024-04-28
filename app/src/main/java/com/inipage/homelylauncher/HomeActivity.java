@@ -19,9 +19,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
-import android.gesture.Gesture;
 import android.graphics.Rect;
-import android.graphics.RectF;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -260,8 +258,8 @@ public class HomeActivity extends AppCompatActivity implements
                 return DecorViewDragger.DRAG_PRIORITY_LOWEST;
             }
         };
-    private final DecorViewDragger.BaseDragAwareComponent mBackgroundDragAwareComponent =
-        new DecorViewDragger.BaseDragAwareComponent() {
+    private final DecorViewDragger.DragAwareComponent mBackgroundDragAwareComponent =
+        new DecorViewDragger.DragAwareComponent() {
 
             private final SwitchPageHandler mSwitchPageHandler = new SwitchPageHandler();
 

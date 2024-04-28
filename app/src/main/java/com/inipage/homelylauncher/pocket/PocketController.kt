@@ -1,30 +1,14 @@
 package com.inipage.homelylauncher.pocket
 
-import android.animation.Animator
-import com.inipage.homelylauncher.dock.ForwardingContainer
-import com.inipage.homelylauncher.R
-import android.widget.LinearLayout
-import com.inipage.homelylauncher.model.SwipeFolder
-import android.animation.ValueAnimator
 import android.content.Context
 import android.util.Pair
-import android.view.*
-import com.inipage.homelylauncher.persistence.DatabaseEditor
-import androidx.dynamicanimation.animation.FlingAnimation
-import androidx.dynamicanimation.animation.FloatPropertyCompat
-import androidx.dynamicanimation.animation.DynamicAnimation
-import com.inipage.homelylauncher.model.SwipeApp
-import com.inipage.homelylauncher.model.ApplicationIcon
-import android.widget.TextView
-import android.widget.ImageView
-import android.widget.ScrollView
-import androidx.core.view.ViewCompat
+import android.view.View
 import com.google.common.collect.ImmutableList
-import com.inipage.homelylauncher.utils.*
-import java.util.*
-import java.util.stream.Collectors
-import kotlin.collections.ArrayList
-import kotlin.math.abs
+import com.inipage.homelylauncher.model.ApplicationIcon
+import com.inipage.homelylauncher.model.SwipeApp
+import com.inipage.homelylauncher.model.SwipeFolder
+import com.inipage.homelylauncher.utils.Constants
+import com.inipage.homelylauncher.utils.ViewUtils
 
 /**
  * Renders a pocket of folders at the bottom of the homescreen. This pocket animates in with an
