@@ -25,11 +25,12 @@ public class ClassicGridItem extends GridItem {
         int width,
         int height,
         int type,
-        String DS1,
-        String DS2,
+        @Nullable GridFolder gridFolder,
+        @Nullable String DS1,
+        @Nullable String DS2,
         int DI)
     {
-        super(id, x, y, width, height, type, DS1, DS2, DI);
+        super(id, x, y, width, height, type, gridFolder, DS1, DS2, DI);
         mPageId = pageId;
     }
 
@@ -60,6 +61,7 @@ public class ClassicGridItem extends GridItem {
             GRID_TYPE_WIDGET,
             null,
             null,
+            null,
             appWidgetID);
     }
 
@@ -72,6 +74,7 @@ public class ClassicGridItem extends GridItem {
             1,
             1,
             GRID_TYPE_APP,
+            null,
             app.getPackageName(),
             app.getActivityName(),
             UNSET_ID);

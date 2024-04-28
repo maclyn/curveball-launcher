@@ -13,6 +13,8 @@ import com.inipage.homelylauncher.model.ApplicationIconHideable;
 import com.inipage.homelylauncher.model.DockItem;
 import com.inipage.homelylauncher.model.ClassicGridItem;
 import com.inipage.homelylauncher.model.ClassicGridPage;
+import com.inipage.homelylauncher.model.GridFolder;
+import com.inipage.homelylauncher.model.GridFolderApp;
 import com.inipage.homelylauncher.model.SwipeApp;
 import com.inipage.homelylauncher.model.SwipeFolder;
 import com.inipage.homelylauncher.utils.Constants;
@@ -29,8 +31,11 @@ import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_ACTIV
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_DATA_INT_1;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_DATA_STRING_1;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_DATA_STRING_2;
+import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_GRID_FOLDER_ID;
+import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_GRID_ITEM_ID;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_GRID_ITEM_TYPE;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_HEIGHT;
+import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_ID;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_INDEX;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_ITEM_ID;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_PACKAGE;
@@ -38,9 +43,12 @@ import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_PAGE_
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_POSITION_X;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_POSITION_Y;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_WHEN_TO_SHOW;
+import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_WIDGET_ID;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_WIDTH;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLES;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLE_DOCK;
+import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLE_GRID_FOLDER;
+import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLE_GRID_FOLDER_APPS;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLE_GRID_ITEM;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLE_GRID_PAGE;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLE_HIDDEN_APPS;
@@ -95,6 +103,61 @@ public class DatabaseEditor {
         }
         cursor.close();
 
+        // Create a map of grid item ID -> grid folder
+        cursor = mDB.rawQuery("SELECT * FROM " + TABLE_GRID_FOLDER, null);
+        final Map<String, GridFolder> gridItemIdToFolderMap = new HashMap<>();
+        final Map<Integer, GridFolder> gridFolderIdToFolderMap = new HashMap<>();
+        getFolders: {
+            if (!cursor.moveToFirst()) {
+                break getFolders;
+            }
+
+            final int idColumn = cursor.getColumnIndex(COLUMN_ID);
+            final int gridItemIdColumn = cursor.getColumnIndex(COLUMN_GRID_ITEM_ID);
+            final int widgetIdColumn = cursor.getColumnIndex(COLUMN_WIDGET_ID);
+            final int widthColumn = cursor.getColumnIndex(COLUMN_WIDTH);
+            final int heightColumn = cursor.getColumnIndex(COLUMN_HEIGHT);
+            while (!cursor.isAfterLast()) {
+                final int id = cursor.getInt(idColumn);
+                final String gridItemId = cursor.getString(gridItemIdColumn);
+                final int widgetId = cursor.getInt(widgetIdColumn);
+                final int width = cursor.getInt(widthColumn);
+                final int height = cursor.getInt(heightColumn);
+                final GridFolder gridFolder =
+                    new GridFolder(id, gridItemId, widgetId, width, height);
+                gridItemIdToFolderMap.put(gridItemId, gridFolder);
+                gridFolderIdToFolderMap.put(id, gridFolder);
+            }
+        }
+        cursor.close();
+
+        // Fill out apps in grid folders
+        cursor = mDB.rawQuery("SELECT * FROM " + TABLE_GRID_FOLDER_APPS, null);
+        getFolderApps: {
+            if (!cursor.moveToFirst()) {
+                break getFolderApps;
+            }
+
+            final int idColumn = cursor.getColumnIndex(COLUMN_ID);
+            final int gridFolderIdColumn = cursor.getColumnIndex(COLUMN_GRID_FOLDER_ID);
+            final int indexColumn = cursor.getColumnIndex(COLUMN_INDEX);
+            final int packageNameColumn = cursor.getColumnIndex(COLUMN_DATA_STRING_1);
+            final int activityNameColumn = cursor.getColumnIndex(COLUMN_DATA_STRING_2);
+            while (!cursor.isAfterLast()) {
+                final int id = cursor.getInt(idColumn);
+                final int gridFolderId = cursor.getInt(gridFolderIdColumn);
+                final int index = cursor.getInt(indexColumn);
+                final String packageName = cursor.getString(packageNameColumn);
+                final String activityName = cursor.getString(activityNameColumn);
+                final GridFolderApp gridFolderApp =
+                    new GridFolderApp(id, gridFolderId, index, packageName, activityName);
+                if (gridFolderIdToFolderMap.containsKey(id)) {
+                    Objects.requireNonNull(gridFolderIdToFolderMap.get(id)).addApp(gridFolderApp);
+                }
+            }
+        }
+        cursor.close();
+
         cursor = mDB.rawQuery(
             "SELECT * FROM " + TABLE_GRID_ITEM,
             null);
@@ -118,14 +181,16 @@ public class DatabaseEditor {
             final int dataIntColumn =
                 cursor.getColumnIndex(COLUMN_DATA_INT_1);
             while (!cursor.isAfterLast()) {
+                final String gridItemId = cursor.getString(itemIdColumn);
                 final ClassicGridItem gridItem = new ClassicGridItem(
-                    cursor.getString(itemIdColumn),
+                    gridItemId,
                     cursor.getString(pageIdColumn),
                     cursor.getInt(xColumn),
                     cursor.getInt(yColumn),
                     cursor.getInt(widthColumn),
                     cursor.getInt(heightColumn),
                     cursor.getInt(typeColumn),
+                    gridItemIdToFolderMap.getOrDefault(gridItemId, null),
                     cursor.getString(dataStringOneColumn),
                     cursor.getString(dataStringTwoColumn),
                     cursor.getInt(dataIntColumn));
@@ -185,11 +250,6 @@ public class DatabaseEditor {
         mDB.delete(TABLE_GRID_ITEM, COLUMN_PAGE_ID + "=?", new String[]{pageId});
     }
 
-    public void dropVerticalPage() {
-        mDB.delete(TABLE_VERTICAL_GRID_PAGE, null, null);
-        mDB.delete(TABLE_VERTICAL_GRID_ITEM, null, null);
-    }
-
     public void updatePage(ClassicGridPage page) {
         mDB.beginTransaction();
         writePage(page);
@@ -197,8 +257,64 @@ public class DatabaseEditor {
         mDB.endTransaction();
     }
 
-    // Dock data
+    @Nullable
+    public GridFolder insertNewGridFolder(String gridItemId) {
+        // Insert a new folder; SQLite will give us a new ID for it
+        ContentValues cv = new GridFolder(gridItemId).serialize();
+        int id = insertContentValuesAndRetrieveColumnId(TABLE_GRID_FOLDER, cv);
 
+        // Return an unset object to represent this folder
+        return new GridFolder(id, gridItemId);
+    }
+
+
+    public void updateGridFolder(GridFolder folder) {
+        // Drop all grid folder apps here
+        mDB.beginTransaction();
+        mDB.delete(
+            TABLE_GRID_FOLDER_APPS,
+            DatabaseHelper.COLUMN_GRID_FOLDER_ID + "=?",
+            new String[] { String.valueOf(folder.getId()) });
+
+
+        // Re-insert them in the correct order
+        List<GridFolderApp> newApps = new ArrayList<>();
+        for (int i = 0; i < folder.getApps().size(); i++) {
+            GridFolderApp app = folder.getApps().get(i);
+            ContentValues cv = app.serialize();
+            int id = insertContentValuesAndRetrieveColumnId(TABLE_GRID_FOLDER, cv);
+            newApps.add(
+                new GridFolderApp(
+                    id, app.getGridFolderId(), i, app.getPackageName(), app.getActivityName()));
+        }
+        folder.setApps(newApps);
+
+        // Update the root item
+        mDB.update(
+            TABLE_GRID_FOLDER,
+            folder.serialize(),
+            COLUMN_ID + "=?",
+            new String[] { String.valueOf(folder.getId()) });
+
+        mDB.setTransactionSuccessful();
+        mDB.endTransaction();
+    }
+
+    public void deleteGridFolder(GridFolder folder) {
+        mDB.beginTransaction();
+        mDB.delete(
+            TABLE_GRID_FOLDER,
+            DatabaseHelper.COLUMN_ID + "=?",
+            new String[] { String.valueOf(folder.getId()) });
+        mDB.delete(
+            TABLE_GRID_FOLDER_APPS,
+            DatabaseHelper.COLUMN_GRID_FOLDER_ID + "=?",
+            new String[] { String.valueOf(folder.getId()) });
+        mDB.setTransactionSuccessful();
+        mDB.endTransaction();
+    }
+
+    // Dock data
     public List<DockItem> getDockPreferences() {
         final List<DockItem> dockItems = new ArrayList<>();
         final Cursor loadItems = mDB.query(
@@ -326,8 +442,6 @@ public class DatabaseEditor {
         return hiddenApps;
     }
 
-    // TODO: Grid folders
-
     public String getPath() {
         return mDB.getPath();
     }
@@ -336,5 +450,30 @@ public class DatabaseEditor {
         for (String table : TABLES) {
             mDB.delete(table, null, null);
         }
+    }
+
+    private int insertContentValuesAndRetrieveColumnId(String table, ContentValues cv) {
+        mDB.beginTransaction();
+        long rowId = mDB.insert(table, null, cv);
+        Cursor newItemColumnIdCursor =
+            mDB.query(
+                table,
+                new String[] { COLUMN_ID }, "rowid = ?",
+                new String[]{ String.valueOf(rowId) },
+                null,
+                null,
+                null,
+                null);
+        if (!newItemColumnIdCursor.moveToFirst()) {
+            newItemColumnIdCursor.close();
+            return -1;
+        }
+        // Get out the ID from the rowid
+        int idColumnIndex = newItemColumnIdCursor.getColumnIndex(COLUMN_ID);
+        int id = newItemColumnIdCursor.getInt(idColumnIndex);
+        newItemColumnIdCursor.close();
+        mDB.setTransactionSuccessful();
+        mDB.endTransaction();
+        return id;
     }
 }

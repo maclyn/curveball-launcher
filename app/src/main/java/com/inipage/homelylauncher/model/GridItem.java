@@ -23,8 +23,9 @@ public class GridItem {
 
     private final String mID;
     private final int mType;
-    private final String mDS1;
-    private final String mDS2;
+    @Nullable GridFolder mGridFolder;
+    @Nullable private final String mDS1;
+    @Nullable private final String mDS2;
     private final int mDI;
 
     // These fields can change as GridItems are moved and resized
@@ -40,8 +41,9 @@ public class GridItem {
         int width,
         int height,
         int type,
-        String DS1,
-        String DS2,
+        @Nullable GridFolder gridFolder,
+        @Nullable String DS1,
+        @Nullable String DS2,
         int DI)
     {
         mID = id;
@@ -50,6 +52,7 @@ public class GridItem {
         mWidth = width;
         mHeight = height;
         mType = type;
+        mGridFolder = gridFolder;
         mDS1 = DS1;
         mDS2 = DS2;
         mDI = DI;
@@ -156,10 +159,17 @@ public class GridItem {
         return mHeight;
     }
 
+    @Nullable
+    public GridFolder getGridFolder() {
+        return mGridFolder;
+    }
+
+    @Nullable
     public String getDS1() {
         return mDS1;
     }
 
+    @Nullable
     public String getDS2() {
         return mDS2;
     }
@@ -174,32 +184,5 @@ public class GridItem {
         return getX() + "x" + getY() +
             "-- Type=" + getType() +
             "-- DS=" + getDS1() + ", " + getDS2() + ", " + getDI();
-    }
-
-    public static GridItem getNewWidgetItem(int x, int y, int width, int height, int appWidgetID)
-    {
-        return new GridItem(
-            UUID.randomUUID().toString(),
-            x,
-            y,
-            width,
-            height,
-            GRID_TYPE_WIDGET,
-            null,
-            null,
-            appWidgetID);
-    }
-
-    public static GridItem getNewAppItem(ApplicationIcon app) {
-        return new GridItem(
-            UUID.randomUUID().toString(),
-            UNSET_ID,
-            UNSET_ID,
-            1,
-            1,
-            GRID_TYPE_APP,
-            app.getPackageName(),
-            app.getActivityName(),
-            UNSET_ID);
     }
 }

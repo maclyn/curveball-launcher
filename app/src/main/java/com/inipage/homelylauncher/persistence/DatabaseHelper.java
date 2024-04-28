@@ -18,10 +18,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // Database basics
     static final String TAG = "DatabaseHelper";
     static final String DATABASE_NAME = "database.db";
-    static final int DATABASE_VERSION = 18;
+    static final int DATABASE_VERSION = 19;
 
     // Common columns
-    static final String COLUMN_ID = "_id";
+    public static final String COLUMN_ID = "_id";
 
     // Hidden apps table
     static final String TABLE_HIDDEN_APPS = "hidden_apps_table";
@@ -36,32 +36,34 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // Grid pages
     // Re-uses: COLUMN_ID
     static final String TABLE_GRID_PAGE = "grid_page_table";
+    // This was a mistake -- no idea why I chose 2 IDs for this row
     static final String COLUMN_PAGE_ID = "page_id";
-    static final String COLUMN_INDEX = "idx";
-    static final String COLUMN_HEIGHT = "height";
-    static final String COLUMN_WIDTH = "width";
+    public static final String COLUMN_INDEX = "idx";
+    public static final String COLUMN_HEIGHT = "height";
+    public static final String COLUMN_WIDTH = "width";
 
     // Grid item table
     // Re-uses: HEIGHT, WIDTH, PAGE_ID
     static final String TABLE_GRID_ITEM = "grid_item_table";
+    // This was a mistake -- no idea why I chose 2 IDs for this row
     static final String COLUMN_ITEM_ID = "item_id";
     static final String COLUMN_GRID_ITEM_TYPE = "grid_item_type";
     static final String COLUMN_POSITION_X = "position_x";
     static final String COLUMN_POSITION_Y = "position_y";
-    static final String COLUMN_DATA_STRING_1 = "ds1";
-    static final String COLUMN_DATA_STRING_2 = "ds2";
+    public static final String COLUMN_DATA_STRING_1 = "ds1";
+    public static final String COLUMN_DATA_STRING_2 = "ds2";
     static final String COLUMN_DATA_INT_1 = "di1";
 
     // Grid item folder table
     static final String TABLE_GRID_FOLDER = "grid_folder_table";
-    // Re-uses: COLUMN_INDEX, COLUMN_HEIGHT, COLUMN_WIDTH
-    static final String COLUMN_GRID_ITEM_ID = "grid_item_id";
-    static final String COLUMN_WIDGET_ID = "widget_id";
+    // Re-uses: COLUMN_HEIGHT, COLUMN_WIDTH
+    public static final String COLUMN_GRID_ITEM_ID = "grid_item_id";
+    public static final String COLUMN_WIDGET_ID = "widget_id";
 
     // Grid item folder table
     static final String TABLE_GRID_FOLDER_APPS = "grid_folder_apps_table";
     // Re-uses: COLUMN_DATA_STRING_1, COLUMN_DATA_STRING_2, COLUMN_INDEX
-    static final String COLUMN_GRID_FOLDER_ID = "grid_folder_id";
+    public static final String COLUMN_GRID_FOLDER_ID = "grid_folder_id";
 
     // Deprecated tables
     static final String TABLE_ROWS = "rows_table";
@@ -75,6 +77,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         TABLE_GRID_ITEM,
         TABLE_HIDDEN_APPS,
         TABLE_DOCK,
+        TABLE_GRID_FOLDER_APPS,
+        TABLE_GRID_FOLDER,
 
         // Deprecated
         TABLE_VERTICAL_GRID_PAGE,
@@ -126,7 +130,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String GRID_FOLDER_TABLE_CREATE = "CREATE TABLE "
         + TABLE_GRID_FOLDER
         + "(" + COLUMN_ID + " INTEGER PRIMARY KEY autoincrement,"
-        + COLUMN_GRID_ITEM_ID + " INTEGER not null, "
+        + COLUMN_GRID_ITEM_ID + " STRING not null, "
         + COLUMN_WIDGET_ID + " INTEGER not null, "
         + COLUMN_HEIGHT + " integer not null, "
         + COLUMN_WIDTH + " integer not null);";
@@ -163,11 +167,20 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // 16 -> 17 migration
+        // 18 -> 19 migration
+        if (oldVersion == 18) {
+            db.execSQL("DROP TABLE " + TABLE_GRID_FOLDER);
+            db.execSQL("DROP TABLE " + TABLE_GRID_FOLDER_APPS);
+            db.execSQL(GRID_FOLDER_TABLE_CREATE);
+            db.execSQL(GRID_FOLDER_APPS_TABLE_CREATE);
+            return;
+        }
+
+        // 17 -> 18 migration
         if (oldVersion == 17) {
             LifecycleLogUtils.logEvent(
                 LifecycleLogUtils.LogType.LOG,
-                TAG + " upgrading from 17 by adding grid item folders");
+                TAG + " upgrading from 16 by adding grid item folders");
             for (String table : DEPRECATED_TABLES) {
                 try {
                     db.execSQL("DROP TABLE " + table);

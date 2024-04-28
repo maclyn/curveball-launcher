@@ -115,6 +115,7 @@ public class GesturePageLayout extends FrameLayout {
             return false;
         }
 
+
         switch (event.getAction()) {
             // ACTION_DOWNs always reset
             case ACTION_DOWN:

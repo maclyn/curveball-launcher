@@ -10,27 +10,27 @@ import com.inipage.homelylauncher.pocket.RowContent;
 
 public class SwipeApp extends RowContent {
 
-    private final Pair<String, String> mPair;
+    private final Pair<String, String> mComponent;
 
-    public SwipeApp(Pair<String, String> pair) {
-        mPair = pair;
+    public SwipeApp(Pair<String, String> component) {
+        mComponent = component;
     }
 
     public SwipeApp(String packageName, String className) {
-        mPair = new Pair<>(packageName, className);
+        mComponent = new Pair<>(packageName, className);
     }
 
     public Pair<String, String> getComponent() {
-        return mPair;
+        return mComponent;
     }
 
     @Override
     public String getLabel(Context c) {
-        return AppLabelCache.getInstance(c).getLabel(mPair);
+        return AppLabelCache.getInstance(c).getLabel(mComponent);
     }
 
     @Override
     public Bitmap getIcon(Context context) {
-        return IconCacheSync.getInstance(context).getActivityIcon(mPair.first, mPair.second);
+        return IconCacheSync.getInstance(context).getActivityIcon(mComponent.first, mComponent.second);
     }
 }

@@ -537,7 +537,6 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
             findPreference("export_database").setEnabled(isDevModeEnabled);
             findPreference("import_settings").setEnabled(isDevModeEnabled);
             findPreference("export_settings").setEnabled(isDevModeEnabled);
-            findPreference("vertical_scroller_design").setEnabled(isDevModeEnabled);
             findPreference("reset_database").setEnabled(isDevModeEnabled);
             findPreference("move_database_to_b").setEnabled(isDevModeEnabled);
             findPreference("overwrite_from_b").setEnabled(isDevModeEnabled);
