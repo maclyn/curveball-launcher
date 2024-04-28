@@ -106,9 +106,6 @@ public class AppDrawerIconViewGroup extends LinearLayout {
                 // This is fired when the first pointer is down
                 // Theoretically multiple pointers could go down at once, but we just pick the
                 // one at pointerIdx = 0
-                if (mHasDroppedEvent) {
-                    break;
-                }
                 mFirstPointerId = event.getPointerId(event.getActionIndex());
                 log("ACTION_DOWN with " + mFirstPointerId);
                 mStartX = event.getX();

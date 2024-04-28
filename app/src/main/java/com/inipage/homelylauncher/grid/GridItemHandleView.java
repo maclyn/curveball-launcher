@@ -7,7 +7,6 @@ import android.content.res.TypedArray;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.Gravity;
-import android.view.MotionEvent;
 import android.view.TouchDelegate;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -22,6 +21,7 @@ import com.inipage.homelylauncher.utils.AttributeApplier;
 import com.inipage.homelylauncher.utils.DebugLogUtils;
 import com.inipage.homelylauncher.utils.SizeDimenAttribute;
 import com.inipage.homelylauncher.utils.ViewUtils;
+import com.inipage.homelylauncher.views.SingleTouchEventHelper;
 
 import static android.view.MotionEvent.ACTION_CANCEL;
 import static android.view.MotionEvent.ACTION_DOWN;
@@ -33,16 +33,25 @@ import static com.inipage.homelylauncher.utils.AttributeApplier.intValue;
 
 public class GridItemHandleView extends FrameLayout {
 
+    public enum Direction {
+        LEFT_UP, RIGHT_DOWN
+    }
+
+    public interface Listener {
+        void onTriggered(Direction d);
+    }
+
     private static final float ENABLED_ALPHA = 1F;
     private static final float DISABLED_ALPHA = 0F;
+
+    private final SingleTouchEventHelper mTouchEventHelper;
     private final View mLeftTopView;
     private final View mRightBottomView;
     private final int mOrientation;
+
     @SizeDimenAttribute(R.dimen.scale_button_size)
     private final int mHandleSize = intValue();
-    private boolean mHasTouchDown;
-    private boolean mFinishedParsing;
-    private int mStartX, mStartY;
+
     @Nullable
     private Listener mListener;
     private boolean mLeftTopEnabled, mRightBottomEnabled;
@@ -58,7 +67,8 @@ public class GridItemHandleView extends FrameLayout {
     public GridItemHandleView(
         @NonNull Context context,
         @Nullable AttributeSet attrs,
-        int defStyleAttr) {
+        int defStyleAttr
+    ) {
         super(context, attrs, defStyleAttr);
         AttributeApplier.applyDensity(this, context);
         setBackground(ContextCompat.getDrawable(context, R.drawable.widget_button_bg_file));
@@ -87,18 +97,10 @@ public class GridItemHandleView extends FrameLayout {
                 R.drawable.ic_arrow_drop_down_48,
                 Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
         }
-
         if (isInEditMode()) {
             setArrowsEnabled(true, true);
         }
-    }
-
-    private View addArrowButton(int arrowDrawableId, int gravity) {
-        final int arrowSize = (int) (mHandleSize / 1.5);
-        final ImageView arrowView = new ImageView(getContext());
-        arrowView.setImageDrawable(ContextCompat.getDrawable(getContext(), arrowDrawableId));
-        addView(arrowView, new FrameLayout.LayoutParams(arrowSize, arrowSize, gravity));
-        return arrowView;
+        mTouchEventHelper = new SingleTouchEventHelper(this, buildTouchListener());
     }
 
     public void setArrowsEnabled(boolean leftUp, boolean rightDown) {
@@ -114,7 +116,6 @@ public class GridItemHandleView extends FrameLayout {
     }
 
     private final Rect hitRect = new Rect();
-
 
     @SuppressLint("DrawAllocation")
     @Override
@@ -132,97 +133,89 @@ public class GridItemHandleView extends FrameLayout {
         }
     }
 
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        if (getAlpha() == 0 || getVisibility() != VISIBLE || mListener == null) {
-            return false;
-        }
-
-        switch (event.getAction()) {
-            case ACTION_DOWN:
-                log("ACTION_DOWN");
-                mHasTouchDown = true;
-                mFinishedParsing = false;
-                mStartX = (int) event.getRawX();
-                mStartY = (int) event.getRawY();
-                return true;
-            case ACTION_MOVE:
-                log("ACTION_MOVE");
-                if (mFinishedParsing || !mHasTouchDown) {
-                    log("ACTION_MOVE, but finished parsing");
-                    return true;
-                }
-                final float xDelta = event.getRawX() - mStartX;
-                final float yDelta = event.getRawY() - mStartY;
-                if (!ViewUtils.exceedsSlop_DEPRECATED_FAILS_WHEN_MULTIPLE_POINTERS_DOWN(event, mStartX, mStartY, getContext(), 0.8)) {
-                    log("Move motion wasn't far enough for grid item");
-                    return true;
-                }
-                mFinishedParsing = true;
-                getParent().requestDisallowInterceptTouchEvent(true);
-                final boolean isHorizontalScroll = Math.abs(xDelta) > Math.abs(yDelta);
-                final boolean isRightDown = isHorizontalScroll ?
-                                            (xDelta > 0) :
-                                            (yDelta > 0);
-                final boolean isActionValidForDirection =
-                    (
-                        (isRightDown && mRightBottomEnabled) ||
-                            (!isRightDown && mLeftTopEnabled));
-                boolean tookAction = false;
-                if (isHorizontalScroll && mOrientation == HORIZONTAL && isActionValidForDirection) {
-                    log("Detected horizontal scroll on grid item");
-                    tookAction = true;
-                    if (isRightDown) {
-                        mListener.onTriggered(Direction.RIGHT_DOWN);
-                    } else {
-                        mListener.onTriggered(Direction.LEFT_UP);
-                    }
-                } else if (!isHorizontalScroll && mOrientation == VERTICAL &&
-                    isActionValidForDirection) {
-                    log("Detected vertical scroll on grid item");
-                    tookAction = true;
-                    if (isRightDown) {
-                        mListener.onTriggered(Direction.RIGHT_DOWN);
-                    } else {
-                        mListener.onTriggered(Direction.LEFT_UP);
-                    }
-                }
-                if (tookAction) {
-                    if (getParent() != null) {
-                        getParent().requestDisallowInterceptTouchEvent(true);
-                    }
-                    return true;
-                } else {
-                    return false;
-                }
-            case ACTION_UP:
-            case ACTION_CANCEL:
-                log("Event complete by " +
-                        (event.getAction() == ACTION_UP ? "ACTION_UP" : "ACTION_CANCEL"));
-                return mFinishedParsing;
-        }
-        return false;
-    }
-
-    // No intercept needed; everything below isn't touchable
-
     private void log(String... vals) {
         DebugLogUtils.needle(DebugLogUtils.TAG_GRID_HANDLE, vals);
     }
 
-    @Override
-    public void requestDisallowInterceptTouchEvent(boolean disallowIntercept) {
-        super.requestDisallowInterceptTouchEvent(disallowIntercept);
-        if (disallowIntercept) {
-            mFinishedParsing = true;
-        }
+    private View addArrowButton(int arrowDrawableId, int gravity) {
+        final int arrowSize = (int) (mHandleSize / 1.5);
+        final ImageView arrowView = new ImageView(getContext());
+        arrowView.setImageDrawable(ContextCompat.getDrawable(getContext(), arrowDrawableId));
+        addView(arrowView, new FrameLayout.LayoutParams(arrowSize, arrowSize, gravity));
+        return arrowView;
     }
 
-    public enum Direction {
-        LEFT_UP, RIGHT_DOWN
-    }
+    private boolean mDetectedSwipe = false;
 
-    public interface Listener {
-        void onTriggered(Direction d);
+    private SingleTouchEventHelper.OnSingleTouchListener buildTouchListener() {
+        return (v, event, action) -> {
+            if (getAlpha() == 0 || getVisibility() != VISIBLE || mListener == null) {
+                return false;
+            }
+
+            switch (action) {
+                case ACTION_DOWN:
+                    return true;
+                case ACTION_MOVE:
+                    if (mDetectedSwipe) {
+                        return true;
+                    }
+
+                    float rawX = mTouchEventHelper.getRawX(event);
+                    float rawY = mTouchEventHelper.getRawY(event);
+                    float startRawX = mTouchEventHelper.getStartRawX();
+                    float startRawY = mTouchEventHelper.getStartRawY();
+                    boolean exceedsSlop =
+                        ViewUtils.exceedsSlop(rawX, rawY, startRawX, startRawY, this, 0.8);
+                    if (!exceedsSlop) {
+                        return true;
+                    }
+
+                    // Perform swipe gesture
+                    mDetectedSwipe = true;
+                    getParent().requestDisallowInterceptTouchEvent(true);
+                    final float xDelta = rawX - startRawX;
+                    final float yDelta = rawY - startRawY;
+                    final boolean isHorizontalScroll = Math.abs(xDelta) > Math.abs(yDelta);
+                    final boolean isRightDown = isHorizontalScroll ? (xDelta > 0) : (yDelta > 0);
+                    final boolean isActionValidForDirection =
+                        ((isRightDown && mRightBottomEnabled) || (!isRightDown && mLeftTopEnabled));
+                    boolean tookAction = false;
+                    if (isHorizontalScroll &&
+                        mOrientation == HORIZONTAL &&
+                        isActionValidForDirection)
+                    {
+                        log("Detected horizontal scroll on grid item");
+                        tookAction = true;
+                        if (isRightDown) {
+                            mListener.onTriggered(Direction.RIGHT_DOWN);
+                        } else {
+                            mListener.onTriggered(Direction.LEFT_UP);
+                        }
+                    } else if (!isHorizontalScroll &&
+                        mOrientation == VERTICAL &&
+                        isActionValidForDirection)
+                    {
+                        log("Detected vertical scroll on grid item");
+                        tookAction = true;
+                        if (isRightDown) {
+                            mListener.onTriggered(Direction.RIGHT_DOWN);
+                        } else {
+                            mListener.onTriggered(Direction.LEFT_UP);
+                        }
+                    }
+
+                    if (tookAction && getParent() != null) {
+                        getParent().requestDisallowInterceptTouchEvent(true);
+                    }
+                    return tookAction;
+                case ACTION_UP:
+                case ACTION_CANCEL:
+                    boolean didComplete = mDetectedSwipe;
+                    mDetectedSwipe = false;
+                    return didComplete;
+            }
+            return false;
+        };
     }
 }
