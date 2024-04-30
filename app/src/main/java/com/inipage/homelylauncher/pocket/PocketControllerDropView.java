@@ -216,7 +216,7 @@ public class PocketControllerDropView extends View implements DecorViewDragger.T
                 break;
             case DragEvent.ACTION_DRAG_ENTERED:
             case DragEvent.ACTION_DRAG_LOCATION:
-                final int x = event.getX(this);
+                final int x = event.getRawXOffsetByView(this);
                 for (int i = 0; i < mRanges.size(); i++) {
                     Pair<Float, Float> range = mRanges.get(i);
                     if (x >= range.first && x <= range.second) {

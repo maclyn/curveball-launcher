@@ -11,7 +11,7 @@
         android:layout_height="match_parent"
         android:layout_margin="@dimen/grid_horizontal_margin">
 
-        <com.inipage.homelylauncher.pager.GesturePageLayout
+        <com.inipage.homelylauncher.pager.GridPageLayout
             android:id="@+id/grid_container"
             android:layout_gravity="center"
             android:layout_width="match_parent"
@@ -19,7 +19,7 @@
 
             <!-- Don't place anything in here. These are dynamically sized and added in
                  GridPageController. -->
-        </com.inipage.homelylauncher.pager.GesturePageLayout>
+        </com.inipage.homelylauncher.pager.GridPageLayout>
     </FrameLayout>
 
     <View

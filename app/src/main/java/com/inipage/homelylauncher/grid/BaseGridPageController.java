@@ -17,7 +17,11 @@ import static com.inipage.homelylauncher.caches.PackageModifiedEvent.Modificatio
 import static com.inipage.homelylauncher.caches.PackageModifiedEvent.Modification.REMOVED;
 import static com.inipage.homelylauncher.utils.DebugLogUtils.TAG_DRAG_OFFSET;
 import static com.inipage.homelylauncher.utils.DebugLogUtils.TAG_ICON_CASCADE;
+import static com.inipage.homelylauncher.utils.ViewUtils.exceedsSlopInActionMove;
+import static com.inipage.homelylauncher.utils.ViewUtils.getRawXWithPointerId;
+import static com.inipage.homelylauncher.utils.ViewUtils.getRawYWithPointerId;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.WallpaperManager;
@@ -47,7 +51,7 @@ import com.inipage.homelylauncher.model.ApplicationIconHideable;
 import com.inipage.homelylauncher.model.GridItem;
 import com.inipage.homelylauncher.model.GridPage;
 import com.inipage.homelylauncher.pager.BasePageController;
-import com.inipage.homelylauncher.pager.GesturePageLayout;
+import com.inipage.homelylauncher.pager.GridPageLayout;
 import com.inipage.homelylauncher.state.EditingEvent;
 import com.inipage.homelylauncher.state.GestureNavContractSingleton;
 import com.inipage.homelylauncher.state.GridDropFailedEvent;
@@ -88,9 +92,10 @@ public abstract class BaseGridPageController implements BasePageController {
     private final DragListener mDragListener;
     private GridMetrics mMetrics;
     private GridViewHolderMap mHolderMap;
-    private GesturePageLayout mRootContainer;
+    private GridPageLayout mRootContainer;
     private RelativeLayout mContainer;
     private AnimatedBackgroundGrid mAnimatedBackgroundGrid;
+
     // Widget addition
     private int mPendingAppWidgetId;
     private AppWidgetProviderInfo mPendingAwpi;
@@ -117,11 +122,15 @@ public abstract class BaseGridPageController implements BasePageController {
     /**
      * Given that we'll know the actual height/width of our view, layout the page.
      */
+    @SuppressLint("ClickableViewAccessibility")
     private void onRootContainerLayout() {
         final int height = mRootContainer.getHeight();
         final int width = mRootContainer.getWidth();
 
-        // TODO: The follow logic works if the screen doesn't change size or rotate
+        /*
+         * TODO: The following logic works if the screen doesn't change size or rotate
+         * We have to re-layout if we want this work nicely on tablets
+         */
 
         if (mPage.areDimensionsUnset()) {
             mMetrics = new GridMetrics(height, width, Constants.DEFAULT_COLUMN_COUNT);
@@ -539,8 +548,6 @@ public abstract class BaseGridPageController implements BasePageController {
         void requestBindWidget(@Nullable String pageId, int appWidgetId, AppWidgetProviderInfo awpi);
 
         void requestConfigureWidget(@Nullable String pageId, int appWidgetId, AppWidgetProviderInfo awpi);
-
-        void forwardSwipeUp(MotionEvent event, float deltaY);
     }
 
     private class TouchListener implements View.OnTouchListener {
@@ -715,19 +722,19 @@ public abstract class BaseGridPageController implements BasePageController {
         }
 
         private Point findPointFromDragEvent(DragEvent event) {
-            // DragEvent.getX() and DragEvent.getY() are already relative to the receiving view --
+            // DragEvent.getRawXOffsetByView() and DragEvent.getRawYOffsetByView() are already relative to the receiving view --
             // in this case, mContainer
             final GridViewHolder viewHolder = (GridViewHolder) event.getLocalState();
             final GridItem gridItem = viewHolder.getItem();
             final int cellWidth = mMetrics.getCellWidthPx();
             final int cellHeight = mMetrics.getCellHeightPx();
 
-            log(TAG_DRAG_OFFSET, "event.getX()/Y():" + event.getRawX() + ", " + event.getRawY());
+            log(TAG_DRAG_OFFSET, "event.getRawXOffsetByView()/Y():" + event.getRawX() + ", " + event.getRawY());
 
             float topLeftCellCenterX =
-                event.getX(mContainer) + event.getOffsetX() + (cellWidth / 2F);
+                event.getRawXOffsetByView(mContainer) + event.getOffsetX() + (cellWidth / 2F);
             float topLeftCellCenterY =
-                event.getY(mContainer) + event.getOffsetY() + (cellHeight / 2F);
+                event.getRawYOffsetByView(mContainer) + event.getOffsetY() + (cellHeight / 2F);
             final float columnValue = topLeftCellCenterX / cellWidth;
             final float rowValue = topLeftCellCenterY / cellHeight;
             int columnCell =
@@ -776,12 +783,10 @@ public abstract class BaseGridPageController implements BasePageController {
         }
     }
 
-    private class GesturePageLayoutListener implements GesturePageLayout.Listener {
+    private class GesturePageLayoutListener implements GridPageLayout.Listener {
 
         @Nullable
-        private GridViewHolder mHolder;
-        private boolean mShowingMenu;
-        private int mStartX, mStartY;
+        private GridViewHolder mActionTargetGridHolder;
 
         @Override
         public boolean onLongPress(final int rawX, final int rawY) {
@@ -793,66 +798,128 @@ public abstract class BaseGridPageController implements BasePageController {
             // Nothing there? Flip editing mode
             if (gridViewHolder == null) {
                 LayoutEditingSingleton.getInstance().setEditing(!isEditing);
+                // No drag will happen after this; ignore following events
                 return false;
             }
 
-            // AppViewHolders have a menu that we should show before breaking off into a drag
-            // if we're not in edit mode
             if (gridViewHolder instanceof AppViewHolder) {
-                if (!isEditing) {
-                    AppViewHolder appViewHolder = (AppViewHolder) gridViewHolder;
-                    mRootContainer.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
-                    mShowingMenu = true;
-
-                    // Center on the menu on center of the app icon
-                    final int[] out = new int[2];
-                    appViewHolder.getDragView().getLocationOnScreen(out);
-                    int viewWidth = appViewHolder.getDragView().getMeasuredWidth();
-                    int viewHeight = appViewHolder.getDragView().getMeasuredHeight();
-
-                    new AppPopupMenu().show(
-                        out[0] + (viewWidth / 2),
-                        out[1] + (viewHeight / 2),
-                        true,
-                        mRootContainer.getContext(),
-                        appViewHolder.getAppIcon(),
-                        new AppPopupMenu.Listener() {
-                            @Override
-                            public void onRemove() {
-                                removeViewHolder(appViewHolder);
-                                mShowingMenu = false;
-                            }
-
-                            @Override
-                            public void onDismiss() {
-                                mShowingMenu = false;
-                            }
-                        });
-                    mHolder = gridViewHolder;
-                    mStartX = rawX;
-                    mStartY = rawY;
-                } else {
+                // AppViewHolders have a menu that we should show before breaking off into a drag
+                // if we're not in edit mode
+                if (isEditing) {
+                    // Start drag immediately (don't show menu in edit mode)
                     beginDragOnHolder(gridViewHolder, rawX, rawY);
+                    return true;
                 }
-                return true;
-            }
 
-            // If it's a widget, either enter edit mode, or start moving it
-            if (gridViewHolder instanceof WidgetViewHolder) {
+                // Show app menu
+                AppViewHolder appViewHolder = (AppViewHolder) gridViewHolder;
+                mRootContainer.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+
+                // Center on the menu on center of the app icon
+                final int[] out = new int[2];
+                appViewHolder.getDragView().getLocationOnScreen(out);
+                int viewWidth = appViewHolder.getDragView().getMeasuredWidth();
+                int viewHeight = appViewHolder.getDragView().getMeasuredHeight();
+
+                new AppPopupMenu().show(
+                    out[0] + (viewWidth / 2),
+                    out[1] + (viewHeight / 2),
+                    true,
+                    mRootContainer.getContext(),
+                    appViewHolder.getAppIcon(),
+                    new AppPopupMenu.Listener() {
+                        @Override
+                        public void onRemove() {
+                            removeViewHolder(appViewHolder);
+                        }
+
+                        @Override
+                        public void onDismiss() {}
+                    });
+                mActionTargetGridHolder = gridViewHolder;
+                return true;
+            } else if (gridViewHolder instanceof WidgetViewHolder) {
+                // If it's a widget, either enter edit mode, or start moving it
                 if (isEditing) {
                     beginDragOnHolder(gridViewHolder, rawX, rawY);
                 } else {
                     LayoutEditingSingleton.getInstance().setEditing(true);
                 }
+                // We have to steal to stop the widget action from firing
+                mActionTargetGridHolder = gridViewHolder;
                 return true;
+            } else {
+                // Empty space and we're already editing
+                return false;
             }
-
-            return false;
         }
 
         @Override
-        public void onSwipeUpStarted(MotionEvent motionEvent, float deltaY) {
-            mHost.forwardSwipeUp(motionEvent, deltaY);
+        public void onEventAfterLongPress(
+            MotionEvent event,
+            int action,
+            int firstPointerId,
+            float startRawX,
+            float startRawY
+        ) {
+            // If we're in an ongoing drag -> forward to drag manager to move icon/widget
+            // around the screen
+            DecorViewDragger dragger = DecorViewDragger.get(mHost.getContext());
+            if (dragger.isDragActive()) {
+                switch (action) {
+                    case ACTION_MOVE:
+                        dragger.onDragMoveEvent(
+                            getRawXWithPointerId(mRootContainer, event, firstPointerId),
+                            getRawYWithPointerId(mRootContainer, event, firstPointerId));
+                        break;
+                    case ACTION_UP:
+                        dragger.onDragEndEvent(
+                            getRawXWithPointerId(mRootContainer, event, firstPointerId),
+                            getRawYWithPointerId(mRootContainer, event, firstPointerId));
+                        mActionTargetGridHolder = null;
+                        break;
+                    case ACTION_CANCEL:
+                        dragger.onDragCancelEvent();
+                        mActionTargetGridHolder = null;
+                        break;
+                }
+                return;
+            }
+
+            if (action == ACTION_UP || action == ACTION_CANCEL) {
+                mActionTargetGridHolder = null;
+                return;
+            }
+
+            if (action == ACTION_MOVE &&
+                exceedsSlopInActionMove(event, firstPointerId, startRawX, startRawY, mRootContainer)
+            ) {
+                // Collapse the menu, if it's showing
+                DecorViewManager.get(mRootContainer.getContext()).detachAllViews();
+                LayoutEditingSingleton.getInstance().setEditing(true);
+                beginDragOnHolder(
+                    Objects.requireNonNull(mActionTargetGridHolder),
+                    (int) startRawX,
+                    (int) startRawY);
+            }
+        }
+
+        @Override
+        public void onSwipeUpStarted(MotionEvent motionEvent, int firstPointerIdx, float startRawY) {
+            if (LayoutEditingSingleton.getInstance().isEditing()) {
+                return;
+            }
+            // TODO: This will be updated to handle folders at some point
+        }
+
+        @Override
+        public void onEventAfterSwipeUp(
+            MotionEvent event,
+            int action,
+            int firstPointerId,
+            float startRawY
+        ) {
+            // TODO: Implement
         }
 
         @Override
@@ -862,41 +929,7 @@ public abstract class BaseGridPageController implements BasePageController {
         }
 
         @Override
-        public void onAdditionalEvent(MotionEvent event, float deltaX, float deltaY) {
-            // If we're in an ongoing drag -> forward to drag manager to move icon/widget
-            // around the screen
-            DecorViewDragger dragger = DecorViewDragger.get(mHost.getContext());
-            if (dragger.isDragActive()) {
-                switch (event.getAction()) {
-                    case ACTION_MOVE:
-                        dragger.onDragMoveEvent(event.getRawX(), event.getRawY());
-                        break;
-                    case ACTION_UP:
-                        dragger.onDragEndEvent(event.getRawX(), event.getRawY());
-                        break;
-                    case ACTION_CANCEL:
-                        dragger.onDragCancelEvent();
-                        break;
-                }
-                return;
-            }
-
-            // If we're not showing a menu, we can't transition to a drag event, so this has
-            // to be a swipe up
-            if (!mShowingMenu) {
-                mHost.forwardSwipeUp(event, deltaY);
-            } else if (ViewUtils.exceedsSlop_DEPRECATED_FAILS_WHEN_MULTIPLE_POINTERS_DOWN(event, mStartX, mStartY, mContainer.getContext(), 1F)) {
-                // If we ARE showing the menu (i.e. long press has happened), we are allowed to
-                // start a drag event
-                DecorViewManager.get(mRootContainer.getContext()).detachAllViews();
-                LayoutEditingSingleton.getInstance().setEditing(true);
-                beginDragOnHolder(Objects.requireNonNull(mHolder), mStartX, mStartY);
-                mShowingMenu = false;
-            }
-        }
-
-        @Override
-        public void onUnhandledTouchUp(MotionEvent event) {
+        public void onUnhandledTouchUpInGridLayoutBounds(MotionEvent event) {
             @Nullable final GridViewHolder gridViewHolder =
                 getItemAtPosition((int) event.getRawX(), (int) event.getRawY());
             if (!(gridViewHolder instanceof WidgetViewHolder)) {
@@ -924,20 +957,18 @@ public abstract class BaseGridPageController implements BasePageController {
 
         private void beginDragOnHolder(GridViewHolder gridViewHolder, int startX, int startY) {
             gridViewHolder.getRootContainer().requestDisallowInterceptTouchEvent(true);
-            gridViewHolder.getRootContainer().post(() -> {
-                DecorViewDragger.get(mHost.getContext())
-                    .startDrag(
-                        gridViewHolder.getDragView(),
-                        gridViewHolder,
-                        false,
-                        startX,
-                        startY);
-                gridViewHolder.detachHost();
-                mPage.getItems().remove(gridViewHolder.getItem());
-                mHolderMap.removeHolder(gridViewHolder);
-                onGridMakeupChanged();
-                commitPage();
-            });
+            DecorViewDragger.get(mHost.getContext())
+                .startDrag(
+                    gridViewHolder.getDragView(),
+                    gridViewHolder,
+                    false,
+                    startX,
+                    startY);
+            gridViewHolder.detachHost();
+            mPage.getItems().remove(gridViewHolder.getItem());
+            mHolderMap.removeHolder(gridViewHolder);
+            onGridMakeupChanged();
+            commitPage();
         }
     }
 

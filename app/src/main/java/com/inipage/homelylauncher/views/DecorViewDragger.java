@@ -4,15 +4,12 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.os.Debug;
-import android.view.MotionEvent;
+import android.util.Log;
 import android.view.View;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
 import com.inipage.homelylauncher.drawer.BitmapView;
-import com.inipage.homelylauncher.persistence.PrefsHelper;
 import com.inipage.homelylauncher.utils.DebugLogUtils;
 import com.inipage.homelylauncher.utils.ViewUtils;
 
@@ -28,10 +25,6 @@ import static android.view.DragEvent.ACTION_DRAG_EXITED;
 import static android.view.DragEvent.ACTION_DRAG_LOCATION;
 import static android.view.DragEvent.ACTION_DRAG_STARTED;
 import static android.view.DragEvent.ACTION_DROP;
-import static android.view.MotionEvent.ACTION_CANCEL;
-import static android.view.MotionEvent.ACTION_DOWN;
-import static android.view.MotionEvent.ACTION_MOVE;
-import static android.view.MotionEvent.ACTION_UP;
 import static android.view.View.VISIBLE;
 
 /**
@@ -51,22 +44,23 @@ public class DecorViewDragger {
         private final int[] mTempOut = new int[2];
         private final Object mLocalState;
         private final int mAction;
-        private final int mX;
-        private final int mY;
+        private final int mRawX;
+        private final int mRawY;
         private final int mOffsetX;
         private final int mOffsetY;
 
         private DragEvent(
             Object localState,
             int action,
-            int x,
-            int y,
+            int rawX,
+            int rawY,
             int offsetX,
-            int offsetY) {
+            int offsetY)
+        {
             mLocalState = localState;
             mAction = action;
-            mX = x;
-            mY = y;
+            mRawX = rawX;
+            mRawY = rawY;
             mOffsetX = offsetX;
             mOffsetY = offsetY;
         }
@@ -87,22 +81,22 @@ public class DecorViewDragger {
             return mOffsetY;
         }
 
-        public int getX(View v) {
+        public int getRawXOffsetByView(View v) {
             v.getLocationOnScreen(mTempOut);
             return getRawX() - mTempOut[0];
         }
 
         public int getRawX() {
-            return mX;
+            return mRawX;
         }
 
-        public int getY(View v) {
+        public int getRawYOffsetByView(View v) {
             v.getLocationOnScreen(mTempOut);
             return getRawY() - mTempOut[1];
         }
 
         public int getRawY() {
-            return mY;
+            return mRawY;
         }
     }
 
@@ -238,7 +232,12 @@ public class DecorViewDragger {
                 .get(mActivityRef.get())
                 .attachView(
                     dragView,
-                    new DecorViewManager.Callback() {},
+                    new DecorViewManager.Callback() {
+                        @Override
+                        public boolean canBeDismissedWithBackgroundTap() {
+                            return false;
+                        }
+                    },
                     width,
                     height,
                     startX + mOffsetX,
@@ -261,6 +260,9 @@ public class DecorViewDragger {
     }
 
     public synchronized boolean onDragMoveEvent(float currentX, float currentY) {
+        DebugLogUtils.needle(
+            DebugLogUtils.TAG_CUSTOM_TOUCHEVENTS,
+            "onDragMoveEvent x=" + currentX + ", y=" + currentY);
         return onDragMoveEvent((int) currentX, (int) currentY);
     }
 

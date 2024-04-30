@@ -1,6 +1,5 @@
 package com.inipage.homelylauncher.views
 
-import android.os.Parcel
 import android.view.MotionEvent
 import android.view.MotionEvent.ACTION_CANCEL
 import android.view.MotionEvent.ACTION_DOWN

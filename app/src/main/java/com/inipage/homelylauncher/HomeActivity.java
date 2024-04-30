@@ -525,14 +525,6 @@ public class HomeActivity extends AppCompatActivity implements
         }
     }
 
-    @Override
-    public void forwardSwipeUp(MotionEvent event, float deltaY) {
-        if (LayoutEditingSingleton.getInstance().isEditing()) {
-            return;
-        }
-        // TODO: This probably needs to be purged for vertical grid controllers to work
-    }
-
     @SuppressLint("UseCompatLoadingForDrawables")
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {

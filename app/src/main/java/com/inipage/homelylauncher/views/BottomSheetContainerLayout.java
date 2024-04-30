@@ -91,8 +91,8 @@ public class BottomSheetContainerLayout extends LinearLayout {
                     return false;
                 }
                 addMovementToVelocityTracker(ev);
-                final float xDelta = getRawXWithPointerId(this, ev, firstPointerIdx) - mStartRawX;
-                final float yDelta = getRawYWithPointerId(this, ev, firstPointerIdx) - mStartRawY;
+                final float xDelta = getRawXWithPointerId(this, ev, mFirstPointerId) - mStartRawX;
+                final float yDelta = getRawYWithPointerId(this, ev, mFirstPointerId) - mStartRawY;
                 if (yDelta < 0 || Math.abs(xDelta) > Math.abs(yDelta)) {
                     mDroppedEvent = true;
                     return false;

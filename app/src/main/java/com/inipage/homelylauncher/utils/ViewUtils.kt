@@ -50,22 +50,6 @@ object ViewUtils {
 
     @JvmStatic
     @JvmOverloads
-    fun exceedsSlop_DEPRECATED_FAILS_WHEN_MULTIPLE_POINTERS_DOWN(
-        event: MotionEvent,
-        startX: Double,
-        startY: Double,
-        ctx: Context,
-        slopFactor: Double = 1.0
-    ): Boolean {
-        if (event.action == MotionEvent.ACTION_CANCEL) {
-            return false
-        }
-        val dist = Math.hypot(event.rawX - startX, event.rawY - startY)
-        return dist > ViewConfiguration.get(ctx).scaledTouchSlop * slopFactor
-    }
-
-    @JvmStatic
-    @JvmOverloads
     fun exceedsSlopInActionMove(
         event: MotionEvent,
         pointerId: Int,
@@ -102,7 +86,7 @@ object ViewUtils {
         if (ptrIdx == -1) {
             DebugLogUtils.complain(
                 view,
-                "Tried to getX() for $ptrId, but it wasn't in this event")
+                "Tried to getRawXOffsetByView() for $ptrId, but it wasn't in this event")
             return 0F
         }
         return event.getX(ptrIdx)
@@ -114,7 +98,7 @@ object ViewUtils {
         if (ptrIdx == -1) {
             DebugLogUtils.complain(
                 view,
-                "Tried to getY() for $ptrId, but it wasn't in this event")
+                "Tried to getRawYOffsetByView() for $ptrId, but it wasn't in this event")
             return 0F
         }
         return event.getY(ptrIdx)

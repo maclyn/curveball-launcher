@@ -13,6 +13,7 @@ import android.widget.FrameLayout;
 import androidx.annotation.Nullable;
 
 import com.inipage.homelylauncher.R;
+import com.inipage.homelylauncher.utils.DebugLogUtils;
 import com.inipage.homelylauncher.utils.ViewUtils;
 
 import java.lang.ref.WeakReference;
@@ -90,9 +91,13 @@ public class DecorViewManager {
     private String attachViewImpl(
         View view,
         FrameLayout.LayoutParams params,
-        Callback listener) {
+        Callback listener
+    ) {
         final String key = UUID.randomUUID().toString();
-        attachBackgroundView(key, listener.shouldTintBackgroundView());
+        attachBackgroundView(
+            key,
+            listener.shouldTintBackgroundView(),
+            listener.canBeDismissedWithBackgroundTap());
         @Nullable FrameLayout decorView = getDecorView();
         if (decorView != null) {
             decorView.addView(view, params);
@@ -103,7 +108,11 @@ public class DecorViewManager {
         return key;
     }
 
-    private void attachBackgroundView(String key, boolean shouldTintView) {
+    private void attachBackgroundView(
+        String key,
+        boolean shouldTintView,
+        boolean canBeDismissedWithBackgroundTap)
+    {
         @Nullable FrameLayout decorView = getDecorView();
         @Nullable Activity activity = mActivityRef.get();
         if (decorView == null || activity == null) {
@@ -112,7 +121,9 @@ public class DecorViewManager {
 
         View fullscreenTransparentView = new View(activity);
         fullscreenTransparentView.setClickable(true);
-        fullscreenTransparentView.setOnClickListener(v -> removeView(key));
+        if (canBeDismissedWithBackgroundTap) {
+            fullscreenTransparentView.setOnClickListener(v -> removeView(key));
+        }
         decorView.addView(
             fullscreenTransparentView,
             new FrameLayout.LayoutParams(
@@ -243,11 +254,15 @@ public class DecorViewManager {
     public String attachView(
         View view,
         Callback callback,
-        FrameLayout.LayoutParams layoutParams) {
+        FrameLayout.LayoutParams layoutParams)
+    {
         return attachViewImpl(view, layoutParams, callback);
     }
 
     public void updateViewPosition(String key, int x, int y) {
+        DebugLogUtils.needle(
+            DebugLogUtils.TAG_CUSTOM_TOUCHEVENTS,
+            "updateViewPosition key=" + key + ", x=" + x + ", y=" + y);
         @Nullable FrameLayout decorView = getDecorView();
         @Nullable View attachedView = mViewKeyToView.get(key);
         if (decorView != null && attachedView != null) {
@@ -317,7 +332,10 @@ public class DecorViewManager {
          *
          * @param removedView The View that will be removed.
          */
-        default void onDismissedByBackgroundTap(View removedView) {
+        default void onDismissedByBackgroundTap(View removedView) {}
+
+        default boolean canBeDismissedWithBackgroundTap() {
+            return true;
         }
     }
 }

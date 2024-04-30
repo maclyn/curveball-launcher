@@ -27,10 +27,9 @@ public class DebugLogUtils {
     public static final String TAG_WEATHER_LOADING = "tag_weather_loading";
     public static final String TAG_WALLPAPER_OFFSET = "tag_wallpaper_offset";
     public static final String TAG_BOTTOM_SHEET = "tag_bottom_sheet";
-    public static final String TAG_POCKET_ANIMATION = "tag_pocket_animation";
     public static final String TAG_VIRTUAL_TRACKPAD = "tag_virtual_trackpad";
 
-    private static final String NEEDLED = TAG_BOTTOM_SHEET;
+    private static final String NEEDLED = TAG_CUSTOM_TOUCHEVENTS;
 
     public static void complain(Context context, String complaint) {
         if (!PrefsHelper.isDevMode() && !BuildConfig.DEBUG) {
