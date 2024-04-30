@@ -798,8 +798,9 @@ public abstract class BaseGridPageController implements BasePageController {
             // Nothing there? Flip editing mode
             if (gridViewHolder == null) {
                 LayoutEditingSingleton.getInstance().setEditing(!isEditing);
-                // No drag will happen after this; ignore following events
-                return false;
+                // No drag will happen after this, but we still want to steal the following
+                // events so we don't show the widget add menu
+                return true;
             }
 
             if (gridViewHolder instanceof AppViewHolder) {
@@ -883,6 +884,10 @@ public abstract class BaseGridPageController implements BasePageController {
                         mActionTargetGridHolder = null;
                         break;
                 }
+                return;
+            }
+
+            if (mActionTargetGridHolder == null) {
                 return;
             }
 
