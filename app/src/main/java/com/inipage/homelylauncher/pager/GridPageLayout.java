@@ -14,6 +14,7 @@ import android.widget.FrameLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.inipage.homelylauncher.state.GridDropStateMachine;
 import com.inipage.homelylauncher.utils.DebugLogUtils;
 import com.inipage.homelylauncher.utils.ViewUtils;
 import com.inipage.homelylauncher.views.DecorViewDragger;
@@ -101,7 +102,9 @@ public class GridPageLayout extends FrameLayout {
         if (mListener == null) {
             return false;
         }
-        if (mDetectedState == GestureDetectedState.FORWARD_AFTER_LONG_PRESS) {
+        if (mDetectedState == GestureDetectedState.FORWARD_AFTER_LONG_PRESS &&
+            event.getActionMasked() != ACTION_DOWN)
+        {
             log("Long press happened; requesting intercept");
             return true;
         }
@@ -260,6 +263,9 @@ public class GridPageLayout extends FrameLayout {
 
     private synchronized void onLongPressAction() {
         log("Got long press event");
+        if (mDetectedState != GestureDetectedState.UNDECIDED) {
+            return;
+        }
         if (getParent() != null) {
             getParent().requestDisallowInterceptTouchEvent(true);
         }
