@@ -1,32 +1,6 @@
 package com.inipage.homelylauncher.persistence;
 
 
-import android.content.ContentValues;
-import android.content.Context;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.util.Pair;
-
-import com.google.common.collect.ImmutableList;
-import com.inipage.homelylauncher.HomeActivity;
-import com.inipage.homelylauncher.model.ApplicationIconHideable;
-import com.inipage.homelylauncher.model.DockItem;
-import com.inipage.homelylauncher.model.ClassicGridItem;
-import com.inipage.homelylauncher.model.ClassicGridPage;
-import com.inipage.homelylauncher.model.GridFolder;
-import com.inipage.homelylauncher.model.GridFolderApp;
-import com.inipage.homelylauncher.model.SwipeApp;
-import com.inipage.homelylauncher.model.SwipeFolder;
-import com.inipage.homelylauncher.utils.Constants;
-
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_ACTIVITY_NAME;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_DATA_INT_1;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.COLUMN_DATA_STRING_1;
@@ -52,8 +26,29 @@ import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLE_GRID_F
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLE_GRID_ITEM;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLE_GRID_PAGE;
 import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLE_HIDDEN_APPS;
-import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLE_VERTICAL_GRID_ITEM;
-import static com.inipage.homelylauncher.persistence.DatabaseHelper.TABLE_VERTICAL_GRID_PAGE;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.util.Pair;
+
+import com.inipage.homelylauncher.HomeActivity;
+import com.inipage.homelylauncher.model.ApplicationIconHideable;
+import com.inipage.homelylauncher.model.ClassicGridItem;
+import com.inipage.homelylauncher.model.ClassicGridPage;
+import com.inipage.homelylauncher.model.DockItem;
+import com.inipage.homelylauncher.model.GridFolder;
+import com.inipage.homelylauncher.model.GridFolderApp;
+import com.inipage.homelylauncher.utils.Constants;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 

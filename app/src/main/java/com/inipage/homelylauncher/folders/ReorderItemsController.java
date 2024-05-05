@@ -1,4 +1,4 @@
-package com.inipage.homelylauncher.pocket;
+package com.inipage.homelylauncher.folders;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,13 +13,13 @@ import com.inipage.homelylauncher.grid.GridItemHandleView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReorderController<T> {
+public class ReorderItemsController<T> {
 
     private final List<T> mReorderedList;
     private final LinearLayout mListContainer;
     private final ItemBinder<T> mItemBinder;
 
-    public ReorderController(
+    public ReorderItemsController(
         List<T> originalList,
         LinearLayout listContainer,
         ItemBinder<T> binder) {

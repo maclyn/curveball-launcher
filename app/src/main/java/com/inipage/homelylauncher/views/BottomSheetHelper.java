@@ -65,13 +65,12 @@ public class BottomSheetHelper {
 
     public String show(Context context, String title) {
         final LayoutInflater inflater = LayoutInflater.from(context);
-        final BottomSheetContainerLayout rootView =
-            (BottomSheetContainerLayout) inflater.inflate(R.layout.bottom_sheet_container, null);
+        final DraggableLayout rootView =
+            (DraggableLayout) inflater.inflate(R.layout.bottom_sheet_container, null);
         final LinearLayout containerView = rootView.findViewById(R.id.bottom_sheet_container);
         final LinearLayout actionContainerView =
             rootView.findViewById(R.id.bottom_sheet_action_container);
         ((TextView) rootView.findViewById(R.id.bottom_sheet_title)).setText(title);
-
 
         @Nullable final Activity activity = ViewUtils.requireActivityOf(context);
         rootView.setLayoutParams(
@@ -101,7 +100,7 @@ public class BottomSheetHelper {
                 }
             },
             (FrameLayout.LayoutParams) rootView.getLayoutParams());
-        rootView.attachDecorView(decorHandle);
+        rootView.attachHost(new BottomSheetContainerLayoutHost(context, decorHandle));
         // Attach menu items
         if (!mItems.isEmpty()) {
             ScrollView scroller = new ScrollView(context);

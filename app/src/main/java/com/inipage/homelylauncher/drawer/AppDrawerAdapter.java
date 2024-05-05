@@ -27,21 +27,14 @@ import com.inipage.homelylauncher.R;
 import com.inipage.homelylauncher.caches.AppInfoCache;
 import com.inipage.homelylauncher.caches.FontCacheSync;
 import com.inipage.homelylauncher.caches.IconCacheSync;
-import com.inipage.homelylauncher.grid.AppViewHolder;
 import com.inipage.homelylauncher.model.ApplicationIcon;
 import com.inipage.homelylauncher.model.ApplicationIconHideable;
-import com.inipage.homelylauncher.model.ClassicGridItem;
-import com.inipage.homelylauncher.model.SwipeFolder;
-import com.inipage.homelylauncher.state.LayoutEditingSingleton;
 import com.inipage.homelylauncher.utils.Constants;
-import com.inipage.homelylauncher.utils.DebugLogUtils;
 import com.inipage.homelylauncher.utils.InstalledAppUtils;
 import com.inipage.homelylauncher.utils.InstalledAppUtils.AppLaunchSource;
 import com.inipage.homelylauncher.utils.LifecycleLogUtils;
 import com.inipage.homelylauncher.utils.Prewarmer;
 import com.inipage.homelylauncher.views.AppPopupMenu;
-import com.inipage.homelylauncher.views.DecorViewDragger;
-import com.inipage.homelylauncher.views.DecorViewManager;
 
 import org.apache.commons.collections4.trie.PatriciaTrie;
 import org.greenrobot.eventbus.EventBus;
@@ -243,7 +236,6 @@ public class AppDrawerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     private enum Mode {
         SHOWING_ALL,
-        SHOWING_GROUP,
         SEARCH_RESULTS
     }
 
@@ -267,7 +259,6 @@ public class AppDrawerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     private final int mColumnCount;
 
     private List<AdapterElement> mElements;
-    @Nullable private SwipeFolder mSelectedFolder;
     @Nullable
     private List<ApplicationIconHideable> mLastSearchResult;
     private Mode mMode;
@@ -295,49 +286,10 @@ public class AppDrawerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     @SuppressLint("NotifyDataSetChanged")
     public synchronized boolean performSearch(String query) {
         mMode = Mode.SEARCH_RESULTS;
-        mSelectedFolder = null;
         if (rebuild(query)) {
             notifyDataSetChanged();
         }
         return !mElements.isEmpty();
-    }
-
-    public synchronized void showGroup(SwipeFolder group) {
-        assert(mMode != Mode.SEARCH_RESULTS);
-
-        if (group == mSelectedFolder) {
-            leaveGroupSelection();
-            return;
-        }
-
-        Mode oldMode = mMode;
-        mMode = Mode.SHOWING_GROUP;
-        mSelectedFolder = group;
-        mDelegate.setItemAnimator(null);
-        notifyItemChanged(0);
-
-        if (oldMode == Mode.SHOWING_GROUP) {
-            rebuild(null);
-        }
-        for (int i = 1; i < mElements.size(); i++) {
-            AdapterElement element = mElements.get(i);
-            if (element.getElementType() != ITEM_VIEW_TYPE_APP ||
-                !group.doesContainApp(element.getUnderlyingApp()))
-            {
-                mElements.remove(i);
-                notifyItemRemoved(i);
-                i--;
-            }
-        }
-    }
-
-    public synchronized void leaveGroupSelection() {
-        mMode = Mode.SHOWING_ALL;
-        mLastSearchResult = null;
-        mSelectedFolder = null;
-        rebuild(null);
-        notifyDataSetChanged();
-        mDelegate.setItemAnimator(new DefaultItemAnimator());
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -808,36 +760,6 @@ public class AppDrawerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         return mColumnCount > 1;
     }
 
-    private View getGroupView(View parent, @Nullable SwipeFolder folder, boolean isSelected) {
-        FrameLayout itemContainer = new FrameLayout(parent.getContext(), null);
-        int appIconSize =
-            parent
-                .getContext()
-                .getResources()
-                .getDimensionPixelSize(R.dimen.app_drawer_group_icon_size);
-        FrameLayout.LayoutParams groupFolderViewParams =
-            new FrameLayout.LayoutParams(appIconSize, appIconSize);
-        groupFolderViewParams.gravity = Gravity.CENTER;
-        ImageView groupFolderView = new ImageView(itemContainer.getContext(), null);
-        if (folder != null) {
-            groupFolderView.setImageBitmap(folder.getIcon(parent.getContext()));
-            groupFolderView.setImageAlpha(
-                isSelected ?
-                HEADER_TOP_GROUP_SELECTED_ALPHA :
-                HEADER_TOP_GROUP_DESELECTED_ALPHA);
-            groupFolderView.setOnClickListener(v -> showGroup(folder));
-        }
-        itemContainer.addView(groupFolderView, groupFolderViewParams);
-
-        LinearLayout.LayoutParams itemContainerLayoutParams =
-            new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        itemContainerLayoutParams.weight = 1.0F;
-        itemContainer.setLayoutParams(itemContainerLayoutParams);
-
-        return itemContainer;
-    }
 
     public static class TopHeaderHolder extends AnimatableViewHolder {
         TextView installCount;

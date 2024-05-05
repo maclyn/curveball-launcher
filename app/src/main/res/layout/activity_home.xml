@@ -19,9 +19,9 @@
         android:layout_height="20dp" />
 
     <View
+        android:id="@+id/bottom_scrim"
         android:layout_width="match_parent"
         android:layout_height="20dp"
-        android:id="@+id/bottom_scrim"
         android:background="@color/transparent"
         android:layout_alignParentBottom="true" />
 
@@ -54,16 +54,6 @@
             android:gravity="center_vertical"
             android:layout_alignParentBottom="true" />
 
-        <!-- This is broken now -->
-        <com.inipage.homelylauncher.pocket.PocketControllerDropView
-            android:id="@+id/pocket_drop_view"
-            android:orientation="horizontal"
-            android:visibility="gone"
-            android:layout_height="@dimen/contextual_dock_height"
-            android:layout_width="match_parent"
-            android:layout_alignParentBottom="true"
-            android:layout_marginHorizontal="@dimen/home_activity_margin" />
-
         <com.inipage.homelylauncher.pager.PagerIndicatorView
             android:id="@+id/pager_indicator_view"
             android:focusableInTouchMode="false"
@@ -73,4 +63,93 @@
             android:layout_alignParentBottom="true"
             android:layout_marginBottom="@dimen/contextual_dock_height"/>
     </RelativeLayout>
+
+    <View
+        android:id="@+id/veil"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/home_masking_overlay"
+        android:visibility="gone"
+        />
+
+    <com.inipage.homelylauncher.views.DraggableLayout
+        android:id="@+id/folder_container"
+        android:background="@color/folder_background"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/bottom_scrim"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <!-- New folder suggestion -->
+        <FrameLayout
+            android:id="@+id/new_folder_suggestion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:visibility="gone"
+            >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="80dp"
+                android:layout_gravity="center"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/primary_text_color"
+                android:text="@string/folder_create_new_expando"
+                />
+        </FrameLayout>
+
+        <LinearLayout
+            android:id="@+id/open_folder_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:orientation="vertical"
+            android:visibility="gone"
+            >
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                >
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    />
+
+                <ImageView
+                    android:id="@+id/collapse_folder_button"
+                    android:contentDescription="@string/collapse_folder_button_content_description"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:drawable="@drawable/round_keyboard_arrow_down_24"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    />
+
+                <ImageView
+                    android:id="@+id/show_folder_menu"
+                    android:contentDescription="@string/show_folder_menu_button_content_description"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:drawable="@drawable/ic_more_horiz_white_48dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    />
+            </LinearLayout>
+
+            <!-- TODO: Add widget container -->
+
+            <!-- TODO: Add RecyclerView for folder elements -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/folder_apps_rv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                />
+        </LinearLayout>
+    </com.inipage.homelylauncher.views.DraggableLayout>
 </RelativeLayout>

@@ -29,7 +29,7 @@ public class DebugLogUtils {
     public static final String TAG_BOTTOM_SHEET = "tag_bottom_sheet";
     public static final String TAG_VIRTUAL_TRACKPAD = "tag_virtual_trackpad";
 
-    private static final String NEEDLED = TAG_CUSTOM_TOUCHEVENTS;
+    private static final String NEEDLED = TAG_PAGE_SCROLL;
 
     public static void complain(Context context, String complaint) {
         if (!PrefsHelper.isDevMode() && !BuildConfig.DEBUG) {

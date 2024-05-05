@@ -41,7 +41,6 @@
     <string name="remove_dock_item_message">Would you like to remove %s from the dock?</string>
     <string name="yes">Yes</string>
     <string name="app_info">App info</string>
-    <string name="name_your_folder">Name your folder</string>
     <string name="reorder_rows">Reorder rows</string>
     <string name="sample_text">Some sample text</string>
     <string name="no_snacklets_found">No snacklets found.</string>
@@ -229,7 +228,6 @@
     <string name="import_database_from_storage_description">Import a database from storage</string>
     <string name="export_database_to_storage">Export database to storage</string>
     <string name="export_database_to_storage_description">Export database (layout, hidden apps) to phone storage</string>
-    <string name="folder_icon_content_description">Icon for the currently edited folder</string>
     <string name="new_folder_bottom_sheet_title">Create new folder</string>
     <string name="add_to_new_folder">Create new folder</string>
     <string name="edit_folder_bottom_sheet_title">Edit folder</string>
@@ -239,7 +237,6 @@
     <string name="included_icons">Included icons</string>
     <string name="failed_to_fetch_icons">Couldn\'t get icons for package %s.</string>
     <string name="pick_an_icon">Pick an icon</string>
-    <string name="default_folder_title">Folder</string>
     <string name="hidden_apps_bottom_sheet_title">Hidden apps</string>
     <string name="hidden_dock_item_bottom_sheet_title">Hidden apps in dock</string>
     <string name="dock_show_in_call">in an ongoing call</string>
@@ -255,7 +252,6 @@
     <string name="pocket">Pocket</string>
     <string name="all_day">All day</string>
     <string name="ends_at">Ends %s</string>
-    <string name="reorder_pocket_items">Reorder pocket rows</string>
     <string name="choose_calendars_to_hide">Choose calendars to hide</string>
     <string name="dock_items">Dock items</string>
     <string name="manage_hidden_calendars">Manage hidden calendars</string>
@@ -283,5 +279,8 @@
     <string name="amount_of_sleet">%s of sleet</string>
     <string name="header_app_count">%d apps</string>
     <string name="item_doesnt_fit_here">This item doesn\'t fit here.</string>
+    <string name="folder_create_new_expando">Create new expando</string>
+    <string name="show_folder_menu_button_content_description">Button to show a folder menu</string>
+    <string name="collapse_folder_button_content_description">Button to collapse folder</string>
 </resources>
 

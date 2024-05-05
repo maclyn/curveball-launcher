@@ -1,5 +1,8 @@
 package com.inipage.homelylauncher.drawer;
 
+import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
+
 import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
@@ -44,7 +47,6 @@ import com.inipage.homelylauncher.caches.PackagesBulkModifiedEvent;
 import com.inipage.homelylauncher.grid.AppViewHolder;
 import com.inipage.homelylauncher.model.ApplicationIcon;
 import com.inipage.homelylauncher.model.ApplicationIconHideable;
-import com.inipage.homelylauncher.model.SwipeFolder;
 import com.inipage.homelylauncher.pager.BasePageController;
 import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.persistence.PrefsHelper;
@@ -69,9 +71,6 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnEditorAction;
 import butterknife.OnTextChanged;
-
-import static android.view.View.GONE;
-import static android.view.View.VISIBLE;
 
 /**
  * The controller instantiates the conventional vertically scrolling app drawer provided by the
@@ -452,10 +451,6 @@ public class AppDrawerController implements BasePageController, FastScrollContro
             bottomSheetHelper.addItem(R.drawable.ic_visibility_white_48dp, R.string.show_new_user_bottom_sheet, () -> {
                 new NewUserBottomSheet(mContext).show();
             });
-            bottomSheetHelper.addItem(
-                R.drawable.ic_reorder,
-                R.string.reorder_pocket_items,
-                mHost::editFolderOrder);
         }
         bottomSheetHelper.show(mContext, mContext.getString(R.string.settings));
     }
@@ -606,10 +601,6 @@ public class AppDrawerController implements BasePageController, FastScrollContro
     }
 
     public interface Host {
-
-        void editFolderOrder();
-
-        void editFolder(SwipeFolder folder);
 
         void requestAppDrawerFocus();
     }

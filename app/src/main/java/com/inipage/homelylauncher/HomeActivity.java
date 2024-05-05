@@ -44,29 +44,26 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 import androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback;
 
+import com.google.common.collect.ImmutableList;
 import com.inipage.homelylauncher.caches.AppInfoCache;
 import com.inipage.homelylauncher.caches.AppLabelCache;
 import com.inipage.homelylauncher.caches.FontCacheSync;
 import com.inipage.homelylauncher.caches.IconCacheSync;
 import com.inipage.homelylauncher.dock.DockController;
 import com.inipage.homelylauncher.drawer.HideAppEvent;
-import com.inipage.homelylauncher.grid.BaseGridPageController;
+import com.inipage.homelylauncher.folders.FolderController;
+import com.inipage.homelylauncher.grid.AppViewHolder;
 import com.inipage.homelylauncher.grid.ClassicGridPageController;
-import com.inipage.homelylauncher.grid.GridViewHolder;
 import com.inipage.homelylauncher.hacks.FasterPagerSnapHelper;
 import com.inipage.homelylauncher.model.ApplicationIcon;
-import com.inipage.homelylauncher.model.SwipeFolder;
 import com.inipage.homelylauncher.pager.BasePageController;
 import com.inipage.homelylauncher.pager.HomePager;
 import com.inipage.homelylauncher.pager.NonTouchInputCoordinator;
 import com.inipage.homelylauncher.pager.PagerIndicatorView;
 import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.persistence.PrefsHelper;
-import com.inipage.homelylauncher.pocket.PocketController;
-import com.inipage.homelylauncher.pocket.PocketControllerDropView;
 import com.inipage.homelylauncher.state.EditingEvent;
 import com.inipage.homelylauncher.state.GestureNavContractSingleton;
-import com.inipage.homelylauncher.state.GridDropFailedEvent;
 import com.inipage.homelylauncher.state.LayoutEditingSingleton;
 import com.inipage.homelylauncher.state.PagesChangedEvent;
 import com.inipage.homelylauncher.utils.AttributeApplier;
@@ -77,6 +74,7 @@ import com.inipage.homelylauncher.utils.StatusBarUtils;
 import com.inipage.homelylauncher.utils.ViewUtils;
 import com.inipage.homelylauncher.views.DecorViewDragger;
 import com.inipage.homelylauncher.views.DecorViewManager;
+import com.inipage.homelylauncher.views.DraggableLayout;
 import com.inipage.homelylauncher.views.ProvidesOverallDimensions;
 import com.inipage.homelylauncher.views.SurfaceViewWrapper;
 
@@ -86,14 +84,18 @@ import org.greenrobot.eventbus.ThreadMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Consumer;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
+@SuppressLint("NonConstantResourceId")
 public class HomeActivity extends AppCompatActivity implements
-    PocketController.Host,
+    FolderController.Host,
     HomePager.Host,
     NonTouchInputCoordinator.Host,
-    ProvidesOverallDimensions {
+    ProvidesOverallDimensions
+{
 
     private class NavContractClosedReceiver implements Handler.Callback {
         private static final int MSG_CLOSE_LAST_TARGET = 0;
@@ -137,8 +139,6 @@ public class HomeActivity extends AppCompatActivity implements
     View backgroundTint;
     @BindView(R.id.top_scrim_gradient)
     View scrimGradient;
-    @BindView(R.id.pocket_drop_view)
-    PocketControllerDropView pocketDropView;
     @BindView(R.id.pager_indicator_view)
     PagerIndicatorView pagerIndicatorView;
     @BindView(R.id.top_scrim)
@@ -151,6 +151,12 @@ public class HomeActivity extends AppCompatActivity implements
     RelativeLayout dockElementContainer;
     @BindView(R.id.pager_view)
     ViewPager2 pagerView;
+    @BindView(R.id.veil)
+    View folderVeil;
+    @BindView(R.id.folder_container)
+    DraggableLayout folderContainer;
+
+    private ImmutableList<View> folderTranslatableElements;
 
     private HomePager mPager;
     private NonTouchInputCoordinator mNonTouchInputCoordinator;
@@ -184,18 +190,18 @@ public class HomeActivity extends AppCompatActivity implements
                 }
 
                 BasePageController controller = mPager.getPageController(i);
-                float dillutionAmount = 0;
+                float dilutionAmount;
                 if (i == position) {
-                    dillutionAmount = positionOffset;
+                    dilutionAmount = positionOffset;
                 } else {
                     // The bigger the offset, the closer we are
-                    dillutionAmount = 1 - positionOffset;
+                    dilutionAmount = 1 - positionOffset;
                 }
                 @Nullable final View v =
                     controller.getDragAwareComponent().getDragAwareTargetView();
                 if (v != null) {
                     // Range from 0.5 to 1, so the effect isn't too pronounced
-                    v.setAlpha(1 - (dillutionAmount / 2.0F));
+                    v.setAlpha(1 - (dilutionAmount / 2.0F));
                 }
             }
 
@@ -233,31 +239,7 @@ public class HomeActivity extends AppCompatActivity implements
             }
         }
     };
-    private final DecorViewDragger.TargetedDragAwareComponent mFallbackDragAwareComponent =
-        new DecorViewDragger.TargetedDragAwareComponent() {
-            @androidx.annotation.Nullable
-            @Override
-            public View getDragAwareTargetView() {
-                return backgroundTint;
-            }
 
-            @Override
-            public void onDrag(View v, DecorViewDragger.DragEvent event) {
-                if (event.getAction() != DragEvent.ACTION_DROP) {
-                    return;
-                }
-                if (!(event.getLocalState() instanceof GridViewHolder)) {
-                    return;
-                }
-                EventBus.getDefault().post(
-                    new GridDropFailedEvent((GridViewHolder) event.getLocalState()));
-            }
-
-            @Override
-            public int getPriority() {
-                return DecorViewDragger.DRAG_PRIORITY_LOWEST;
-            }
-        };
     private final DecorViewDragger.DragAwareComponent mBackgroundDragAwareComponent =
         new DecorViewDragger.DragAwareComponent() {
 
@@ -295,8 +277,9 @@ public class HomeActivity extends AppCompatActivity implements
                 }
             }
         };
+
     private DockController mDockController;
-    private PocketController mPocketController;
+    private FolderController mFolderController;
     private View.OnLayoutChangeListener mFirstLayoutListener;
     private boolean mHasSetPage = false;
     @Nullable private String mPendingGridPageId;
@@ -311,6 +294,10 @@ public class HomeActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         ButterKnife.bind(this, this.findViewById(R.id.rootView));
+        folderTranslatableElements = ImmutableList.of(
+            pagerView,
+            dockElementContainer
+        );
         AttributeApplier.applyDensity(this, this);
         FontCacheSync.Companion.get().reload(this);
         setRequestedOrientation(ViewUtils.isTablet(this) ?
@@ -332,6 +319,7 @@ public class HomeActivity extends AppCompatActivity implements
         pagerView.registerOnPageChangeCallback(mOnPageChangeCallback);
         pagerView.setOffscreenPageLimit(100);
         pagerIndicatorView.setup(mPager.getItemCount() - 1);
+        folderVeil.setOnClickListener(v -> mFolderController.closeFolder());
         updateWallpaperOffsetSteps();
         pagerView.post(() -> updateWallpaperOffset(pagerView.getCurrentItem(), 0));
 
@@ -370,10 +358,7 @@ public class HomeActivity extends AppCompatActivity implements
             .registerBackgroundDragAwareComponent(mBackgroundDragAwareComponent);
 
         mDockController = new DockController(dockView);
-        mPocketController = new PocketController(
-            getContext(),
-            this,
-            pocketDropView);
+        mFolderController = new FolderController(getContext(), this, folderContainer);
     }
 
     @Override
@@ -431,6 +416,10 @@ public class HomeActivity extends AppCompatActivity implements
             EventBus.getDefault().unregister(this);
         }
         GestureNavContractSingleton.INSTANCE.onHomeActivityStopped();
+        if (GestureNavContractSingleton.INSTANCE.lastValidComponentLaunch() == null) {
+            pagerView.setCurrentItem(1, false);
+            mOnPageChangeCallback.onPageScrolled(1, 0, 0);
+        }
     }
 
     @Override
@@ -447,6 +436,9 @@ public class HomeActivity extends AppCompatActivity implements
                 break;
             case SWITCH_TO_HOME_SCREEN:
                 pagerView.setCurrentItem(1, true);
+                break;
+            case CLOSE_FOLDER:
+                mFolderController.closeFolder();
                 break;
         }
     }
@@ -525,6 +517,28 @@ public class HomeActivity extends AppCompatActivity implements
         }
     }
 
+    @Override
+    public void onSwipeUpStarted(
+        AppViewHolder appViewHolder,
+        MotionEvent motionEvent,
+        View sourceView,
+        int firstPointerIdx,
+        float startRawY
+    ) {
+        mFolderController.onStartOpenAction(
+            appViewHolder, motionEvent, sourceView,firstPointerIdx, startRawY);
+    }
+
+    @Override
+    public void onSwipeUpMotionEvent(
+        MotionEvent event,
+        int action,
+        int firstPointerId,
+        float startRawY
+    ) {
+        mFolderController.onOpenMotionEvent(event, action, firstPointerId, startRawY);
+    }
+
     @SuppressLint("UseCompatLoadingForDrawables")
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -595,6 +609,7 @@ public class HomeActivity extends AppCompatActivity implements
             if (componentLaunch == null) {
                 return false;
             }
+            GestureNavContractSingleton.INSTANCE.clearComponentLaunch();
 
             Bundle result = new Bundle();
             result.putParcelable("gesture_nav_contract_icon_position", componentLaunch.getPosition());
@@ -641,14 +656,30 @@ public class HomeActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void editFolderOrder() {
-        mPocketController.editFolderOrder();
+    public void onStartFolderOpen() {
+        folderVeil.setVisibility(View.VISIBLE);
+        bottomScrim.setBackgroundColor(getColor(R.color.folder_background));
+        bottomScrim.setAlpha(0.0F);
     }
 
     @Override
-    public void editFolder(SwipeFolder folder) {
+    public void onFolderPartiallyOpen(float percent, float translationAmount) {
+        folderTranslatableElements.forEach(view -> view.setTranslationY(-translationAmount));
+        folderVeil.setAlpha(percent);
+        bottomScrim.setAlpha(percent);
+    }
+
+    @Override
+    public void onFolderCompletelyOpen() {
         // TODO
     }
+
+    @Override
+    public void onFolderClosed() {
+        folderVeil.setVisibility(View.GONE);
+        bottomScrim.setBackgroundColor(getColor(R.color.transparent));
+    }
+
 
     @Override
     public void requestAppDrawerFocus() {
@@ -677,15 +708,6 @@ public class HomeActivity extends AppCompatActivity implements
         DatabaseEditor.get().markAppHidden(ai.getActivityName(), ai.getPackageName());
         AppInfoCache.get().reloadVisibleActivities();
         mPager.getAppDrawerController().hideApp(ai);
-    }
-
-    @Override
-    public void clearActiveDragTarget() {
-        final BasePageController pageController =
-            mPager.getPageController(pagerView.getCurrentItem());
-        if (pageController instanceof BaseGridPageController) {
-            ((BaseGridPageController) pageController).clearDragTarget();
-        }
     }
 
     @Override
@@ -728,6 +750,11 @@ public class HomeActivity extends AppCompatActivity implements
     @Override
     public boolean isAlphabeticalPickerOpen() {
         return mPager.getAppDrawerController().isAlphabeticalPickerOpen();
+    }
+
+    @Override
+    public boolean isFolderOpen() {
+        return mFolderController.isFolderOpen();
     }
 
     private void updateWallpaperOffsetSteps() {

@@ -118,6 +118,14 @@ object ViewUtils {
         return getYWithPointerId(view, event, ptrId)+ location[1]
     }
 
+    fun MotionEvent.getRawXForViewAndId(view: View, ptrId: Int): Float {
+        return getRawXWithPointerId(view, this, ptrId)
+    }
+
+    fun MotionEvent.getRawYForViewAndId(view: View, ptrId: Int): Float {
+        return getRawYWithPointerId(view, this, ptrId)
+    }
+
     @JvmStatic
     fun performSyntheticMeasure(view: View) {
         val windowBounds = windowBounds(view.context)

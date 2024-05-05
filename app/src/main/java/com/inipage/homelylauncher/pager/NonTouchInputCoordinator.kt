@@ -28,6 +28,8 @@ class NonTouchInputCoordinator(private val host: Host, private val context: Acti
 
         fun isOnFirstHomeScreen(): Boolean
 
+        fun isFolderOpen(): Boolean
+
         fun getPager(): HomePager
 
         fun isAlphabeticalPickerOpen(): Boolean
@@ -50,7 +52,8 @@ class NonTouchInputCoordinator(private val host: Host, private val context: Acti
         SWITCH_RIGHT,
         SWITCH_LEFT,
         SWITCH_TO_HOME_SCREEN,
-        NO_OP
+        CLOSE_FOLDER,
+        NO_OP,
     }
 
     private val handler = Handler(Looper.getMainLooper(), this)
@@ -170,6 +173,10 @@ class NonTouchInputCoordinator(private val host: Host, private val context: Acti
             }
             if (host.isOnAppDrawer()) {
                 runMessageImmediately(NonTouchInputMessage.SWITCH_TO_HOME_SCREEN)
+                return true
+            }
+            if (host.isFolderOpen()) {
+                runMessageImmediately(NonTouchInputMessage.CLOSE_FOLDER)
                 return true
             }
             if (LayoutEditingSingleton.getInstance().isEditing) {

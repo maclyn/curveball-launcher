@@ -548,6 +548,15 @@ public abstract class BaseGridPageController implements BasePageController {
         void requestBindWidget(@Nullable String pageId, int appWidgetId, AppWidgetProviderInfo awpi);
 
         void requestConfigureWidget(@Nullable String pageId, int appWidgetId, AppWidgetProviderInfo awpi);
+
+        void onSwipeUpStarted(
+            AppViewHolder appViewHolder,
+            MotionEvent motionEvent,
+            View sourceView,
+            int firstPointerIdx,
+            float startRawY);
+
+        void onSwipeUpMotionEvent(MotionEvent event, int action, int firstPointerId, float startRawY);
     }
 
     private class TouchListener implements View.OnTouchListener {
@@ -914,7 +923,20 @@ public abstract class BaseGridPageController implements BasePageController {
             if (LayoutEditingSingleton.getInstance().isEditing()) {
                 return;
             }
-            // TODO: This will be updated to handle folders at some point
+            final int rawX =
+                (int) getRawXWithPointerId(mRootContainer, motionEvent, firstPointerIdx);
+            final int rawY =
+                (int) getRawYWithPointerId(mRootContainer, motionEvent, firstPointerIdx);
+            @Nullable GridViewHolder gvh = mActionTargetGridHolder = getItemAtPosition(rawX, rawY);
+            if (!(gvh instanceof AppViewHolder)) {
+                return;
+            }
+            mHost.onSwipeUpStarted(
+                (AppViewHolder) gvh,
+                motionEvent,
+                mRootContainer,
+                firstPointerIdx,
+                startRawY);
         }
 
         @Override
@@ -924,7 +946,10 @@ public abstract class BaseGridPageController implements BasePageController {
             int firstPointerId,
             float startRawY
         ) {
-            // TODO: Implement
+            if (mActionTargetGridHolder == null) {
+                return;
+            }
+            mHost.onSwipeUpMotionEvent(event, action, firstPointerId, startRawY);
         }
 
         @Override
@@ -935,6 +960,8 @@ public abstract class BaseGridPageController implements BasePageController {
 
         @Override
         public void onUnhandledTouchUpInGridLayoutBounds(MotionEvent event) {
+            // This potentially unsafe getRawX() and getRawY() is OK here because we only trigger
+            // this callback on a primary pointer up
             @Nullable final GridViewHolder gridViewHolder =
                 getItemAtPosition((int) event.getRawX(), (int) event.getRawY());
             if (!(gridViewHolder instanceof WidgetViewHolder)) {
@@ -946,7 +973,7 @@ public abstract class BaseGridPageController implements BasePageController {
             view.getLocationOnScreen(out);
             GestureNavContractSingleton.INSTANCE.onWidgetLaunchRequest(
                 widgetViewHolder.getProviderInfo().provider.getPackageName(),
-                new RectF(out[0], out[1], out[1] + view.getWidth(), out[1] + view.getHeight()));
+                new RectF(out[0], out[1], out[0] + view.getWidth(), out[1] + view.getHeight()));
         }
 
         @Nullable
