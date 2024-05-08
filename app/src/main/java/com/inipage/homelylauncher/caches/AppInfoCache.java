@@ -14,6 +14,7 @@ import android.util.Pair;
 import androidx.annotation.NonNull;
 
 import com.inipage.homelylauncher.drawer.FastScrollable;
+import com.inipage.homelylauncher.model.ApplicationIconCheckable;
 import com.inipage.homelylauncher.model.ApplicationIconHideable;
 import com.inipage.homelylauncher.persistence.DatabaseEditor;
 import com.inipage.homelylauncher.utils.LifecycleLogUtils;
@@ -285,6 +286,12 @@ public class AppInfoCache {
     public List<ApplicationIconHideable> getAppDrawerActivities() {
         return mInstalledApps.stream()
             .filter(applicationIconHideable -> !applicationIconHideable.isHidden())
+            .collect(Collectors.toList());
+    }
+
+    public List<ApplicationIconCheckable> getCheckableActivities() {
+        return mInstalledApps.stream()
+            .map(ApplicationIconCheckable::new)
             .collect(Collectors.toList());
     }
 

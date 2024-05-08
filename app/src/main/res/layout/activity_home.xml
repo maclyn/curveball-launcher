@@ -1,4 +1,6 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_height="match_parent"
     android:layout_width="match_parent"
@@ -87,13 +89,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
-            android:visibility="gone"
+            android:visibility="visible"
             >
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="80dp"
+                android:layout_margin="40dp"
                 android:layout_gravity="center"
                 android:textSize="16sp"
                 android:textStyle="bold"
@@ -108,12 +110,12 @@
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
             android:orientation="vertical"
-            android:visibility="gone"
+            android:visibility="visible"
             >
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="48dp"
                 android:orientation="horizontal"
                 >
 
@@ -125,20 +127,28 @@
 
                 <ImageView
                     android:id="@+id/collapse_folder_button"
-                    android:contentDescription="@string/collapse_folder_button_content_description"
                     android:layout_width="0dp"
                     android:layout_height="48dp"
-                    android:drawable="@drawable/round_keyboard_arrow_down_24"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:layout_weight="1"
+                    android:padding="8dp"
+
+                    android:src="@drawable/round_keyboard_arrow_down_24"
+                    android:contentDescription="@string/collapse_folder_button_content_description"
+                    android:background="?android:attr/selectableItemBackground"
+                    app:tint="@color/white"
                     />
 
                 <ImageView
                     android:id="@+id/show_folder_menu"
-                    android:contentDescription="@string/show_folder_menu_button_content_description"
                     android:layout_width="0dp"
                     android:layout_height="48dp"
-                    android:drawable="@drawable/ic_more_horiz_white_48dp"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:layout_weight="1"
+                    android:padding="8dp"
+                    android:scaleType="fitEnd"
+                    android:src="@drawable/ic_more_horiz_white_48dp"
+                    android:contentDescription="@string/show_folder_menu_button_content_description"
+                    android:background="?android:attr/selectableItemBackground"
+                    app:tint="@color/white"
                     />
             </LinearLayout>
 

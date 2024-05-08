@@ -54,6 +54,7 @@
     <dimen name="bottom_sheet_inner_margin">8dp</dimen>
     <dimen name="bottom_sheet_corner_round_radius">16dp</dimen>
     <dimen name="min_start_velocity_dp_s">320dp</dimen>
+    <dimen name="speedy_exit_velocity_dp_s">600dp</dimen>
 
     <!-- Dot values -->
     <dimen name="pocket_dot_view_dot_radius">1.5dp</dimen>

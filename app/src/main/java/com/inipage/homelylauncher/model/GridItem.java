@@ -121,6 +121,10 @@ public class GridItem {
         mY = y;
     }
 
+    public void updateGridFolder(@Nullable GridFolder gridFolder) {
+        mGridFolder = gridFolder;
+    }
+
     // This isn't quite equals
     public boolean equalish(@Nullable Object obj) {
         if (!(obj instanceof ClassicGridItem)) {

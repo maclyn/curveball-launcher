@@ -122,6 +122,7 @@ public class DatabaseEditor {
                     new GridFolder(id, gridItemId, widgetId, width, height);
                 gridItemIdToFolderMap.put(gridItemId, gridFolder);
                 gridFolderIdToFolderMap.put(id, gridFolder);
+                cursor.moveToNext();
             }
         }
         cursor.close();
@@ -149,6 +150,7 @@ public class DatabaseEditor {
                 if (gridFolderIdToFolderMap.containsKey(id)) {
                     Objects.requireNonNull(gridFolderIdToFolderMap.get(id)).addApp(gridFolderApp);
                 }
+                cursor.moveToNext();
             }
         }
         cursor.close();
@@ -252,7 +254,6 @@ public class DatabaseEditor {
         mDB.endTransaction();
     }
 
-    @Nullable
     public GridFolder insertNewGridFolder(String gridItemId) {
         // Insert a new folder; SQLite will give us a new ID for it
         ContentValues cv = new GridFolder(gridItemId).serialize();
@@ -277,7 +278,7 @@ public class DatabaseEditor {
         for (int i = 0; i < folder.getApps().size(); i++) {
             GridFolderApp app = folder.getApps().get(i);
             ContentValues cv = app.serialize();
-            int id = insertContentValuesAndRetrieveColumnId(TABLE_GRID_FOLDER, cv);
+            int id = insertContentValuesAndRetrieveColumnId(TABLE_GRID_FOLDER_APPS, cv);
             newApps.add(
                 new GridFolderApp(
                     id, app.getGridFolderId(), i, app.getPackageName(), app.getActivityName()));

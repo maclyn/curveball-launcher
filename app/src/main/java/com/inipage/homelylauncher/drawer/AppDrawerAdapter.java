@@ -7,19 +7,14 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.TextAppearanceSpan;
 import android.util.Pair;
-import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.view.ViewCompat;
-import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.common.base.Preconditions;
@@ -500,7 +495,7 @@ public class AppDrawerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 final AppDrawerIconViewGroup rootView =
                     (AppDrawerIconViewGroup)
                         LayoutInflater.from(viewGroup.getContext())
-                            .inflate(R.layout.application_icon, viewGroup, false);
+                            .inflate(R.layout.app_drawer_app_row, viewGroup, false);
                 final AppIconHolder holder = new AppIconHolder(rootView);
                 FontCacheSync.Companion.get().applyTypefaceToTextView(
                     holder.title, Constants.LIST_FONT_PATH);

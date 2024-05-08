@@ -27,7 +27,8 @@ public class InstalledAppUtils {
     public enum AppLaunchSource {
         APP_LIST,
         GRID_PAGE,
-        DOCK
+        DOCK,
+        FOLDER
     }
 
     public static void launchUninstallPackageIntent(Context context, String packageName) {

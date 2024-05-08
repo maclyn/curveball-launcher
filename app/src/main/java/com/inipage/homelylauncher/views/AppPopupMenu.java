@@ -239,7 +239,7 @@ public class AppPopupMenu {
                 }
 
                 @Override
-                public void onDismissedByBackgroundTap(View removedView) {
+                public void onDismissed(View removedView, boolean byBackgroundTap) {
                     listener.onDismiss();
                 }
             },

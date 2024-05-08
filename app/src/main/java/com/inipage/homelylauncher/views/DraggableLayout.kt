@@ -18,6 +18,7 @@ import com.inipage.homelylauncher.utils.DebugLogUtils
 import com.inipage.homelylauncher.utils.ViewUtils.exceedsSlopInActionMove
 import com.inipage.homelylauncher.utils.ViewUtils.getRawXWithPointerId
 import com.inipage.homelylauncher.utils.ViewUtils.getRawYWithPointerId
+import java.lang.IllegalArgumentException
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -58,12 +59,19 @@ class DraggableLayout : LinearLayout {
         this.host = host
     }
 
-    fun runWithBrainSlug(newVelocityTracker: VelocityTracker, newFirstPointerId: Int) {
+    fun runAnimationFromBrainSlug(newVelocityTracker: VelocityTracker, newFirstPointerId: Int) {
         velocityTracker?.recycle()
         velocityTracker = newVelocityTracker
         firstPointerId = newFirstPointerId
         maxDraggableDistance = measuredHeight.toFloat()
         commitAnimation()
+    }
+
+    fun triggerExitAnimation() {
+        runAnimationImpl(
+            0.0F,
+            context.resources.getDimension(R.dimen.speedy_exit_velocity_dp_s),
+            true)
     }
 
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
@@ -203,6 +211,10 @@ class DraggableLayout : LinearLayout {
             "isAnimatingOut", isAnimatingOut.toString()
         )
 
+        runAnimationImpl(startPoint, startVelocity, isAnimatingOut)
+    }
+
+    private fun runAnimationImpl(startPoint: Float, startVelocity: Float, isAnimatingOut: Boolean) {
         val flingAnimation = FlingAnimation(
             this, object : FloatPropertyCompat<DraggableLayout>("translationY") {
                 override fun getValue(`object`: DraggableLayout): Float {
@@ -219,14 +231,25 @@ class DraggableLayout : LinearLayout {
         flingAnimation.setStartVelocity(startVelocity)
         flingAnimation.friction = 0.1F;
         flingAnimation.addEndListener { _: DynamicAnimation<*>?, _: Boolean, _: Float, _: Float ->
-            if (isAnimatingOut) {
-                host?.onAnimationOutComplete()
-            } else {
-                host?.onAnimationInComplete()
-            }
-            isExecutingAnimation = false
+            onAnimationComplete(isAnimatingOut)
         }
-        flingAnimation.start()
+        try {
+            flingAnimation.start()
+        } catch (_: IllegalArgumentException) {
+            DebugLogUtils.complain(
+                context,
+                "startPoint=$startPoint maxDraggableDistance=$maxDraggableDistance")
+            onAnimationComplete(isAnimatingOut)
+        }
+    }
+
+    private fun onAnimationComplete(isAnimatingOut: Boolean) {
+        if (isAnimatingOut) {
+            host?.onAnimationOutComplete()
+        } else {
+            host?.onAnimationInComplete()
+        }
+        isExecutingAnimation = false
     }
 
     private fun addMovementToVelocityTracker(ev: MotionEvent) {

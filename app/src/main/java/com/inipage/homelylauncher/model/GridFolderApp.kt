@@ -11,6 +11,13 @@ data class GridFolderApp(
     val activityName: String
 ) {
 
+    constructor(
+        gridFolderId: Int,
+        index: Int,
+        packageName: String,
+        activityName: String
+    ) : this(-1, gridFolderId, index, packageName, activityName)
+
     fun serialize(): ContentValues {
         val cv = ContentValues()
         cv.put(DatabaseHelper.COLUMN_ID, id)

@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.WeakHashMap;
-import java.util.stream.Collectors;
 
 /**
  * Helper for managing views added directly to the DecorView of an Activity's Window.
@@ -122,7 +121,7 @@ public class DecorViewManager {
         View fullscreenTransparentView = new View(activity);
         fullscreenTransparentView.setClickable(true);
         if (canBeDismissedWithBackgroundTap) {
-            fullscreenTransparentView.setOnClickListener(v -> removeView(key));
+            fullscreenTransparentView.setOnClickListener(v -> removeViewImpl(key, true));
         }
         decorView.addView(
             fullscreenTransparentView,
@@ -161,16 +160,16 @@ public class DecorViewManager {
     }
 
     public void removeView(String key) {
-        removeViewImpl(key);
+        removeViewImpl(key, false);
     }
 
-    private void removeViewImpl(String key) {
+    private void removeViewImpl(String key, boolean byBackgroundTap) {
         @Nullable FrameLayout decorView = getDecorView();
         @Nullable View attachedView = mViewKeyToView.get(key);
         @Nullable View backgroundView = mViewKeyToBackground.get(key);
         @Nullable Callback callback = mViewKeyToCallback.get(key);
         if (callback != null) {
-            callback.onDismissedByBackgroundTap(attachedView);
+            callback.onDismissed(attachedView, byBackgroundTap);
         }
         if (decorView != null && attachedView != null) {
             @Nullable final Animator exitAnimator =
@@ -280,8 +279,8 @@ public class DecorViewManager {
         List<String> keyCopy = new ArrayList<>(mViewKeyToView.keySet());
         for (String key : keyCopy) {
             final Callback listener = mViewKeyToCallback.get(key);
-            listener.onDismissedByBackgroundTap(mViewKeyToView.get(key));
-            removeViewImpl(key);
+            listener.onDismissed(mViewKeyToView.get(key), false);
+            removeViewImpl(key, false);
         }
         return true;
     }
@@ -329,10 +328,9 @@ public class DecorViewManager {
 
         /**
          * This view is going to be removed.
-         *
          * @param removedView The View that will be removed.
          */
-        default void onDismissedByBackgroundTap(View removedView) {}
+        default void onDismissed(View removedView, boolean byBackgroundTap) {}
 
         default boolean canBeDismissedWithBackgroundTap() {
             return true;

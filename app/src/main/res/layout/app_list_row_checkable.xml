@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?selectableItemBackground"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingVertical="4dp">
+
+    <CheckBox
+        android:id="@+id/app_icon_checkbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/app_row_horizontal_padding"
+        />
+
+    <com.inipage.homelylauncher.drawer.BitmapView
+        android:id="@+id/app_icon_image"
+        android:layout_marginStart="@dimen/app_row_horizontal_padding"
+        android:layout_width="48dp"
+        android:layout_height="48dp" />
+
+    <TextView
+        android:id="@+id/app_icon_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="1"
+        android:layout_marginHorizontal="@dimen/app_row_horizontal_padding"
+        android:text="@string/sample_text"
+        android:textColor="@color/primary_text_color"
+        android:textSize="16sp" />
+</LinearLayout>

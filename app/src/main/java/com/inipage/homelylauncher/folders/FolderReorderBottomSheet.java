@@ -12,7 +12,7 @@ import com.inipage.homelylauncher.views.BottomSheetHelper;
 
 import java.util.List;
 
-public class ReorderAppsBottomSheet {
+public class FolderReorderBottomSheet {
 
     public static void show(Context context, List<GridFolderApp> folders, Callback callback) {
         final View contentView =
@@ -31,12 +31,12 @@ public class ReorderAppsBottomSheet {
                 });
         new BottomSheetHelper()
             .addActionItem(R.string.save, () ->
-                callback.onFoldersReordered(reorderItemsController.getReorderedList()))
+                callback.onFolderReordered(reorderItemsController.getReorderedList()))
             .setContentView(contentView)
             .show(context, context.getString(R.string.reorder_rows));
     }
 
     public interface Callback {
-        void onFoldersReordered(List<GridFolderApp> reorderedFolders);
+        void onFolderReordered(List<GridFolderApp> reorderedFolders);
     }
 }

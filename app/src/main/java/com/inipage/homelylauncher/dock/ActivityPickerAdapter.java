@@ -32,7 +32,7 @@ public class ActivityPickerAdapter extends RecyclerView.Adapter<ActivityPickerAd
     public ApplicationVH onCreateViewHolder(ViewGroup parent, int viewType) {
         return new ApplicationVH(
             LayoutInflater.from(parent.getContext()).inflate(
-                R.layout.application_icon_row, parent, false));
+                R.layout.app_list_row, parent, false));
     }
 
     @Override

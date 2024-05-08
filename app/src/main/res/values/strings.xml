@@ -41,7 +41,7 @@
     <string name="remove_dock_item_message">Would you like to remove %s from the dock?</string>
     <string name="yes">Yes</string>
     <string name="app_info">App info</string>
-    <string name="reorder_rows">Reorder rows</string>
+    <string name="reorder_rows">Reorder folder</string>
     <string name="sample_text">Some sample text</string>
     <string name="no_snacklets_found">No snacklets found.</string>
     <string name="advanced">Advanced</string>

@@ -29,12 +29,20 @@ import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 
 public class BottomSheetHelper {
 
+    public interface OnDismissedCallback {
+        void onDismissed(boolean bySwipeOrBackgroundTap);
+    }
+
     private final List<BuilderItem> mItems;
     private final List<BuilderItem> mActionItems;
+
     @Nullable
     private View mContentView;
+    @Nullable
+    private OnDismissedCallback mOnDismissedCallback;
     private boolean mFixedToScreenHeightPercent;
     private float mScreenHeightPercent;
+    private boolean mDismissedBySwipeOrBackgroundTap;
 
     public BottomSheetHelper() {
         mItems = new ArrayList<>();
@@ -60,6 +68,11 @@ public class BottomSheetHelper {
     public BottomSheetHelper setIsFixedHeight() {
         mFixedToScreenHeightPercent = true;
         mScreenHeightPercent = 0.85F;
+        return this;
+    }
+
+    public BottomSheetHelper setOnDismissedCallback(OnDismissedCallback callback) {
+        mOnDismissedCallback = callback;
         return this;
     }
 
@@ -98,9 +111,22 @@ public class BottomSheetHelper {
                 public Animator provideExitAnimation(View view) {
                     return ObjectAnimator.ofFloat(view, "translationY", view.getHeight());
                 }
+
+                @Override
+                public void onDismissed(View removedView, boolean byBackgroundTap) {
+                    if (byBackgroundTap) {
+                        mDismissedBySwipeOrBackgroundTap = true;
+                    }
+                    if (mOnDismissedCallback != null) {
+                        mOnDismissedCallback.onDismissed(mDismissedBySwipeOrBackgroundTap);
+                    }
+                }
             },
             (FrameLayout.LayoutParams) rootView.getLayoutParams());
-        rootView.attachHost(new BottomSheetContainerLayoutHost(context, decorHandle));
+        rootView.attachHost(new BottomSheetContainerLayoutHost(
+            context,
+            decorHandle,
+            () -> mDismissedBySwipeOrBackgroundTap = true));
         // Attach menu items
         if (!mItems.isEmpty()) {
             ScrollView scroller = new ScrollView(context);
@@ -169,7 +195,6 @@ public class BottomSheetHelper {
                 ViewUtils.setHeight(rootView, maxAllowedBottomSheetHeight);
             }
         }
-
 
         int maxContentHeight = windowHeight - topScrimPadding - bottomScrimHeight;
         rootView.setTranslationY(

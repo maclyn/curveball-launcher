@@ -17,7 +17,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.inipage.homelylauncher.R
 import com.inipage.homelylauncher.grid.AppViewHolder
-import com.inipage.homelylauncher.model.ApplicationIcon
+import com.inipage.homelylauncher.model.GridFolder
 import com.inipage.homelylauncher.model.GridFolderApp
 import com.inipage.homelylauncher.model.GridItem
 import com.inipage.homelylauncher.persistence.DatabaseEditor
@@ -88,6 +88,16 @@ class FolderController(
 
     private var selectedFolder: SelectedFolderTarget? = null
 
+    private val gridItem: GridItem?
+        get() {
+            return selectedFolder?.folderTarget?.item
+        }
+
+    private val gridFolder: GridFolder?
+        get() {
+            return gridItem?.gridFolder
+        }
+
     fun onStartOpenAction(
         appViewHolder: AppViewHolder,
         motionEvent: MotionEvent,
@@ -96,19 +106,9 @@ class FolderController(
         startRawY: Float
     ) {
         host.onStartFolderOpen()
-
-        val newFolderRequest = appViewHolder.item.gridFolder == null
-        rootView.visibility = VISIBLE
-        newFolderSuggestionContainer.visibility = if (newFolderRequest) VISIBLE else GONE
-        openFolderContainer.visibility  = if (newFolderRequest) GONE else VISIBLE
-
-        // TODO: If not a new folder, populate apps
-        // TODO: Show desired widget
-
-        ViewUtils.performSyntheticMeasure(rootView)
         selectedFolder = SelectedFolderTarget(
             appViewHolder, rootView.measuredHeight, sourceView, startRawY)
-
+        bindFolderView()
         onOpenMotionEvent(motionEvent, ACTION_MOVE, firstPointerId, startRawY)
     }
 
@@ -126,15 +126,13 @@ class FolderController(
                 host.onFolderPartiallyOpen(target.percentComplete, target.currentTranslationAmount)
             }
             ACTION_UP -> {
-                // TODO: Animation this action
-                // TODO: Swipes going back down should actually close instead
                 if (target.percentComplete >= 1.0) {
                     onAnimationInComplete()
                     host.onFolderCompletelyOpen()
                     return
                 }
                 val folder = selectedFolder ?: return
-                rootView.runWithBrainSlug(folder.velocityTracker, firstPointerId)
+                rootView.runAnimationFromBrainSlug(folder.velocityTracker, firstPointerId)
             }
             ACTION_CANCEL -> {
                 onAnimationOutComplete()
@@ -142,55 +140,111 @@ class FolderController(
         }
     }
 
-    fun onNewFolderRequested(app: ApplicationIcon, gridItem: GridItem) {
-        val newFolder = DatabaseEditor.get().insertNewGridFolder(gridItem.id)
-        FolderEditingBottomSheet.show(
-            context,
-            newFolder,
-            true,
-            object : FolderEditingBottomSheet.Callback {
-                override fun onFolderSaved(
-                    reorderedApps: List<GridFolderApp>
-                ) {}
-
-                override fun onFolderDeleted() {}
-            })
-    }
-
     fun isFolderOpen(): Boolean {
         return selectedFolder != null
     }
 
     fun closeFolder() {
-        // TODO: Animate this action
-        onAnimationOutComplete()
+        rootView.triggerExitAnimation()
+    }
+
+    private fun bindFolderView() {
+        val newFolderRequest = gridFolder == null
+        rootView.visibility = VISIBLE
+        newFolderSuggestionContainer.visibility = if (newFolderRequest) VISIBLE else GONE
+        openFolderContainer.visibility  = if (newFolderRequest) GONE else VISIBLE
+
+        if (!newFolderRequest) {
+            appsRecyclerView.adapter = FolderAppRecyclerViewAdapter(gridFolder?.apps ?: listOf())
+            // TODO: Show desired widget
+        }
+
+        ViewUtils.performSyntheticMeasure(rootView)
+    }
+
+    private fun onNewFolderRequested() {
+        val targetFolderId = gridItem?.id ?: return
+        val newFolder = DatabaseEditor.get().insertNewGridFolder(targetFolderId)
+        gridItem?.updateGridFolder(newFolder)
+
+        FolderAppEditingBottomSheet(
+            context,
+            newFolder,
+            true,
+            object : FolderAppEditingBottomSheet.Callback {
+                override fun onFolderUpdated(newApps: MutableList<GridFolderApp>) {
+                    val gridFolder = gridFolder ?: return
+                    gridFolder.setApps(newApps)
+                    DatabaseEditor.get().updateGridFolder(gridFolder)
+                    bindFolderView()
+                }
+
+                override fun onChangesDismissed() {
+                    DatabaseEditor.get().deleteGridFolder(newFolder)
+                    selectedFolder?.folderTarget?.item?.updateGridFolder(null)
+                    closeFolder()
+                }
+            })
+    }
+
+    private fun onFolderEditRequested() {
+        val folder = gridFolder ?: return
+        FolderAppEditingBottomSheet(
+            context,
+            folder,
+            true,
+            object : FolderAppEditingBottomSheet.Callback {
+                override fun onFolderUpdated(newApps: MutableList<GridFolderApp>) {
+                    folder.setApps(newApps)
+                    DatabaseEditor.get().updateGridFolder(folder)
+                    bindFolderView()
+                }
+
+                override fun onChangesDismissed() = Unit
+            })
+    }
+
+    private fun onFolderReorderRequested() {
+        val folder = gridFolder ?: return
+        FolderReorderBottomSheet.show(context, folder.apps) { newApps ->
+            folder.setApps(newApps)
+            DatabaseEditor.get().updateGridFolder(folder)
+            bindFolderView()
+        }
     }
 
     init {
         rootView.attachHost(this)
 
         // TODO: Load up all possible widgets
+
         rootView.findViewById<ImageView>(R.id.collapse_folder_button).setOnClickListener {
             closeFolder()
         }
         rootView.findViewById<ImageView>(R.id.show_folder_menu).setOnClickListener {
             val menu = PopupMenu(it.context, it, Gravity.BOTTOM)
             menu.menu.add("Edit items").setOnMenuItemClickListener {
-                // TODO: Impl.
+                onFolderEditRequested()
                 true
             }
             menu.menu.add("Reorder items").setOnMenuItemClickListener {
-                // TODO: Impl.
+                onFolderReorderRequested()
                 true
             }
             menu.menu.add("Delete folder").setOnMenuItemClickListener {
-                // TODO: Impl.
+                val folder = gridFolder ?: return@setOnMenuItemClickListener false
+                DatabaseEditor.get().deleteGridFolder(folder)
+                gridItem?.updateGridFolder(null)
+                bindFolderView()
+                closeFolder()
                 true
             }
+
             // TODO: Widget options
+
             menu.show()
         }
-        appsRecyclerView.layoutManager = GridLayoutManager(context, 5, RecyclerView.HORIZONTAL, false)
+        appsRecyclerView.layoutManager = GridLayoutManager(context, 5, RecyclerView.VERTICAL, false)
     }
 
     override fun onAnimationPartial(percentComplete: Float, translationMagnitude: Float) {
@@ -213,5 +267,8 @@ class FolderController(
             1.0F,
             selectedFolder?.targetYTranslation?.toFloat() ?: 0F)
         rootView.translationY = 0.0F
+        if (selectedFolder?.newFolderRequest == true) {
+            onNewFolderRequested()
+        }
     }
 }
