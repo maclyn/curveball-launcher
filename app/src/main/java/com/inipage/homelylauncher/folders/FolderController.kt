@@ -180,6 +180,7 @@ class FolderController(
                 }
 
                 override fun onChangesDismissed() {
+                    val gridFolder = gridFolder ?: return
                     DatabaseEditor.get().deleteGridFolder(newFolder)
                     selectedFolder?.folderTarget?.item?.updateGridFolder(null)
                     closeFolder()

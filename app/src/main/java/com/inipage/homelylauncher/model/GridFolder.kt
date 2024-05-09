@@ -2,6 +2,7 @@ package com.inipage.homelylauncher.model
 
 import android.content.ContentValues
 import android.graphics.ColorSpace.Model
+import com.inipage.homelylauncher.model.ModelUtils.isValueSet
 import com.inipage.homelylauncher.persistence.DatabaseHelper
 
 data class GridFolder(
@@ -12,16 +13,15 @@ data class GridFolder(
     var height: Int
 ) {
 
-    constructor(id: Int, gridItemId: String) :
+    constructor(newId: Int, newGridItemId: String) :
             this(
-                ModelUtils.unsetValue,
-                gridItemId,
+                newId,
+                newGridItemId,
                 ModelUtils.unsetValue,
                 ModelUtils.unsetValue,
                 ModelUtils.unsetValue)
 
-    constructor(gridItemId: String) :
-            this(ModelUtils.unsetValue, gridItemId)
+    constructor(newGridItemId: String) : this(ModelUtils.unsetValue, newGridItemId)
 
     var apps: MutableList<GridFolderApp> = ArrayList()
         private set
@@ -36,7 +36,9 @@ data class GridFolder(
 
     fun serialize(): ContentValues {
         val cv = ContentValues()
-        cv.put(DatabaseHelper.COLUMN_ID, id)
+        if (!id.isValueSet()) {
+            cv.put(DatabaseHelper.COLUMN_ID, id)
+        }
         cv.put(DatabaseHelper.COLUMN_GRID_ITEM_ID, gridItemId)
         cv.put(DatabaseHelper.COLUMN_WIDGET_ID, widgetId)
         cv.put(DatabaseHelper.COLUMN_WIDTH, width)

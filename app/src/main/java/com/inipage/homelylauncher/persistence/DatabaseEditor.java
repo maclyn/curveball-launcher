@@ -147,8 +147,9 @@ public class DatabaseEditor {
                 final String activityName = cursor.getString(activityNameColumn);
                 final GridFolderApp gridFolderApp =
                     new GridFolderApp(id, gridFolderId, index, packageName, activityName);
-                if (gridFolderIdToFolderMap.containsKey(id)) {
-                    Objects.requireNonNull(gridFolderIdToFolderMap.get(id)).addApp(gridFolderApp);
+                if (gridFolderIdToFolderMap.containsKey(gridFolderId)) {
+                    Objects.requireNonNull(gridFolderIdToFolderMap.get(gridFolderId))
+                        .addApp(gridFolderApp);
                 }
                 cursor.moveToNext();
             }
@@ -271,7 +272,6 @@ public class DatabaseEditor {
             TABLE_GRID_FOLDER_APPS,
             DatabaseHelper.COLUMN_GRID_FOLDER_ID + "=?",
             new String[] { String.valueOf(folder.getId()) });
-
 
         // Re-insert them in the correct order
         List<GridFolderApp> newApps = new ArrayList<>();
@@ -454,7 +454,8 @@ public class DatabaseEditor {
         Cursor newItemColumnIdCursor =
             mDB.query(
                 table,
-                new String[] { COLUMN_ID }, "rowid = ?",
+                new String[] { COLUMN_ID },
+                "rowid = ?",
                 new String[]{ String.valueOf(rowId) },
                 null,
                 null,

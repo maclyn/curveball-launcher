@@ -20,7 +20,9 @@ data class GridFolderApp(
 
     fun serialize(): ContentValues {
         val cv = ContentValues()
-        cv.put(DatabaseHelper.COLUMN_ID, id)
+        if (id != ModelUtils.unsetValue) {
+            cv.put(DatabaseHelper.COLUMN_ID, id)
+        }
         cv.put(DatabaseHelper.COLUMN_GRID_FOLDER_ID, gridFolderId)
         cv.put(DatabaseHelper.COLUMN_INDEX, index)
         cv.put(DatabaseHelper.COLUMN_DATA_STRING_1, packageName)

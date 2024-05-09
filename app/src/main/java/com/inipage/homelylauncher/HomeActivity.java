@@ -88,6 +88,8 @@ import java.util.function.Consumer;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function0;
 
 @SuppressLint("NonConstantResourceId")
 public class HomeActivity extends AppCompatActivity implements
@@ -347,10 +349,15 @@ public class HomeActivity extends AppCompatActivity implements
             ViewUtils.setHeight(HomeActivity.this.bottomScrim, bottomScrim);
             rootView.addOnLayoutChangeListener(mFirstLayoutListener);
             rootView.requestLayout();
+
             // New user experience
-            if (PrefsHelper.get().checkAndUpdateIsNewUser()) {
-                new NewUserBottomSheet(this).show();
-            }
+            ViewUtils.waitForLayoutToTakeSpace(HomeActivity.this.topScrim, () -> {
+                if (PrefsHelper.get().checkAndUpdateIsNewUser()) {
+                    new NewUserBottomSheet(HomeActivity.this).show();
+                }
+                return null;
+            });
+
             return insets.consumeSystemWindowInsets();
         });
         DecorViewDragger

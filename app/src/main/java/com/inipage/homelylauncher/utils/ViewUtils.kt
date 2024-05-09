@@ -49,6 +49,18 @@ object ViewUtils {
     }
 
     @JvmStatic
+    fun waitForLayoutToTakeSpace(view: View, onLayout: (() -> Unit)) {
+        var listener: View.OnLayoutChangeListener? = null
+        listener = View.OnLayoutChangeListener { _, left, top, right, bottom, _, _, _, _ ->
+            if (right - left > 0 && bottom - top > 0) {
+                onLayout()
+                listener?.let { view.removeOnLayoutChangeListener(it) }
+            }
+        }
+        view.addOnLayoutChangeListener(listener)
+    }
+
+    @JvmStatic
     @JvmOverloads
     fun exceedsSlopInActionMove(
         event: MotionEvent,
