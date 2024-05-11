@@ -4,14 +4,12 @@
     <dimen name="icon_chooser_vertical_margin">8dp</dimen>
     <dimen name="icon_chooser_margin">16dp</dimen>
     <dimen name="reorder_item_view_width">96dp</dimen>
-    <dimen name="indicator_height">24dp</dimen>
     <dimen name="home_activity_margin">16dp</dimen>
     <dimen name="home_activity_squarish">8dp</dimen>
     <dimen name="grid_horizontal_margin">8dp</dimen>
     <dimen name="log_text_size">4sp</dimen>
     <dimen name="scale_button_size">36dp</dimen>
     <dimen name="dist_from_edge_to_switch">24dp</dimen>
-
 
     <!-- App drawer values -->
     <dimen name="app_drawer_app_icon_size">48dp</dimen>

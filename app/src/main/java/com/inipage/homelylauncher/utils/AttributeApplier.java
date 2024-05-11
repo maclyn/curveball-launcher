@@ -35,23 +35,21 @@ public class AttributeApplier {
         }
 
         try {
-
             final DisplayMetrics metrics = context.getResources().getDisplayMetrics();
             field.setAccessible(true);
             float value = attribute.value();
             float newValue = TypedValue.applyDimension(
-                type == SizeValAttribute.AttributeType.SP ? TypedValue.COMPLEX_UNIT_SP :
-                (
-                    type == SizeValAttribute.AttributeType.DIP ? TypedValue.COMPLEX_UNIT_DIP :
-                    TypedValue.COMPLEX_UNIT_IN),
-                value, metrics);
+                type == SizeValAttribute.AttributeType.SP ?
+                    TypedValue.COMPLEX_UNIT_SP :
+                    TypedValue.COMPLEX_UNIT_DIP,
+                value,
+                metrics);
             if (field.getType() == Float.TYPE) {
                 field.setFloat(source, newValue);
             } else {
                 field.setInt(source, (int) newValue);
             }
-        } catch (Exception ignored) {
-        }
+        } catch (Exception ignored) {}
     }
 
 

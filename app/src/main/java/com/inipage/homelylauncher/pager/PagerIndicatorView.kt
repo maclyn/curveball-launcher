@@ -9,7 +9,6 @@ import com.inipage.homelylauncher.utils.SizeDimenAttribute
 import com.inipage.homelylauncher.R
 import com.inipage.homelylauncher.utils.AttributeApplier
 import com.inipage.homelylauncher.utils.SizeValAttribute
-import android.view.View.MeasureSpec
 
 class PagerIndicatorView @JvmOverloads constructor(
     context: Context?,
@@ -17,105 +16,106 @@ class PagerIndicatorView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
-    private val INACTIVE_ALPHA = 80
-    private val ACTIVE_ALPHA = 220
-    private val INDICATOR_WIDTH_FACTOR = 4
-    private val OVERLAP_XFER_MODE = PorterDuffXfermode(PorterDuff.Mode.XOR)
-    private val mPaint: Paint
+    private val paint: Paint
 
-    @SizeDimenAttribute(R.dimen.indicator_height)
-    var DESIRED_HEIGHT = AttributeApplier.intValue()
     @SizeValAttribute(2F)
-    var STROKE_WIDTH = AttributeApplier.intValue()
-    @SizeValAttribute(6F)
-    var INDICATOR_SIZE = AttributeApplier.intValue()
+    private var strokeWidth = AttributeApplier.floatValue()
+    @SizeValAttribute(4F)
+    private var rectRounding = AttributeApplier.floatValue()
+    @SizeValAttribute(8F)
+    private var indicatorHeight = AttributeApplier.floatValue()
 
-    private var mGridPageCount: Int = 0
-    private var mActiveItem: Int = 0
-    private var mIsSetup: Boolean = false
+    private var paddingBetweenIndicators = 0F
+    private var gridPageIndicatorWidth = 0F
+    private var appIndicatorRadius = 0F
+    private var desiredHeight = 0F
+    private var desiredWidth = 0F
 
-    fun setup(gridPageCount: Int) {
-        mGridPageCount = gridPageCount
-        mActiveItem = 1
-        mIsSetup = true
+    private var gridPageCount: Int = 0
+    private var activePageIdx: Int = 0
+    private var isSetup: Boolean = false
+
+    fun setup(pageCount: Int) {
+        gridPageCount = pageCount
+        activePageIdx = 1
+        desiredWidth =
+            indicatorHeight +
+                ((gridPageCount + 1) * paddingBetweenIndicators) +
+                (gridPageCount * gridPageIndicatorWidth)
+        isSetup = true
         requestLayout()
         invalidate()
     }
 
     fun updateActiveItem(activeItem: Int) {
-        mActiveItem = activeItem
+        activePageIdx = activeItem
         invalidate()
     }
 
-    // Background is rendered as a View background;
+    // Renders as () (---) (   ) (   )
     override fun onDraw(canvas: Canvas) {
-        if (!mIsSetup) {
+        if (!isSetup) {
             return
         }
 
-        // App drawer + other pages
-        val itemCount = mGridPageCount + 1
-        val itemWidth = width / itemCount
-        val xOffsetInRange = itemWidth / 2 - INDICATOR_SIZE / 2
-        val yOffset = height / 2 - INDICATOR_SIZE / 2
-        mPaint.color = Color.WHITE
-        for (i in 0 until itemCount) {
-            val active = i == mActiveItem
-            mPaint.alpha = if (active) ACTIVE_ALPHA else INACTIVE_ALPHA
-            mPaint.style =
+        // We assume we have the height and width we need to layout, but we self-center inside
+        // to avoid clipping the edge
+        // Start at 0 and walk until the end of the view
+        var xOffset = (width / 2.0F) - (desiredWidth / 2.0F)
+        val yOffset = (height / 2.0F) - (desiredHeight / 2.0F)
+
+        // App indicator
+        val appIndicatorActive = 0 == activePageIdx
+        paint.alpha = if (appIndicatorActive) activeAlpha else inactiveAlpha
+        paint.style =
+            if (appIndicatorActive) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
+        canvas.drawCircle(
+            xOffset + appIndicatorRadius,
+            yOffset + appIndicatorRadius,
+            appIndicatorRadius,
+            paint
+        )
+        xOffset += (appIndicatorRadius * 2.0F) + paddingBetweenIndicators
+
+        // Page indicator(s)
+        for (idx in 0 until gridPageCount) {
+            val active = (idx + 1) == activePageIdx
+            paint.alpha = if (active) activeAlpha else inactiveAlpha
+            paint.style =
                 if (active) Paint.Style.FILL_AND_STROKE else Paint.Style.STROKE
-            val xOffset = i * itemWidth + xOffsetInRange
-            when (i) {
-                0 -> {
-                    val widthOverFour = INDICATOR_SIZE / 4f
-                    val xfermode = mPaint.xfermode
-                    // TODO: This doesn't do what I expect it to
-                    mPaint.xfermode = OVERLAP_XFER_MODE
-                    // Top left
-                    canvas.drawCircle(
-                        xOffset + widthOverFour,
-                        yOffset + widthOverFour,
-                        widthOverFour,
-                        mPaint
-                    )
-                    // Bottom right
-                    canvas.drawCircle(
-                        xOffset + widthOverFour * 3,
-                        yOffset + widthOverFour * 3,
-                        widthOverFour,
-                        mPaint
-                    )
-                    mPaint.xfermode = xfermode
-                }
-                1 -> canvas.drawRect(
-                    xOffset.toFloat(),
-                    yOffset.toFloat(), (
-                            xOffset + INDICATOR_SIZE).toFloat(), (
-                            yOffset + INDICATOR_SIZE).toFloat(),
-                    mPaint
-                )
-                else -> canvas.drawOval(
-                    xOffset.toFloat(),
-                    yOffset.toFloat(), (
-                            xOffset + INDICATOR_SIZE).toFloat(), (
-                            yOffset + INDICATOR_SIZE).toFloat(),
-                    mPaint
-                )
-            }
+            canvas.drawRoundRect(
+                xOffset,
+                yOffset,
+                xOffset + gridPageIndicatorWidth,
+                yOffset + indicatorHeight,
+                rectRounding,
+                rectRounding,
+                paint)
+            xOffset += paddingBetweenIndicators + gridPageIndicatorWidth
         }
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        val horizontalSpace = MeasureSpec.getSize(widthMeasureSpec)
         val verticalSpace = MeasureSpec.getSize(heightMeasureSpec)
-        setMeasuredDimension(
-            mGridPageCount * INDICATOR_SIZE * INDICATOR_WIDTH_FACTOR,
-            if (verticalSpace < DESIRED_HEIGHT) verticalSpace else DESIRED_HEIGHT
-        )
+        // We self-center in the provided area
+        setMeasuredDimension(horizontalSpace, verticalSpace)
     }
 
     init {
         AttributeApplier.applyDensity(this, getContext())
-        mPaint = Paint()
-        mPaint.strokeWidth = STROKE_WIDTH.toFloat()
+        paddingBetweenIndicators = indicatorHeight
+        appIndicatorRadius = indicatorHeight / 2.0F
+        gridPageIndicatorWidth = indicatorHeight * 1.5F
+        desiredHeight = indicatorHeight
+        paint = Paint().also {
+            it.strokeWidth = strokeWidth
+            it.color = Color.WHITE
+        }
+    }
+
+    companion object {
+        private const val inactiveAlpha = 80
+        private const val activeAlpha = 255
     }
 }

@@ -48,6 +48,15 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/total_dock_height">
 
+        <com.inipage.homelylauncher.pager.PagerIndicatorView
+            android:id="@+id/pager_indicator_view"
+            android:layout_width="wrap_content"
+            android:layout_height="24dp"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentTop="true"
+            android:focusableInTouchMode="false"
+            />
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/dock_container"
             android:layout_width="match_parent"
@@ -55,15 +64,6 @@
             android:scrollbars="none"
             android:gravity="center_vertical"
             android:layout_alignParentBottom="true" />
-
-        <com.inipage.homelylauncher.pager.PagerIndicatorView
-            android:id="@+id/pager_indicator_view"
-            android:focusableInTouchMode="false"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:layout_alignParentBottom="true"
-            android:layout_marginBottom="@dimen/contextual_dock_height"/>
     </RelativeLayout>
 
     <View
