@@ -33,7 +33,6 @@
     <dimen name="contextual_dock_internal_padding_horizontal">12dp</dimen>
     <!-- (contextual_dock_height - (external padding * 2) - (internal padding * 2) -->
     <dimen name="contextual_dock_icon_size">40dp</dimen>
-    <dimen name="weather_bottom_sheet_horizontal_padding">32dp</dimen>
 
     <!-- App popup menu -->
     <dimen name="bar_height">32dp</dimen>

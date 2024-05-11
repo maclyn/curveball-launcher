@@ -77,10 +77,6 @@ public class PrefsHelper {
         return true;
     }
 
-    public static boolean useGWeather() {
-        return get().mSharedPreferences.getBoolean(Constants.USE_G_WEATHER_PREF, false);
-    }
-
     public static boolean isUsingIconPack() {
         return get().mSharedPreferences.getBoolean(Constants.HAS_ICON_PACK_SET_PREF, false);
     }

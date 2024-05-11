@@ -8,11 +8,6 @@
     <uses-permission android:name="android.permission.READ_CALENDAR" />
     <!-- For battery state. -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <!-- For weather. -->
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <!-- For weather. -->
-    <uses-permission android:name="android.permission.INTERNET" />
     <!-- To uninstall apps. -->
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES"/>
     <!-- Weird permission thing. -->

@@ -379,11 +379,9 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
 
             // Dock
             bindCheckboxPreference("mono_dock", Constants.MONOCHROME_DOCK_PREF);
-            bindCheckboxPreference("use_g_weather", Constants.USE_G_WEATHER_PREF, false, null);
             bindPreference("manage_cals", ctx -> HiddenCalendarsPickerBottomSheet.show(ctx, null));
             bindPreference("manage_hidden_apps",
                HiddenRecentAppsBottomSheet.INSTANCE::showHiddenRecentAppsBottomSheet);
-            bindCheckboxPreference("celcius_pref", Constants.WEATHER_USE_CELCIUS_PREF);
 
             // Backups
             bindPreference("full_backup", context -> {

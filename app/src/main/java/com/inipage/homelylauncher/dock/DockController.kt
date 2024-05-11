@@ -1,31 +1,22 @@
 package com.inipage.homelylauncher.dock
 
-import android.content.Context
 import android.graphics.Rect
 import android.os.Handler
 import androidx.recyclerview.widget.RecyclerView
 import com.inipage.homelylauncher.dock.items.ContextualAppFetcher
-import com.inipage.homelylauncher.dock.DockControllerItem
 import com.inipage.homelylauncher.model.DockItem
 import android.os.Looper
-import android.util.Log
 import android.view.View
 import com.inipage.homelylauncher.persistence.DatabaseEditor
 import com.inipage.homelylauncher.dock.items.AlarmMappedDockItem
 import com.inipage.homelylauncher.dock.items.CalendarMappedDockItem
-import com.inipage.homelylauncher.dock.items.WeatherDockItem
 import com.inipage.homelylauncher.dock.items.PhoneMappedDockItem
 import com.inipage.homelylauncher.dock.items.PowerMappedDockItem
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.inipage.homelylauncher.R
-import com.inipage.homelylauncher.dock.DockAdapter
 import com.inipage.homelylauncher.persistence.PrefsHelper
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.util.ArrayList
 import java.util.HashMap
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.function.Function
 import java.util.stream.Collectors
@@ -72,7 +63,6 @@ class DockController(val container: RecyclerView) {
         // Add all the dock items
         activeDockItems.add(AlarmMappedDockItem())
         activeDockItems.add(CalendarMappedDockItem())
-        activeDockItems.add(WeatherDockItem())
         activeDockItems.add(PhoneMappedDockItem(appBackedItemsCache))
         activeDockItems.add(PowerMappedDockItem(appBackedItemsCache))
         // This takes about ~150-200ms on a fast-ish device; the rest of the init takes about

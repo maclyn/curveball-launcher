@@ -39,7 +39,6 @@ class NewUserBottomSheet(val context: Context) {
         val activity = ViewUtils.requireActivityOf(context) ?: return
         activity.requestPermissions(
             arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.READ_PHONE_STATE,
                 Manifest.permission.READ_CALENDAR),
             1000)

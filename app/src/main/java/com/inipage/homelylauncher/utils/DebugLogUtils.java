@@ -24,7 +24,6 @@ public class DebugLogUtils {
     public static final String TAG_CUSTOM_TOUCHEVENTS = "tag_custom_touchevents";
     public static final String TAG_GRID_HANDLE = "tag_grid_handle";
     public static final String TAG_DECOR_DRAGGER = "tag_decor_dragger";
-    public static final String TAG_WEATHER_LOADING = "tag_weather_loading";
     public static final String TAG_WALLPAPER_OFFSET = "tag_wallpaper_offset";
     public static final String TAG_BOTTOM_SHEET = "tag_bottom_sheet";
     public static final String TAG_VIRTUAL_TRACKPAD = "tag_virtual_trackpad";

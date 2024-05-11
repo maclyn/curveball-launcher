@@ -44,17 +44,6 @@
             android:drawablePadding="8dp"
             app:drawableStartCompat="@drawable/dock_icon_call" />
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="@string/welcome_subtitle_location"
-            android:textColor="@color/primary_text_color"
-            android:textSize="16sp"
-            android:gravity="start"
-            android:drawablePadding="8dp"
-            app:drawableStartCompat="@drawable/ic_baseline_location_on_24" />
-
         <Button
             android:id="@+id/grant_permissions_button"
             android:layout_width="match_parent"

@@ -4,16 +4,7 @@ import com.google.gson.Gson;
 
 public class Constants {
 
-    public static final String CACHED_WEATHER_RESPONSE_JSON_PREFERENCE = "cached_weather_response_json_pref";
-    public static final String CACHED_WEATHER_RESPONSE_LITE_JSON_PREFERENCE = "cached_weather_response_lite_json_pref";
-    public static final String CACHED_WEATHER_RESPONSE_EXPIRY_PREFERENCE = "cached_weather_response_expire_pref";
-
-    public static final String USE_G_WEATHER_PREF = "use_g_weather_pref";
-    public static final String WEATHER_USE_CELCIUS_PREF = "use_celsius_pref";
-
     public static final String DISABLED_CALENDARS_PREF = "disabled_calendars_pref";
-
-    public static final String VERTICAL_SCROLLER_PREF = "vertical_scroller_pref";
 
     public static final String HAS_SHOWN_NEW_USER_EXPERIENCE = "new_user_pref";
 
