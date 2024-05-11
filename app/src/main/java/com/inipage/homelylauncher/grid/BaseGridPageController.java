@@ -66,6 +66,7 @@ import com.inipage.homelylauncher.views.DecorViewDragger;
 import com.inipage.homelylauncher.views.DecorViewDragger.DragEvent;
 import com.inipage.homelylauncher.views.DecorViewManager;
 import com.inipage.homelylauncher.widgets.WidgetAddBottomSheet;
+import com.inipage.homelylauncher.widgets.WidgetLifecycleUtils;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -241,8 +242,7 @@ public abstract class BaseGridPageController implements BasePageController {
                         mHost.getContext().getApplicationContext(),
                         appWidgetId,
                         awpi);
-            hostView.updateAppWidgetSize(
-                null, spanWidthPx, spanHeightPx, spanWidthPx, spanHeightPx);
+            WidgetLifecycleUtils.updateAppWidgetSize(hostView, spanWidthPx, spanHeightPx);
             gridViewHolder = new WidgetViewHolder(
                 hostView,
                 awpi,

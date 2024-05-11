@@ -734,6 +734,16 @@ public class HomeActivity extends AppCompatActivity implements
     }
 
     @Override
+    public Pair<Integer, Integer> provideScrimYPositionsOnScreen() {
+        final int[] out = new int[2];
+        topScrim.getLocationOnScreen(out);
+        final int topScrimPosition = out[1];
+        bottomScrim.getLocationOnScreen(out);
+        final int bottomScrimPosition = out[1];
+        return Pair.create(topScrimPosition, bottomScrimPosition);
+    }
+
+    @Override
     public boolean isOnAppDrawer() {
         return pagerView.getCurrentItem() == 0;
     }

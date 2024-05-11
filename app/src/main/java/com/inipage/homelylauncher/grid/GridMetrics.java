@@ -11,14 +11,14 @@ public class GridMetrics {
     private final int mColumnCount;
     private final int mRowCount;
 
-    public GridMetrics(int screenHeight, int screenWidth, int columnCount) {
-        float scalar = chooseScalar(screenWidth, screenHeight);
-        mCellWidth = screenWidth / columnCount;
+    public GridMetrics(int containerHeight, int containerWidth, int columnCount) {
+        float scalar = chooseScalar(containerWidth, containerHeight);
+        mCellWidth = containerWidth / columnCount;
         mCellHeight = (int) (mCellWidth * scalar);
         mColumnCount = columnCount;
         mRowCount = Math.min(
             Constants.DEFAULT_MAX_ROW_COUNT,
-            (int) Math.floor(screenHeight / (float) mCellHeight));
+            (int) Math.floor(containerHeight / (float) mCellHeight));
     }
 
     public GridMetrics(int rowCount, int columnCount, int screenHeight, int screenWidth) {

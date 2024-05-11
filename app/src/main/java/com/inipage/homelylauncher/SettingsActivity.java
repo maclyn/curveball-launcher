@@ -305,6 +305,11 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
     }
 
     @Override
+    public Pair<Integer, Integer> provideScrimYPositionsOnScreen() {
+        return Pair.create(0, 0);
+    }
+
+    @Override
     public Rect provideOverallBounds() {
         View view = getWindow().getDecorView();
         return new Rect(view.getLeft(), view.getTop(), view.getRight(), view.getBottom());

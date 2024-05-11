@@ -3,6 +3,7 @@ package com.inipage.homelylauncher.drawer;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Rect;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.TextAppearanceSpan;
@@ -29,7 +30,9 @@ import com.inipage.homelylauncher.utils.InstalledAppUtils;
 import com.inipage.homelylauncher.utils.InstalledAppUtils.AppLaunchSource;
 import com.inipage.homelylauncher.utils.LifecycleLogUtils;
 import com.inipage.homelylauncher.utils.Prewarmer;
+import com.inipage.homelylauncher.utils.ViewUtils;
 import com.inipage.homelylauncher.views.AppPopupMenu;
+import com.inipage.homelylauncher.views.ProvidesOverallDimensions;
 
 import org.apache.commons.collections4.trie.PatriciaTrie;
 import org.greenrobot.eventbus.EventBus;
@@ -250,7 +253,7 @@ public class AppDrawerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     private final List<ApplicationIconHideable> mApps;
     private final PatriciaTrie<ApplicationIconHideable> mAppsTree = new PatriciaTrie<>();
     private final Map<String, Integer> mHeaderToCount = new HashMap<>();
-    private final Activity mActivity;
+    private final Context mContext;
     private final int mColumnCount;
 
     private List<AdapterElement> mElements;
@@ -258,16 +261,16 @@ public class AppDrawerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     private List<ApplicationIconHideable> mLastSearchResult;
     private Mode mMode;
 
-    public AppDrawerAdapter(Delegate delegate, Activity activity, int columnCount) {
+    public AppDrawerAdapter(Delegate delegate, Context context, int columnCount) {
         this.mApps = AppInfoCache.get().getAppDrawerActivities();
         for (ApplicationIconHideable icon : mApps) {
             mAppsTree.put(icon.getName().toLowerCase(Locale.getDefault()), icon);
             Prewarmer.getInstance().prewarm(() ->
-                IconCacheSync.getInstance(activity).getActivityIcon(
+                IconCacheSync.getInstance(context).getActivityIcon(
                     icon.getPackageName(), icon.getActivityName()));
         }
         this.mDelegate = delegate;
-        this.mActivity = activity;
+        this.mContext = context;
         this.mColumnCount = columnCount;
         this.mMode = Mode.SHOWING_ALL;
         rebuild(null);
@@ -436,7 +439,8 @@ public class AppDrawerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     public synchronized void hideApp(ApplicationIcon ai) {
         // We both remove the relevant app from mElements and mApps
         int position = -1;
-        ApplicationIconHideable searchKey = new ApplicationIconHideable(mActivity, ai.getPackageName(), ai.getActivityName(), false);
+        ApplicationIconHideable searchKey =
+            new ApplicationIconHideable(mContext, ai.getPackageName(), ai.getActivityName(), false);
         for (int i = 0; i < mElements.size(); i++) {
             if (mElements.get(i).getElementType() == ITEM_VIEW_TYPE_APP && mElements.get(i).getUnderlyingApp().equals(searchKey)) {
                 position = i;
@@ -565,7 +569,7 @@ public class AppDrawerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         final View mainView = viewHolder.mainView;
         viewHolder.title.setText(ai.getName());
         viewHolder.icon.setBitmap(
-            IconCacheSync.getInstance(mActivity).getActivityIcon(
+            IconCacheSync.getInstance(mContext).getActivityIcon(
                 ai.getPackageName(), ai.getActivityName()));
         viewHolder.mainView.setClickable(true);
         viewHolder.mainView.setAlpha(1F);
@@ -585,6 +589,19 @@ public class AppDrawerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 int viewWidth = mainView.getMeasuredWidth();
                 int viewHeight = mainView.getMeasuredHeight();
                 mainView.getLocationOnScreen(out);
+
+                // If we're searching, we need to *further* offset to account for the pan of the
+                // screen
+                if (mMode == Mode.SEARCH_RESULTS) {
+                    Activity activity = ViewUtils.requireActivityOf(mContext);
+                    if (activity instanceof ProvidesOverallDimensions) {
+                        Pair<Integer, Integer> scrimYPositions =
+                            ((ProvidesOverallDimensions) activity).provideScrimYPositionsOnScreen();
+                        if (scrimYPositions.first < 0) {
+                            out[1] -= scrimYPositions.first;
+                        }
+                    }
+                }
                 new AppPopupMenu().show(
                     out[0] + (viewWidth / 2),
                     out[1] + (viewHeight / 2),

@@ -288,7 +288,7 @@ public class AppDrawerController implements BasePageController, FastScrollContro
         }
         mAdapter = new AppDrawerAdapter(
             mAdapterDelegate,
-            ViewUtils.requireActivityOf(mContext),
+            mContext,
             mUsingGridLayoutByDefault ? GRID_LAYOUT_COLUMN_COUNT : 1);
         mAdapter.setHasStableIds(true);
         appRecyclerView.setAdapter(mAdapter);

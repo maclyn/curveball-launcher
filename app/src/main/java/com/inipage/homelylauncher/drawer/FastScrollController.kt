@@ -115,7 +115,9 @@ class FastScrollController(private val host: Host) {
 
                 override fun provideExitAnimation(view: View): Animator? = null
 
-                override fun onDismissed(removedView: View) = leaveFastScroll()
+                override fun onDismissed(removedView: View, byBackgroundTap: Boolean) {
+                    leaveFastScroll()
+                }
             },
             FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,

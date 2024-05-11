@@ -106,9 +106,14 @@ class FolderController(
         startRawY: Float
     ) {
         host.onStartFolderOpen()
+
         selectedFolder = SelectedFolderTarget(
             appViewHolder, rootView.measuredHeight, sourceView, startRawY)
-        bindFolderView()
+        // TODO: yikes
+        bindFolderView(gridFolder)
+        selectedFolder = SelectedFolderTarget(
+            appViewHolder, rootView.measuredHeight, sourceView, startRawY)
+
         onOpenMotionEvent(motionEvent, ACTION_MOVE, firstPointerId, startRawY)
     }
 
@@ -148,7 +153,7 @@ class FolderController(
         rootView.triggerExitAnimation()
     }
 
-    private fun bindFolderView() {
+    private fun bindFolderView(gridFolder: GridFolder?) {
         val newFolderRequest = gridFolder == null
         rootView.visibility = VISIBLE
         newFolderSuggestionContainer.visibility = if (newFolderRequest) VISIBLE else GONE
@@ -176,7 +181,7 @@ class FolderController(
                     val gridFolder = gridFolder ?: return
                     gridFolder.setApps(newApps)
                     DatabaseEditor.get().updateGridFolder(gridFolder)
-                    bindFolderView()
+                    bindFolderView(gridFolder)
                 }
 
                 override fun onChangesDismissed() {
@@ -198,7 +203,7 @@ class FolderController(
                 override fun onFolderUpdated(newApps: MutableList<GridFolderApp>) {
                     folder.setApps(newApps)
                     DatabaseEditor.get().updateGridFolder(folder)
-                    bindFolderView()
+                    bindFolderView(gridFolder)
                 }
 
                 override fun onChangesDismissed() = Unit
@@ -210,7 +215,7 @@ class FolderController(
         FolderReorderBottomSheet.show(context, folder.apps) { newApps ->
             folder.setApps(newApps)
             DatabaseEditor.get().updateGridFolder(folder)
-            bindFolderView()
+            bindFolderView(gridFolder)
         }
     }
 
@@ -236,7 +241,7 @@ class FolderController(
                 val folder = gridFolder ?: return@setOnMenuItemClickListener false
                 DatabaseEditor.get().deleteGridFolder(folder)
                 gridItem?.updateGridFolder(null)
-                bindFolderView()
+                bindFolderView(gridFolder)
                 closeFolder()
                 true
             }

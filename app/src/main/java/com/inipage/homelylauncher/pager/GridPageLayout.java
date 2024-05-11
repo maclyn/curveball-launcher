@@ -14,7 +14,6 @@ import android.widget.FrameLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.inipage.homelylauncher.state.GridDropStateMachine;
 import com.inipage.homelylauncher.utils.DebugLogUtils;
 import com.inipage.homelylauncher.utils.ViewUtils;
 import com.inipage.homelylauncher.views.DecorViewDragger;
@@ -73,6 +72,8 @@ public class GridPageLayout extends FrameLayout {
     private int mFirstPointerId;
     private float mStartRawX;
     private float mStartRawY;
+    private float mLastRawX;
+    private float mLastRawY;
 
     public GridPageLayout(@NonNull Context context) {
         this(context, null);
@@ -119,8 +120,8 @@ public class GridPageLayout extends FrameLayout {
                 }
                 mDetectedState = GestureDetectedState.UNDECIDED;
                 mFirstPointerId = event.getPointerId(event.getActionIndex());
-                mStartRawX = event.getRawX();
-                mStartRawY =  event.getRawY();
+                mStartRawX = mLastRawX = event.getRawX();
+                mStartRawY = mLastRawY = event.getRawY();
                 mHandler.sendMessageAtTime(
                     Message.obtain(
                         mHandler,
@@ -137,6 +138,9 @@ public class GridPageLayout extends FrameLayout {
                     log("Ignoring ACTION_MOVE missing first pointer");
                     return false;
                 }
+
+                final float rawX = mLastRawX = getRawXWithPointerId(this, event, firstPointerIdx);
+                final float rawY = mLastRawY = getRawYWithPointerId(this, event, firstPointerIdx);
                 boolean exceededSlop = ViewUtils.exceedsSlopInActionMove(
                     event, firstPointerIdx, mStartRawX, mStartRawY, this, /* slopFactor */ 3.0F);
                 if (!exceededSlop) {
@@ -144,10 +148,8 @@ public class GridPageLayout extends FrameLayout {
                     return false;
                 }
                 log("Significant move detected");
-                mHandler.removeMessages(LongPressHandler.GESTURE_LONG_PRESS);
+                clearLongPressHandler();
 
-                final float rawX = getRawXWithPointerId(this, event, firstPointerIdx);
-                final float rawY = getRawYWithPointerId(this, event, firstPointerIdx);
                 final float xDelta = rawX - mStartRawX;
                 final float yDelta = rawY - mStartRawY;
                 if (Math.abs(xDelta) > Math.abs(yDelta)) {
@@ -179,7 +181,7 @@ public class GridPageLayout extends FrameLayout {
                     return false;
                 }
                 mDetectedState = GestureDetectedState.EVENT_DEAD;
-                mHandler.removeMessages(LongPressHandler.GESTURE_LONG_PRESS);
+                clearLongPressHandler();
                 int firstPointerIdx = event.findPointerIndex(mFirstPointerId);
                 if (firstPointerIdx == -1) {
                     log("Ignoring ACTION(_POINTER)_UP event for secondary pointer!");
@@ -193,8 +195,8 @@ public class GridPageLayout extends FrameLayout {
                 if (mDetectedState == GestureDetectedState.EVENT_DEAD) {
                     return false;
                 }
+                clearLongPressHandler();
                 mDetectedState = GestureDetectedState.EVENT_DEAD;
-                mHandler.removeMessages(LongPressHandler.GESTURE_LONG_PRESS);
                 log("Event complete in ACTION_CANCEL");
                 return false;
             default:
@@ -226,11 +228,13 @@ public class GridPageLayout extends FrameLayout {
                 }
                 log("ACTION_UP on first pointer; event done");
                 sendPostInterceptAction(event, ACTION_UP);
+                clearLongPressHandler();
                 mDetectedState = GestureDetectedState.EVENT_DEAD;
                 return true;
             case ACTION_CANCEL:
                 log("ACTION_CANCEL; event done");
                 sendPostInterceptAction(event, ACTION_CANCEL);
+                clearLongPressHandler();
                 mDetectedState = GestureDetectedState.EVENT_DEAD;
                 return true;
         }
@@ -249,8 +253,9 @@ public class GridPageLayout extends FrameLayout {
         } else {
             if (mDetectedState == GestureDetectedState.UNDECIDED) {
                 // Pass to parent
-                log("Allowing intercept to kill event request b/c current state is " + mDetectedState.name());
-                mHandler.removeMessages(LongPressHandler.GESTURE_LONG_PRESS);
+                log("Allowing intercept to kill event request b/c current state is " +
+                        mDetectedState.name());
+                clearLongPressHandler();
                 mDetectedState = GestureDetectedState.EVENT_DEAD;
             } else {
                 log("Not handling intercept during state " + mDetectedState.name());
@@ -260,12 +265,29 @@ public class GridPageLayout extends FrameLayout {
             getParent().requestDisallowInterceptTouchEvent(disallowIntercept);
         }
     }
+    
+    private synchronized void clearLongPressHandler() {
+        mHandler.removeCallbacksAndMessages(null);
+    }
 
-    private synchronized void onLongPressAction() {
+    private synchronized void onLongPressMessage() {
         log("Got long press event");
         if (mDetectedState != GestureDetectedState.UNDECIDED) {
             return;
         }
+        boolean exceededSlop =
+            ViewUtils.exceedsSlop(
+                mLastRawX,
+                mLastRawY,
+                mStartRawX,
+                mStartRawY,
+                this,
+                /* slopFactor */ 1.5F);
+        if (exceededSlop) {
+            mDetectedState = GestureDetectedState.EVENT_DEAD;
+            return;
+        }
+
         if (getParent() != null) {
             getParent().requestDisallowInterceptTouchEvent(true);
         }
@@ -319,7 +341,7 @@ public class GridPageLayout extends FrameLayout {
                 if (parent == null) {
                     return;
                 }
-                parent.onLongPressAction();
+                parent.onLongPressMessage();
             }
         }
     }

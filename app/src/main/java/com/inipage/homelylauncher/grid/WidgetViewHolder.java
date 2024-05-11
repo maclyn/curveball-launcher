@@ -8,6 +8,7 @@ import android.widget.FrameLayout;
 
 import com.inipage.homelylauncher.model.ClassicGridItem;
 import com.inipage.homelylauncher.model.GridItem;
+import com.inipage.homelylauncher.widgets.WidgetLifecycleUtils;
 
 public class WidgetViewHolder extends GridViewHolder {
 
@@ -35,7 +36,7 @@ public class WidgetViewHolder extends GridViewHolder {
         super.onResized();
         final int width = getGridMetrics().getWidthOfColumnSpanPx(mItem.getWidth());
         final int height = getGridMetrics().getHeightOfRowSpanPx(mItem.getHeight());
-        mWidgetHostView.updateAppWidgetSize(null, width, height, width, height);
+        WidgetLifecycleUtils.updateAppWidgetSize(mWidgetHostView, width, height);
     }
 
     @Override

@@ -9,6 +9,7 @@ import android.content.res.Configuration
 import android.graphics.Point
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
+import android.util.DisplayMetrics
 import android.view.*
 import androidx.core.content.ContextCompat
 import com.inipage.homelylauncher.R
@@ -215,6 +216,34 @@ object ViewUtils {
         val isSquarish = screenHeight / screenWidth < 1.1
         IS_SQUARISH_DEVICE = isSquarish
         return isSquarish
+    }
+
+    @JvmStatic
+    fun dpToPx(dp: Float, context: Context): Float {
+        val densityScalar =
+            context.resources.displayMetrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT
+        return dp * densityScalar
+    }
+
+    @JvmStatic
+    fun pxToDp(px: Float, context: Context): Float {
+        val densityScalar =
+            context.resources.displayMetrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT
+        return px / densityScalar
+    }
+
+    @JvmStatic
+    fun dpToPx(dp: Int, context: Context): Int {
+        val densityScalar =
+            context.resources.displayMetrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT
+        return dp * densityScalar
+    }
+
+    @JvmStatic
+    fun pxToDp(px: Int, context: Context): Int {
+        val densityScalar =
+            context.resources.displayMetrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT
+        return px / densityScalar
     }
 
     @JvmStatic

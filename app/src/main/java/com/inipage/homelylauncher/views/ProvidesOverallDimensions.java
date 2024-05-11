@@ -7,5 +7,7 @@ public interface ProvidesOverallDimensions {
 
     Pair<Integer, Integer> provideScrims();
 
+    Pair<Integer, Integer> provideScrimYPositionsOnScreen();
+
     Rect provideOverallBounds();
 }
