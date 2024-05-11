@@ -90,8 +90,6 @@ public class AppDrawerController implements BasePageController, FastScrollContro
     View rootView;
     @BindView(R.id.all_apps_layout)
     RecyclerView appRecyclerView;
-    @BindView(R.id.folder_container)
-    LinearLayout folderContainer;
     @BindView(R.id.search_box_button)
     View searchBoxButton;
     @BindView(R.id.bottom_sheet_settings_button)

@@ -19,7 +19,6 @@
             android:scrollbars="none" />
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
-
     <Button
         android:id="@+id/store_search_button"
         style="?attr/borderlessButtonStyle"
@@ -29,7 +28,7 @@
         android:layout_centerHorizontal="true"
         android:layout_gravity="center_horizontal"
         android:drawableStart="@drawable/ic_shop_white_18dp"
-        android:drawablePadding="8dp"
+        android:drawablePadding="16dp"
         android:gravity="center"
         android:visibility="gone"
         android:text="@string/search_store"
@@ -39,12 +38,13 @@
         android:id="@+id/app_drawer_action_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginHorizontal="8dp"
+        android:paddingBottom="8dp"
         android:layout_alignParentBottom="true"
         android:background="@color/transparent"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:visibility="gone"
-        android:paddingHorizontal="8dp">
+        android:visibility="gone">
 
         <!-- Empty view that can can grab focus when we clearFocus() off the searchBox -->
         <View
@@ -91,6 +91,7 @@
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
         android:orientation="horizontal"
+        android:visibility="visible"
         >
 
         <ImageView
@@ -126,13 +127,5 @@
                 app:tint="@color/white" />
         </FrameLayout>
     </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/folder_container"
-        android:layout_above="@+id/app_drawer_actions_container"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        />
 
 </RelativeLayout>
