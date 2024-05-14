@@ -37,8 +37,7 @@ class ActivitySelectorAdapter(
             icon.isChecked = newState
         }
         holder.checkbox.setOnClickListener {
-            val newState = !holder.checkbox.isChecked
-            holder.checkbox.isChecked = newState
+            val newState = holder.checkbox.isChecked
             icon.isChecked = newState
         }
     }

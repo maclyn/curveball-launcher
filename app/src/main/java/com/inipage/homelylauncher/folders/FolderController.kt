@@ -36,8 +36,7 @@ class FolderController(
     val rootView: DraggableLayout
 ) : DraggableLayout.Host {
 
-    inner class SelectedFolderTarget(
-        val folderTarget: AppViewHolder,
+    inner class FolderAnimationTracker(
         val targetYTranslation: Int,
         private val sourceView: View,
         private val startRawY: Float
@@ -48,11 +47,6 @@ class FolderController(
         val currentTranslationAmount: Float
             get() {
                 return percentComplete * targetYTranslation
-            }
-
-        val newFolderRequest: Boolean
-            get() {
-                return folderTarget.item.gridFolder == null
             }
 
         val velocityTracker: VelocityTracker = VelocityTracker.obtain()
@@ -86,17 +80,26 @@ class FolderController(
     private val appsRecyclerView: RecyclerView =
         ViewCompat.requireViewById(rootView, R.id.folder_apps_rv)
 
-    private var selectedFolder: SelectedFolderTarget? = null
+    private var folderTarget: AppViewHolder? = null
+    private var activeFolderAnimation: FolderAnimationTracker? = null
+    private var targetYTranslation: Int = 0
+
+    val newFolderRequest: Boolean
+        get() {
+            return folderTarget?.item?.gridFolder == null
+        }
 
     private val gridItem: GridItem?
         get() {
-            return selectedFolder?.folderTarget?.item
+            return folderTarget?.item
         }
 
     private val gridFolder: GridFolder?
         get() {
             return gridItem?.gridFolder
         }
+
+    fun isFolderOpen(): Boolean = folderTarget != null
 
     fun onStartOpenAction(
         appViewHolder: AppViewHolder,
@@ -107,12 +110,10 @@ class FolderController(
     ) {
         host.onStartFolderOpen()
 
-        selectedFolder = SelectedFolderTarget(
-            appViewHolder, rootView.measuredHeight, sourceView, startRawY)
-        // TODO: yikes
+        folderTarget = appViewHolder
         bindFolderView(gridFolder)
-        selectedFolder = SelectedFolderTarget(
-            appViewHolder, rootView.measuredHeight, sourceView, startRawY)
+        activeFolderAnimation =
+            FolderAnimationTracker(rootView.measuredHeight, sourceView, startRawY)
 
         onOpenMotionEvent(motionEvent, ACTION_MOVE, firstPointerId, startRawY)
     }
@@ -123,30 +124,26 @@ class FolderController(
         firstPointerId: Int,
         startRawY: Float
     ) {
-        val target = selectedFolder ?: return
-        target.addAction(event, firstPointerId)
+        val animation = activeFolderAnimation ?: return
+        animation.addAction(event, firstPointerId)
         when (action) {
             ACTION_MOVE -> {
-                rootView.translationY = target.targetYTranslation - target.currentTranslationAmount
-                host.onFolderPartiallyOpen(target.percentComplete, target.currentTranslationAmount)
+                rootView.translationY = animation.targetYTranslation - animation.currentTranslationAmount
+                rootView.alpha = animation.percentComplete
+                host.onFolderPartiallyOpen(animation.percentComplete, animation.currentTranslationAmount)
             }
             ACTION_UP -> {
-                if (target.percentComplete >= 1.0) {
+                if (animation.percentComplete >= 1.0) {
                     onAnimationInComplete()
                     host.onFolderCompletelyOpen()
                     return
                 }
-                val folder = selectedFolder ?: return
-                rootView.runAnimationFromBrainSlug(folder.velocityTracker, firstPointerId)
+                rootView.runAnimationFromBrainSlug(animation.velocityTracker, firstPointerId)
             }
             ACTION_CANCEL -> {
                 onAnimationOutComplete()
             }
         }
-    }
-
-    fun isFolderOpen(): Boolean {
-        return selectedFolder != null
     }
 
     fun closeFolder() {
@@ -185,9 +182,8 @@ class FolderController(
                 }
 
                 override fun onChangesDismissed() {
-                    val gridFolder = gridFolder ?: return
                     DatabaseEditor.get().deleteGridFolder(newFolder)
-                    selectedFolder?.folderTarget?.item?.updateGridFolder(null)
+                    gridItem?.updateGridFolder(null)
                     closeFolder()
                 }
             })
@@ -253,16 +249,20 @@ class FolderController(
         appsRecyclerView.layoutManager = GridLayoutManager(context, 5, RecyclerView.VERTICAL, false)
     }
 
-    override fun onAnimationPartial(percentComplete: Float, translationMagnitude: Float) {
+    override fun onAnimationPartial(percentComplete: Float, translationY: Float) {
         // Percent complete = how close are we to "fully expanded"
         // Translation magnitude = how far have we dragged
-        val folder = selectedFolder ?: return
-        rootView.translationY = folder.targetYTranslation - (folder.targetYTranslation * percentComplete)
-        host.onFolderPartiallyOpen(percentComplete, folder.targetYTranslation - translationMagnitude)
+        val animation = activeFolderAnimation ?: return
+        rootView.translationY = animation.targetYTranslation - (animation.targetYTranslation * percentComplete)
+        rootView.alpha = percentComplete
+        host.onFolderPartiallyOpen(
+            percentComplete,
+            animation.targetYTranslation - translationY)
     }
 
     override fun onAnimationOutComplete() {
-        selectedFolder = null
+        folderTarget = null
+        activeFolderAnimation = null
         rootView.visibility = GONE
         host.onFolderPartiallyOpen(0.0f, 0.0f)
         host.onFolderClosed()
@@ -271,9 +271,10 @@ class FolderController(
     override fun onAnimationInComplete() {
         host.onFolderPartiallyOpen(
             1.0F,
-            selectedFolder?.targetYTranslation?.toFloat() ?: 0F)
+            activeFolderAnimation?.targetYTranslation?.toFloat() ?: 0F)
         rootView.translationY = 0.0F
-        if (selectedFolder?.newFolderRequest == true) {
+        rootView.alpha = 1.0F
+        if (newFolderRequest) {
             onNewFolderRequested()
         }
     }

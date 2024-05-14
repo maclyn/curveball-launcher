@@ -14,8 +14,8 @@ class BottomSheetContainerLayoutHost(
         fun onDismissedBySwipe()
     }
 
-    override fun onAnimationPartial(percentComplete: Float, translationMagnitude: Float) {
-        updateBottomSheetLocation(percentComplete, translationMagnitude)
+    override fun onAnimationPartial(percentComplete: Float, translationY: Float) {
+        updateBottomSheetLocation(percentComplete, translationY)
     }
 
     override fun onAnimationOutComplete() {
@@ -27,9 +27,9 @@ class BottomSheetContainerLayoutHost(
         updateBottomSheetLocation(100.0F, 0.0F)
     }
 
-    private fun updateBottomSheetLocation(percentComplete: Float, translationMagnitude: Float) {
+    private fun updateBottomSheetLocation(percentComplete: Float, translationY: Float) {
         val v = getTargetView() ?: return
-        v.translationY = translationMagnitude
+        v.translationY = translationY
         DecorViewManager.get(context).updateTintPercent(decorViewKey, percentComplete)
     }
 

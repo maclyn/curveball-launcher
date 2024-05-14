@@ -110,7 +110,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
             android:orientation="vertical"
-            android:visibility="visible"
+            android:visibility="gone"
             >
 
             <LinearLayout
@@ -129,27 +129,33 @@
                     android:id="@+id/collapse_folder_button"
                     android:layout_width="0dp"
                     android:layout_height="48dp"
-                    android:layout_weight="1"
+                    android:layout_weight="3"
                     android:padding="8dp"
-
                     android:src="@drawable/round_keyboard_arrow_down_24"
                     android:contentDescription="@string/collapse_folder_button_content_description"
-                    android:background="?android:attr/selectableItemBackground"
+                    android:background="?selectableItemBackground"
                     app:tint="@color/white"
                     />
 
-                <ImageView
-                    android:id="@+id/show_folder_menu"
+                <FrameLayout
                     android:layout_width="0dp"
                     android:layout_height="48dp"
                     android:layout_weight="1"
-                    android:padding="8dp"
-                    android:scaleType="fitEnd"
-                    android:src="@drawable/ic_more_horiz_white_48dp"
-                    android:contentDescription="@string/show_folder_menu_button_content_description"
-                    android:background="?android:attr/selectableItemBackground"
-                    app:tint="@color/white"
-                    />
+                    >
+
+                    <ImageView
+                        android:id="@+id/show_folder_menu"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_gravity="end|center_vertical"
+                        android:padding="8dp"
+                        android:scaleType="fitEnd"
+                        android:src="@drawable/ic_more_horiz_white_48dp"
+                        android:contentDescription="@string/show_folder_menu_button_content_description"
+                        android:background="?selectableItemBackgroundBorderless"
+                        app:tint="@color/white"
+                        />
+                </FrameLayout>
             </LinearLayout>
 
             <!-- TODO: Add widget container -->
@@ -159,6 +165,7 @@
                 android:id="@+id/folder_apps_rv"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
                 />
         </LinearLayout>
     </com.inipage.homelylauncher.views.DraggableLayout>

@@ -1,6 +1,8 @@
 package com.inipage.homelylauncher.views
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.os.SystemClock
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.VelocityTracker
@@ -9,18 +11,15 @@ import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.ScrollView
-import androidx.dynamicanimation.animation.DynamicAnimation
-import androidx.dynamicanimation.animation.FlingAnimation
-import androidx.dynamicanimation.animation.FloatPropertyCompat
+import androidx.core.view.ViewCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.inipage.homelylauncher.R
-import com.inipage.homelylauncher.utils.DebugLogUtils
+import com.inipage.homelylauncher.utils.ViewUtils
 import com.inipage.homelylauncher.utils.ViewUtils.exceedsSlopInActionMove
 import com.inipage.homelylauncher.utils.ViewUtils.getRawXWithPointerId
 import com.inipage.homelylauncher.utils.ViewUtils.getRawYWithPointerId
-import java.lang.IllegalArgumentException
 import kotlin.math.abs
-import kotlin.math.max
+import kotlin.math.sign
 
 /**
  * Layout that looks for large downwards vertical swipes insides, and intercepts touch events when
@@ -29,7 +28,7 @@ import kotlin.math.max
 class DraggableLayout : LinearLayout {
 
     interface Host {
-        fun onAnimationPartial(percentComplete: Float, translationMagnitude: Float)
+        fun onAnimationPartial(percentComplete: Float, translationY: Float)
 
         fun onAnimationInComplete()
 
@@ -59,19 +58,30 @@ class DraggableLayout : LinearLayout {
         this.host = host
     }
 
+    fun markViewBeingAnimated(isViewBeingAnimated: Boolean) {
+        isExecutingAnimation = isViewBeingAnimated
+    }
+
+    /**
+     * Run an animation from an existing VelocityTracker. Useful to animate this view without
+     * needing to duplicate the animation logic if the touch events that are the source of the
+     * motion are not originating from this veiw.
+     */
     fun runAnimationFromBrainSlug(newVelocityTracker: VelocityTracker, newFirstPointerId: Int) {
         velocityTracker?.recycle()
         velocityTracker = newVelocityTracker
         firstPointerId = newFirstPointerId
-        maxDraggableDistance = measuredHeight.toFloat()
         commitAnimation()
     }
 
+    // Entrance animations are either triggered by a touch event or, in the bottom sheet case,
+    // provided by DecorViewManager
+
+    /*
+     * Exit animations are either trigger by a touch event, DecorViewManager, or this function
+     */
     fun triggerExitAnimation() {
-        runAnimationImpl(
-            0.0F,
-            context.resources.getDimension(R.dimen.speedy_exit_velocity_dp_s),
-            true)
+        runAnimationImpl(context.resources.getDimension(R.dimen.speedy_exit_velocity_dp_s))
     }
 
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
@@ -129,6 +139,7 @@ class DraggableLayout : LinearLayout {
         return false
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(ev: MotionEvent): Boolean {
         if (!isHandlingEvent) {
             // We delegate *back* to onInterceptTouchEvent if we prematurely receive the event --
@@ -192,55 +203,51 @@ class DraggableLayout : LinearLayout {
             1000,  // px/s
             ViewConfiguration.get(context).scaledMaximumFlingVelocity.toFloat()
         )
-        val speed = velocityTracker?.getYVelocity(firstPointerId) ?: 0.0F
-        val startPoint = translationY
-
-        // Seems like the FlingAnimation doesn't work with negative values? Not entirely sure,
-        // but making the <some + translation> -> 0 animation into a 0 -> <some + translation>
-        // works regardless, though it does add a little logic
-        val isAnimatingOut = speed > 0
-        val startVelocityMagnitude = max(
-            abs(speed),
-            // The ViewConfiguration default here (50dp/s) is WAY too slow
-            context.resources.getDimension(R.dimen.min_start_velocity_dp_s))
-        val startVelocity = startVelocityMagnitude * (if (isAnimatingOut) 1.0F else -1.0F)
-        log(
-            "speed", speed.toString(),
-            "startPoint", startPoint.toString(),
-            "startVelocity", startVelocity.toString(),
-            "isAnimatingOut", isAnimatingOut.toString()
-        )
-
-        runAnimationImpl(startPoint, startVelocity, isAnimatingOut)
+        var fingerVelocity = velocityTracker?.getYVelocity(firstPointerId) ?: 0.0F
+        val minVelocityMagnitude = resources.getDimension(R.dimen.min_scroll_velocity_dp_s)
+        if (
+            ViewUtils.pxToDp(abs(fingerVelocity), context) <
+            minVelocityMagnitude
+        ) {
+            fingerVelocity = sign(fingerVelocity) * minVelocityMagnitude
+        }
+        runAnimationImpl(fingerVelocity)
     }
 
-    private fun runAnimationImpl(startPoint: Float, startVelocity: Float, isAnimatingOut: Boolean) {
-        val flingAnimation = FlingAnimation(
-            this, object : FloatPropertyCompat<DraggableLayout>("translationY") {
-                override fun getValue(`object`: DraggableLayout): Float {
-                    return translationY
+    private fun runAnimationImpl(startVelocityPixelPerSec: Float) {
+        val isExitAnimation = startVelocityPixelPerSec > 0
+        ViewUtils.performSyntheticMeasure(this)
+        val viewHeight = measuredHeight
+
+        val velocityPixelsPerMs = startVelocityPixelPerSec / 1000
+        val startTime = SystemClock.elapsedRealtime()
+        val startY = translationY.toInt()
+        val animationFrameRunnable = object : Runnable {
+            override fun run() {
+                val currTime = SystemClock.elapsedRealtime()
+                val elapsedTimeMs = currTime - startTime
+                if (elapsedTimeMs < 0) {
+                    // Should be impossible
+                    onAnimationComplete(isExitAnimation)
+                    return
                 }
 
-                override fun setValue(`object`: DraggableLayout, value: Float) {
-                    host?.onAnimationPartial(1.0F - (value / maxDraggableDistance), value)
+                val newTranslationY = startY + (elapsedTimeMs * velocityPixelsPerMs)
+                if (isExitAnimation && newTranslationY >= viewHeight) {
+                    onAnimationComplete(true)
+                } else if (!isExitAnimation && newTranslationY <= 0) {
+                    onAnimationComplete(false)
+                } else {
+                    this@DraggableLayout.translationY = newTranslationY
+                    host?.onAnimationPartial(
+                        1.0F - (newTranslationY / viewHeight),
+                        newTranslationY
+                    )
+                    ViewCompat.postOnAnimation(this@DraggableLayout, this)
                 }
-            })
-        flingAnimation.setStartValue(startPoint)
-        flingAnimation.setMinValue(0F)
-        flingAnimation.setMaxValue(maxDraggableDistance)
-        flingAnimation.setStartVelocity(startVelocity)
-        flingAnimation.friction = 0.1F;
-        flingAnimation.addEndListener { _: DynamicAnimation<*>?, _: Boolean, _: Float, _: Float ->
-            onAnimationComplete(isAnimatingOut)
+            }
         }
-        try {
-            flingAnimation.start()
-        } catch (_: IllegalArgumentException) {
-            DebugLogUtils.complain(
-                context,
-                "startPoint=$startPoint maxDraggableDistance=$maxDraggableDistance")
-            onAnimationComplete(isAnimatingOut)
-        }
+        animationFrameRunnable.run()
     }
 
     private fun onAnimationComplete(isAnimatingOut: Boolean) {
@@ -279,9 +286,5 @@ class DraggableLayout : LinearLayout {
         return if (underPointView is ViewGroup) {
             canInterceptEventAtPosition(underPointView, ev)
         } else true
-    }
-
-    private fun log(vararg vals: String) {
-        DebugLogUtils.needle(DebugLogUtils.TAG_BOTTOM_SHEET, *vals)
     }
 }

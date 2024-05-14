@@ -61,7 +61,7 @@ class PagerIndicatorView @JvmOverloads constructor(
         // We assume we have the height and width we need to layout, but we self-center inside
         // to avoid clipping the edge
         // Start at 0 and walk until the end of the view
-        var xOffset = (width / 2.0F) - (desiredWidth / 2.0F)
+        var xOffset = (width / 2.0F) - (desiredWidth / 2.0F) + (paddingBetweenIndicators / 2.0F)
         val yOffset = (height / 2.0F) - (desiredHeight / 2.0F)
 
         // App indicator

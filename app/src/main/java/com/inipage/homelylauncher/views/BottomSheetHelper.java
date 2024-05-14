@@ -106,10 +106,13 @@ public class BottomSheetHelper {
                     return true;
                 }
 
-                @Nullable
                 @Override
                 public Animator provideExitAnimation(View view) {
-                    return ObjectAnimator.ofFloat(view, "translationY", view.getHeight());
+                    Animator animator = ObjectAnimator.ofFloat(view, "translationY", view.getHeight());
+                    animator.addListener(
+                        ViewUtils.onEndListener(() -> rootView.markViewBeingAnimated(false)));
+                    rootView.markViewBeingAnimated(true);
+                    return animator;
                 }
 
                 @Override
@@ -201,11 +204,13 @@ public class BottomSheetHelper {
             mFixedToScreenHeightPercent ?
                 Math.min(rootView.getMeasuredHeight(), maxContentHeight) :
                 rootView.getMeasuredHeight());
+        rootView.markViewBeingAnimated(true);
         rootView
             .animate()
             .translationY(0)
             .setDuration(DecorViewManager.TINT_ANIMATION_DURATION)
             .setInterpolator(DecorViewManager.TINT_INTERPOLATOR)
+            .setListener(ViewUtils.onEndListener(() -> rootView.markViewBeingAnimated(false)))
             .start();
         return decorHandle;
     }

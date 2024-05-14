@@ -177,6 +177,7 @@ object ViewUtils {
         throw IllegalArgumentException("Context passed that doesn't walk up to Activity!")
     }
 
+    @JvmStatic
     fun onEndListener(r: Runnable): Animator.AnimatorListener {
         return object : Animator.AnimatorListener {
             override fun onAnimationStart(animation: Animator) {}

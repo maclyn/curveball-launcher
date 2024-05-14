@@ -7,7 +7,6 @@
     android:stateListAnimator="@xml/touch_animate_scale"
     android:background="?selectableItemBackgroundBorderless">
 
-
     <com.inipage.homelylauncher.drawer.BitmapView
         android:id="@+id/grid_icon_image"
         android:layout_width="52dp"
