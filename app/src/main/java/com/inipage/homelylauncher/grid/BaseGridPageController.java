@@ -66,6 +66,7 @@ import com.inipage.homelylauncher.views.DecorViewDragger;
 import com.inipage.homelylauncher.views.DecorViewDragger.DragEvent;
 import com.inipage.homelylauncher.views.DecorViewManager;
 import com.inipage.homelylauncher.widgets.WidgetAddBottomSheet;
+import com.inipage.homelylauncher.widgets.WidgetHost;
 import com.inipage.homelylauncher.widgets.WidgetLifecycleUtils;
 
 import org.greenrobot.eventbus.EventBus;
@@ -227,25 +228,16 @@ public abstract class BaseGridPageController implements BasePageController {
 
     private void addWidgetItem(GridItem gridItem) {
         final int appWidgetId = gridItem.getDI();
-        @Nullable final AppWidgetProviderInfo awpi =
-            getAppWidgetManager().getAppWidgetInfo(appWidgetId);
         final int spanWidthPx = mMetrics.getWidthOfColumnSpanPx(gridItem.getWidth());
         final int spanHeightPx = mMetrics.getHeightOfRowSpanPx(gridItem.getHeight());
+        @Nullable AppWidgetHostView hostView =
+            WidgetLifecycleUtils.buildAppWidgetHostView(
+                mHost.getContext(), appWidgetId, spanWidthPx, spanHeightPx);
         @Nullable GridViewHolder gridViewHolder;
-        if (awpi != null) {
-            // getApplicationContext is important -- we want a Context that is not themed
-            // otherwise the hosted widgets will look really bad...
-            final AppWidgetHostView hostView =
-                AppInfoCache.get()
-                    .getAppWidgetHost()
-                    .createView(
-                        mHost.getContext().getApplicationContext(),
-                        appWidgetId,
-                        awpi);
-            WidgetLifecycleUtils.updateAppWidgetSize(hostView, spanWidthPx, spanHeightPx);
+        if (hostView != null) {
             gridViewHolder = new WidgetViewHolder(
                 hostView,
-                awpi,
+                hostView.getAppWidgetInfo(),
                 gridItem);
         } else {
             gridViewHolder = new MissingViewHolder(mContainer.getContext(), gridItem);
@@ -343,7 +335,7 @@ public abstract class BaseGridPageController implements BasePageController {
     }
 
     private AppWidgetManager getAppWidgetManager() {
-        return (AppWidgetManager) mHost.getContext().getSystemService(Context.APPWIDGET_SERVICE);
+        return WidgetLifecycleUtils.getAppWidgetManager(mHost.getContext());
     }
 
     private void onGridMakeupChanged() {
@@ -494,7 +486,11 @@ public abstract class BaseGridPageController implements BasePageController {
                 final boolean bindTest = getAppWidgetManager().bindAppWidgetIdIfAllowed(
                     mPendingAppWidgetId, awpi.provider);
                 if (!bindTest) {
-                    mHost.requestBindWidget(getPageId(), mPendingAppWidgetId, awpi);
+                    mHost.requestBindWidget(
+                        mPendingAppWidgetId,
+                        awpi,
+                        new WidgetHost.SourceData(
+                            WidgetHost.Source.GridPageController, getPageId(), null));
                     return;
                 }
                 onBindWidgetSucceeded();
@@ -507,7 +503,10 @@ public abstract class BaseGridPageController implements BasePageController {
             commitPendingWidgetAddition();
             return;
         }
-        mHost.requestConfigureWidget(getPageId(), mPendingAppWidgetId, mPendingAwpi);
+        mHost.requestConfigureWidget(
+            mPendingAppWidgetId,
+            mPendingAwpi,
+            new WidgetHost.SourceData(WidgetHost.Source.GridPageController, getPageId(), null));
     }
 
     public void commitPendingWidgetAddition() {
@@ -538,16 +537,9 @@ public abstract class BaseGridPageController implements BasePageController {
         DebugLogUtils.needle(tag, "page=" + getPageId(), contents);
     }
 
-    public void getLastLaunchedItem() {
-        // TODO
-    }
+    public interface Host extends WidgetHost {
 
-    public interface Host {
         Activity getContext();
-
-        void requestBindWidget(@Nullable String pageId, int appWidgetId, AppWidgetProviderInfo awpi);
-
-        void requestConfigureWidget(@Nullable String pageId, int appWidgetId, AppWidgetProviderInfo awpi);
 
         void onSwipeUpStarted(
             AppViewHolder appViewHolder,

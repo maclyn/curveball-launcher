@@ -56,6 +56,7 @@ import com.inipage.homelylauncher.grid.AppViewHolder;
 import com.inipage.homelylauncher.grid.ClassicGridPageController;
 import com.inipage.homelylauncher.hacks.FasterPagerSnapHelper;
 import com.inipage.homelylauncher.model.ApplicationIcon;
+import com.inipage.homelylauncher.model.ClassicGridPage;
 import com.inipage.homelylauncher.pager.BasePageController;
 import com.inipage.homelylauncher.pager.HomePager;
 import com.inipage.homelylauncher.pager.NonTouchInputCoordinator;
@@ -77,6 +78,7 @@ import com.inipage.homelylauncher.views.DecorViewManager;
 import com.inipage.homelylauncher.views.DraggableLayout;
 import com.inipage.homelylauncher.views.ProvidesOverallDimensions;
 import com.inipage.homelylauncher.views.SurfaceViewWrapper;
+import com.inipage.homelylauncher.widgets.WidgetHost;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -84,6 +86,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 import butterknife.BindView;
@@ -95,7 +98,9 @@ import kotlin.jvm.functions.Function0;
 public class HomeActivity extends AppCompatActivity implements
     FolderController.Host,
     HomePager.Host,
+    DockController.Host,
     NonTouchInputCoordinator.Host,
+    WidgetHost,
     ProvidesOverallDimensions
 {
 
@@ -284,8 +289,10 @@ public class HomeActivity extends AppCompatActivity implements
     private FolderController mFolderController;
     private View.OnLayoutChangeListener mFirstLayoutListener;
     private boolean mHasSetPage = false;
-    @Nullable private String mPendingGridPageId;
     private boolean mSyntheticScrolling = false;
+
+    @Nullable private WidgetHost.SourceData mPendingWidgetActionRoutingData;
+
 
     private SurfaceViewWrapper mSurfaceViewWrapper;
 
@@ -355,6 +362,7 @@ public class HomeActivity extends AppCompatActivity implements
                 if (PrefsHelper.get().checkAndUpdateIsNewUser()) {
                     new NewUserBottomSheet(HomeActivity.this).show();
                 }
+                mFolderController.onHomeActivitySized();
                 return null;
             });
 
@@ -364,7 +372,7 @@ public class HomeActivity extends AppCompatActivity implements
             .get(this)
             .registerBackgroundDragAwareComponent(mBackgroundDragAwareComponent);
 
-        mDockController = new DockController(dockView);
+        mDockController = new DockController(dockView, this);
         mFolderController = new FolderController(getContext(), this, folderContainer);
     }
 
@@ -496,31 +504,43 @@ public class HomeActivity extends AppCompatActivity implements
 
     @Override
     public void requestBindWidget(
-        String pageId, int appWidgetId, AppWidgetProviderInfo appWidgetProviderInfo)
+        int appWidgetId,
+        @NonNull AppWidgetProviderInfo awpi,
+        @NonNull SourceData sourceData)
     {
-        mPendingGridPageId = pageId;
+        mPendingWidgetActionRoutingData = sourceData;
 
         final Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_BIND);
         intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER, appWidgetProviderInfo.provider);
+        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER, awpi.provider);
         intent.addFlags(Intent.FLAG_ACTIVITY_TASK_ON_HOME);
         startActivityForResult(intent, REQUEST_BIND_APP_WIDGET);
     }
 
     @Override
     public void requestConfigureWidget(
-        String pageId, int appWidgetId, AppWidgetProviderInfo appWidgetProviderInfo) {
-        mPendingGridPageId = pageId;
+        int appWidgetId,
+        @NonNull AppWidgetProviderInfo awpi,
+        @NonNull SourceData sourceData)
+    {
+        mPendingWidgetActionRoutingData = sourceData;
 
         Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_CONFIGURE);
-        intent.setComponent(appWidgetProviderInfo.configure);
+        intent.setComponent(awpi.configure);
         intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
         intent.addFlags(Intent.FLAG_ACTIVITY_TASK_ON_HOME);
         try {
             startActivityForResult(intent, REQUEST_CONFIGURE_WIDGET);
         } catch (SecurityException configureComponentNotExported) {
             // Happens with At a Glance widget, potentially others
-            mPager.getGridController(mPendingGridPageId).commitPendingWidgetAddition();
+            switch (sourceData.getSource()) {
+                case FolderController:
+                    // TODO
+                    break;
+                case GridPageController:
+                    mPager.getGridController(sourceData.getPageId()).commitPendingWidgetAddition();
+                    break;
+            }
         }
     }
 
@@ -546,6 +566,12 @@ public class HomeActivity extends AppCompatActivity implements
         mFolderController.onOpenMotionEvent(event, action, firstPointerId, startRawY);
     }
 
+    @NonNull
+    @Override
+    public List<ClassicGridPage> getGridPages() {
+        return mPager.getGridPages();
+    }
+
     @SuppressLint("UseCompatLoadingForDrawables")
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -555,10 +581,34 @@ public class HomeActivity extends AppCompatActivity implements
         }
         switch (requestCode) {
             case REQUEST_BIND_APP_WIDGET:
-                mPager.getGridController(mPendingGridPageId).onBindWidgetSucceeded();
+                if (mPendingWidgetActionRoutingData == null) {
+                    return;
+                }
+                switch (mPendingWidgetActionRoutingData.getSource()) {
+                    case FolderController:
+                        // TODO
+                        break;
+                    case GridPageController:
+                        mPager.getGridController(
+                            mPendingWidgetActionRoutingData.getPageId()).onBindWidgetSucceeded();
+                        break;
+                }
+                mPendingWidgetActionRoutingData = null;
                 break;
             case REQUEST_CONFIGURE_WIDGET:
-                mPager.getGridController(mPendingGridPageId).commitPendingWidgetAddition();
+                if (mPendingWidgetActionRoutingData == null) {
+                    return;
+                }
+                switch (mPendingWidgetActionRoutingData.getSource()) {
+                    case FolderController:
+                        // TODO
+                        break;
+                    case GridPageController:
+                        mPager.getGridController(mPendingWidgetActionRoutingData.getPageId())
+                            .commitPendingWidgetAddition();
+                        break;
+                }
+                mPendingWidgetActionRoutingData = null;
                 break;
             case REQUEST_LOCATION_PERMISSION:
                 mDockController.loadDock();

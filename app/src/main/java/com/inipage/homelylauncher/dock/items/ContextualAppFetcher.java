@@ -6,6 +6,7 @@ import android.content.Context;
 
 import com.google.common.collect.ImmutableList;
 import com.inipage.homelylauncher.caches.AppInfoCache;
+import com.inipage.homelylauncher.dock.DockController;
 import com.inipage.homelylauncher.dock.DockControllerItem;
 import com.inipage.homelylauncher.model.ApplicationIconHideable;
 import com.inipage.homelylauncher.model.DockItem;
@@ -29,11 +30,17 @@ import java.util.stream.Stream;
  */
 public class ContextualAppFetcher {
 
+    public interface Host {
+        List<ClassicGridPage> getGridPages();
+    }
+
     private static final int TARGET_COUNT = 10;
 
+    private Host mHost;
     private Map<String, Boolean> mHiddenApps;
 
-    public ContextualAppFetcher() {
+    public ContextualAppFetcher(Host host) {
+        mHost = host;
         reloadPrefs();
     }
 
@@ -52,7 +59,7 @@ public class ContextualAppFetcher {
                 .map(key -> lookupKey(key.first, key.second));
 
         // Yeesh.
-        Stream<String> hiddenFromPages = DatabaseEditor.get()
+        Stream<String> hiddenFromPages = mHost
             .getGridPages()
             .parallelStream()
             .flatMap(

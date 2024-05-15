@@ -83,6 +83,11 @@ public class HomePager extends RecyclerView.Adapter<HomePager.PagerHolder> {
         EventBus.getDefault().post(new PagesChangedEvent(mGridPages.size()));
     }
 
+    public List<ClassicGridPage> getGridPages() {
+        return mGridPages;
+    }
+
+
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEditingEvent(EditingEvent event) {
         if (event.isEditing()) {

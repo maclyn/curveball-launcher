@@ -1,6 +1,8 @@
 package com.inipage.homelylauncher.widgets
 
 import android.appwidget.AppWidgetHostView
+import android.appwidget.AppWidgetManager
+import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import android.util.SizeF
@@ -8,12 +10,30 @@ import androidx.core.view.marginBottom
 import androidx.core.view.marginEnd
 import androidx.core.view.marginStart
 import androidx.core.view.marginTop
+import com.inipage.homelylauncher.caches.AppInfoCache
 import com.inipage.homelylauncher.utils.ViewUtils
 
 /**
  * Helper functions for handling hosting different widgets.
  */
 object WidgetLifecycleUtils {
+
+    @JvmStatic
+    fun getAppWidgetManager(context: Context): AppWidgetManager =
+        context.getSystemService(Context.APPWIDGET_SERVICE) as AppWidgetManager
+
+    @JvmStatic
+    fun buildAppWidgetHostView(
+        context: Context, appWidgetId: Int, widthPx: Int, heightPx: Int
+    ): AppWidgetHostView? {
+        val awpi = getAppWidgetManager(context).getAppWidgetInfo(appWidgetId) ?: return null
+        // getApplicationContext is important -- we want a Context that is not themed
+        // otherwise the hosted widgets will look really bad...
+        val hostView =
+            AppInfoCache.get().appWidgetHost.createView(context.applicationContext, appWidgetId, awpi)
+        updateAppWidgetSize(hostView, widthPx, heightPx)
+        return hostView
+    }
 
     @JvmStatic
     fun updateAppWidgetSize(hostView: AppWidgetHostView, widthPx: Int, heightPx: Int) {

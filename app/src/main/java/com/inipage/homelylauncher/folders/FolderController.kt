@@ -1,5 +1,6 @@
 package com.inipage.homelylauncher.folders
 
+import android.app.ActionBar.LayoutParams
 import android.content.Context
 import android.view.Gravity
 import android.view.MotionEvent
@@ -17,6 +18,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.inipage.homelylauncher.R
 import com.inipage.homelylauncher.grid.AppViewHolder
+import com.inipage.homelylauncher.model.ClassicGridPage
 import com.inipage.homelylauncher.model.GridFolder
 import com.inipage.homelylauncher.model.GridFolderApp
 import com.inipage.homelylauncher.model.GridItem
@@ -24,6 +26,9 @@ import com.inipage.homelylauncher.persistence.DatabaseEditor
 import com.inipage.homelylauncher.utils.ViewUtils
 import com.inipage.homelylauncher.utils.ViewUtils.getRawYForViewAndId
 import com.inipage.homelylauncher.views.DraggableLayout
+import com.inipage.homelylauncher.views.ProvidesOverallDimensions
+import com.inipage.homelylauncher.widgets.WidgetAddBottomSheet
+import com.inipage.homelylauncher.widgets.WidgetHost
 import kotlin.math.min
 
 /**
@@ -60,7 +65,7 @@ class FolderController(
         }
     }
 
-    interface Host {
+    interface Host : WidgetHost {
 
         fun onStartFolderOpen()
 
@@ -70,7 +75,7 @@ class FolderController(
 
         fun onFolderClosed()
 
-        // TODO: Getter for all GridPages so we can pre-load all widgets
+        fun getGridPages(): List<ClassicGridPage>
     }
 
     private val newFolderSuggestionContainer: View =
@@ -82,7 +87,7 @@ class FolderController(
 
     private var folderTarget: AppViewHolder? = null
     private var activeFolderAnimation: FolderAnimationTracker? = null
-    private var targetYTranslation: Int = 0
+    private var maxRecyclerViewHeight: Int = 0
 
     val newFolderRequest: Boolean
         get() {
@@ -150,18 +155,70 @@ class FolderController(
         rootView.triggerExitAnimation()
     }
 
+    fun onHomeActivitySized() {
+        val dimensionProvider =
+            ViewUtils.requireActivityOf(context) as? ProvidesOverallDimensions ?: return
+        val height = dimensionProvider.provideOverallBounds().height()
+        maxRecyclerViewHeight = (height * 0.3F).toInt()
+    }
+
+    override fun onAnimationPartial(percentComplete: Float, translationY: Float) {
+        // Percent complete = how close are we to "fully expanded"
+        // Translation magnitude = how far have we dragged
+        val animation = activeFolderAnimation ?: return
+        rootView.translationY = animation.targetYTranslation - (animation.targetYTranslation * percentComplete)
+        rootView.alpha = percentComplete
+        host.onFolderPartiallyOpen(
+            percentComplete,
+            animation.targetYTranslation - translationY)
+    }
+
+    override fun onAnimationOutComplete() {
+        folderTarget = null
+        activeFolderAnimation = null
+        rootView.visibility = GONE
+        host.onFolderPartiallyOpen(0.0f, 0.0f)
+        host.onFolderClosed()
+    }
+
+    override fun onAnimationInComplete() {
+        host.onFolderPartiallyOpen(
+            1.0F,
+            activeFolderAnimation?.targetYTranslation?.toFloat() ?: 0F)
+        rootView.translationY = 0.0F
+        rootView.alpha = 1.0F
+        if (newFolderRequest) {
+            onNewFolderRequested()
+        }
+    }
+
     private fun bindFolderView(gridFolder: GridFolder?) {
         val newFolderRequest = gridFolder == null
         rootView.visibility = VISIBLE
         newFolderSuggestionContainer.visibility = if (newFolderRequest) VISIBLE else GONE
         openFolderContainer.visibility  = if (newFolderRequest) GONE else VISIBLE
+        appsRecyclerView.adapter = FolderAppRecyclerViewAdapter(gridFolder?.apps ?: listOf())
 
-        if (!newFolderRequest) {
-            appsRecyclerView.adapter = FolderAppRecyclerViewAdapter(gridFolder?.apps ?: listOf())
-            // TODO: Show desired widget
-        }
+        // Since we need to provide the widget with a known max size, we cap the apps view at 30%
+        // of screen height or less
+        ViewUtils.performSyntheticMeasure(appsRecyclerView)
+        ViewUtils.setHeight(
+            appsRecyclerView,
+            if (appsRecyclerView.measuredHeight > maxRecyclerViewHeight)
+                maxRecyclerViewHeight
+            else LayoutParams.WRAP_CONTENT)
 
         ViewUtils.performSyntheticMeasure(rootView)
+    }
+
+    private fun sizeRecyclerView() {
+        if (!newFolderRequest) {
+
+            // TODO: Show desired widget
+        } else {
+
+        }
+
     }
 
     private fun onNewFolderRequested() {
@@ -215,67 +272,48 @@ class FolderController(
         }
     }
 
+    private fun showMenu(view: View) {
+        val menu = PopupMenu(view.context, view, Gravity.BOTTOM)
+        menu.menu.add(context.getString(R.string.edit_folder_items)).setOnMenuItemClickListener {
+            onFolderEditRequested()
+            true
+        }
+        menu.menu.add(context.getString(R.string.reorder_folder_items)).setOnMenuItemClickListener {
+            onFolderReorderRequested()
+            true
+        }
+        menu.menu.add(context.getString(R.string.delete_folder)).setOnMenuItemClickListener {
+            val folder = gridFolder ?: return@setOnMenuItemClickListener false
+            DatabaseEditor.get().deleteGridFolder(folder)
+            gridItem?.updateGridFolder(null)
+            bindFolderView(gridFolder)
+            closeFolder()
+            true
+        }
+        menu.menu.add(context.getString(R.string.add_widget)).setOnMenuItemClickListener {
+            ViewUtils.performSyntheticMeasure(rootView)
+            WidgetAddBottomSheet.show(context, rootView.measuredWidth, 1000, {
+                // todo: lmao
+            })
+            true
+        }
+
+        // TODO: Widget options
+
+        menu.show()
+    }
+
     init {
         rootView.attachHost(this)
 
-        // TODO: Load up all possible widgets
+        // TODO: Load up all possible widgets, and bind 'em
 
         rootView.findViewById<ImageView>(R.id.collapse_folder_button).setOnClickListener {
             closeFolder()
         }
         rootView.findViewById<ImageView>(R.id.show_folder_menu).setOnClickListener {
-            val menu = PopupMenu(it.context, it, Gravity.BOTTOM)
-            menu.menu.add("Edit items").setOnMenuItemClickListener {
-                onFolderEditRequested()
-                true
-            }
-            menu.menu.add("Reorder items").setOnMenuItemClickListener {
-                onFolderReorderRequested()
-                true
-            }
-            menu.menu.add("Delete folder").setOnMenuItemClickListener {
-                val folder = gridFolder ?: return@setOnMenuItemClickListener false
-                DatabaseEditor.get().deleteGridFolder(folder)
-                gridItem?.updateGridFolder(null)
-                bindFolderView(gridFolder)
-                closeFolder()
-                true
-            }
-
-            // TODO: Widget options
-
-            menu.show()
+            showMenu(it)
         }
         appsRecyclerView.layoutManager = GridLayoutManager(context, 5, RecyclerView.VERTICAL, false)
-    }
-
-    override fun onAnimationPartial(percentComplete: Float, translationY: Float) {
-        // Percent complete = how close are we to "fully expanded"
-        // Translation magnitude = how far have we dragged
-        val animation = activeFolderAnimation ?: return
-        rootView.translationY = animation.targetYTranslation - (animation.targetYTranslation * percentComplete)
-        rootView.alpha = percentComplete
-        host.onFolderPartiallyOpen(
-            percentComplete,
-            animation.targetYTranslation - translationY)
-    }
-
-    override fun onAnimationOutComplete() {
-        folderTarget = null
-        activeFolderAnimation = null
-        rootView.visibility = GONE
-        host.onFolderPartiallyOpen(0.0f, 0.0f)
-        host.onFolderClosed()
-    }
-
-    override fun onAnimationInComplete() {
-        host.onFolderPartiallyOpen(
-            1.0F,
-            activeFolderAnimation?.targetYTranslation?.toFloat() ?: 0F)
-        rootView.translationY = 0.0F
-        rootView.alpha = 1.0F
-        if (newFolderRequest) {
-            onNewFolderRequested()
-        }
     }
 }

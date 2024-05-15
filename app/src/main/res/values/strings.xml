@@ -263,5 +263,8 @@
     <string name="folder_create_new_expando">Create new expando</string>
     <string name="show_folder_menu_button_content_description">Button to show a folder menu</string>
     <string name="collapse_folder_button_content_description">Button to collapse folder</string>
+    <string name="edit_folder_items">Edit items</string>
+    <string name="reorder_folder_items">Reorder items</string>
+    <string name="delete_folder">Delete folder</string>
 </resources>
 

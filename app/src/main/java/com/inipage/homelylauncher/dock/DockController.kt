@@ -14,6 +14,7 @@ import com.inipage.homelylauncher.dock.items.PhoneMappedDockItem
 import com.inipage.homelylauncher.dock.items.PowerMappedDockItem
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.inipage.homelylauncher.R
+import com.inipage.homelylauncher.model.ClassicGridPage
 import com.inipage.homelylauncher.persistence.PrefsHelper
 import java.util.ArrayList
 import java.util.HashMap
@@ -24,11 +25,13 @@ import java.util.stream.Collectors
 /**
  * Manages dock items at the bottom of the home screen.
  */
-class DockController(val container: RecyclerView) {
+class DockController(private val container: RecyclerView, private val host: Host) {
+
+    interface Host : ContextualAppFetcher.Host
 
     private val foregroundHandler = Handler(Looper.getMainLooper())
     private val backgroundExecutor = Executors.newFixedThreadPool(4)
-    private val appFetcher = ContextualAppFetcher()
+    private val appFetcher = ContextualAppFetcher(host)
 
     private var adapter: DockAdapter? = null
     private var activeDockItems: MutableList<DockControllerItem> = ArrayList()

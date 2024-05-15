@@ -17,6 +17,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Helper class to show a bottom sheet to pick a widget.
+ */
 public class WidgetAddBottomSheet {
 
     public static void show(
@@ -25,8 +28,9 @@ public class WidgetAddBottomSheet {
         int targetY,
         GridMetrics gridMetrics,
         Map<Pair<Integer, Integer>, Boolean> spaces,
-        Callback callback) {
-        final List<WidgetAddAdapter.WidgetProviderWrapper> matchingProviders =
+        GridWidgetCallback callback
+    ) {
+        final List<AppWidgetProviderInfo> matchingProviders =
             AppInfoCache.get()
                 .getWidgets()
                 .stream()
@@ -37,35 +41,70 @@ public class WidgetAddBottomSheet {
                         appWidgetProviderInfo);
                     return spaces.containsKey(new Pair<>(minWidth, minHeight));
                 })
-                .map(awpi ->
-                         new WidgetAddAdapter.WidgetProviderWrapper(context, awpi))
-                .sorted((o1, o2) -> {
-                    final int firstField = o1.appName.compareToIgnoreCase(o2.appName);
-                    if (firstField != 0) {
-                        return firstField;
-                    }
-                    return o1.title.compareToIgnoreCase(o2.title);
-                })
                 .collect(Collectors.toList());
+        show(context, matchingProviders, awpi -> callback.onAddWidget(targetX, targetY, awpi));
+    }
+
+    public static void show(
+        Context context,
+        int maxWidthPx,
+        int maxHeightPx,
+        Callback callback
+    ) {
+        final List<AppWidgetProviderInfo> matchingProviders =
+            AppInfoCache.get()
+                .getWidgets()
+                .stream()
+                .filter(appWidgetProviderInfo ->
+                    maxWidthPx >= appWidgetProviderInfo.minWidth &&
+                    maxHeightPx >= appWidgetProviderInfo.minHeight)
+                .collect(Collectors.toList());
+        show(context, matchingProviders, callback::onWidgetSelected);
+    }
+
+    private static void show(
+        Context context,
+        List<AppWidgetProviderInfo> widgets,
+        WidgetAddAdapter.OnWidgetClickListener widgetClickListener
+    ) {
+        final List<WidgetAddAdapter.WidgetProviderWrapper> matchingProviders =
+                widgets
+                    .stream()
+                    .map(awpi ->
+                        new WidgetAddAdapter.WidgetProviderWrapper(context, awpi))
+                    .sorted((o1, o2) -> {
+                        final int firstField = o1.appName.compareToIgnoreCase(o2.appName);
+                        if (firstField != 0) {
+                            return firstField;
+                        }
+                        return o1.title.compareToIgnoreCase(o2.title);
+                    })
+                    .collect(Collectors.toList());
         final RecyclerView recyclerView = new RecyclerView(context);
         final WidgetAddAdapter widgetAddAdapter =
             new WidgetAddAdapter(
                 matchingProviders,
                 context);
-        final String handle = new BottomSheetHelper()
-            .setContentView(recyclerView)
-            .setIsFixedHeight()
-            .show(context, context.getString(R.string.add_widget));
+        String handle =
+            new BottomSheetHelper()
+                .setContentView(recyclerView)
+                .setIsFixedHeight()
+                .show(context, context.getString(R.string.add_widget));
         widgetAddAdapter.setOnClickListener(awpi -> {
             DecorViewManager.get(context).removeView(handle);
-            callback.onAddWidget(targetX, targetY, awpi);
+            widgetClickListener.onClick(awpi);
         });
         recyclerView.setAdapter(widgetAddAdapter);
         recyclerView.setLayoutManager(
             new GridLayoutManager(context, 2, RecyclerView.VERTICAL, false));
+
+    }
+
+    public interface GridWidgetCallback {
+        void onAddWidget(int targetX, int targetY, AppWidgetProviderInfo awpi);
     }
 
     public interface Callback {
-        void onAddWidget(int targetX, int targetY, AppWidgetProviderInfo awpi);
+        void onWidgetSelected(AppWidgetProviderInfo awpi);
     }
 }

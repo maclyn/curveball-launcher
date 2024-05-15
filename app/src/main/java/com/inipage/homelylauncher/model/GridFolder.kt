@@ -34,6 +34,10 @@ data class GridFolder(
         apps = newApps
     }
 
+    fun setWidgetDimensions(widgetWidth: Int, widgetHeight: Int) {
+
+    }
+
     fun serialize(): ContentValues {
         val cv = ContentValues()
         if (!id.isValueSet()) {
