@@ -1,8 +1,12 @@
 package com.inipage.homelylauncher.folders
 
 import android.app.ActionBar.LayoutParams
+import android.app.AlertDialog
+import android.appwidget.AppWidgetProviderInfo
 import android.content.Context
+import android.content.DialogInterface
 import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.MotionEvent.ACTION_CANCEL
 import android.view.MotionEvent.ACTION_MOVE
@@ -11,8 +15,10 @@ import android.view.VelocityTracker
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.PopupMenu
+import android.widget.SeekBar
 import androidx.core.view.ViewCompat
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -22,13 +28,24 @@ import com.inipage.homelylauncher.model.ClassicGridPage
 import com.inipage.homelylauncher.model.GridFolder
 import com.inipage.homelylauncher.model.GridFolderApp
 import com.inipage.homelylauncher.model.GridItem
+import com.inipage.homelylauncher.model.ModelUtils
+import com.inipage.homelylauncher.model.ModelUtils.isValueSet
 import com.inipage.homelylauncher.persistence.DatabaseEditor
 import com.inipage.homelylauncher.utils.ViewUtils
 import com.inipage.homelylauncher.utils.ViewUtils.getRawYForViewAndId
+import com.inipage.homelylauncher.utils.ViewUtils.performSyntheticMeasure
 import com.inipage.homelylauncher.views.DraggableLayout
 import com.inipage.homelylauncher.views.ProvidesOverallDimensions
 import com.inipage.homelylauncher.widgets.WidgetAddBottomSheet
 import com.inipage.homelylauncher.widgets.WidgetHost
+import com.inipage.homelylauncher.widgets.WidgetLifecycleUtils
+import com.inipage.homelylauncher.widgets.WidgetLifecycleUtils.findIdealSize
+import com.inipage.homelylauncher.widgets.WidgetLifecycleUtils.maxLayoutHeight
+import com.inipage.homelylauncher.widgets.WidgetLifecycleUtils.maxLayoutWidth
+import com.inipage.homelylauncher.widgets.WidgetLifecycleUtils.minLayoutHeight
+import com.inipage.homelylauncher.widgets.WidgetLifecycleUtils.minLayoutWidth
+import com.inipage.homelylauncher.widgets.WidgetLifecycleUtils.supportsHorizontalResize
+import com.inipage.homelylauncher.widgets.WidgetLifecycleUtils.supportsResizing
 import kotlin.math.min
 
 /**
@@ -82,12 +99,19 @@ class FolderController(
         ViewCompat.requireViewById(rootView, R.id.new_folder_suggestion)
     private val openFolderContainer: View =
         ViewCompat.requireViewById(rootView, R.id.open_folder_container)
+    private val folderIconsContainer: View =
+        ViewCompat.requireViewById(rootView, R.id.folder_icons_container)
     private val appsRecyclerView: RecyclerView =
         ViewCompat.requireViewById(rootView, R.id.folder_apps_rv)
+    private val widgetsContainer: FrameLayout =
+        ViewCompat.requireViewById(rootView, R.id.folder_widgets_holder)
+
+    private val folderIdToWidgetView: MutableMap<Int, View> = mutableMapOf()
 
     private var folderTarget: AppViewHolder? = null
     private var activeFolderAnimation: FolderAnimationTracker? = null
     private var maxRecyclerViewHeight: Int = 0
+    private var maxWidgetHeight: Int = 0
 
     val newFolderRequest: Boolean
         get() {
@@ -160,6 +184,7 @@ class FolderController(
             ViewUtils.requireActivityOf(context) as? ProvidesOverallDimensions ?: return
         val height = dimensionProvider.provideOverallBounds().height()
         maxRecyclerViewHeight = (height * 0.3F).toInt()
+        maxWidgetHeight = (height * 0.4F).toInt()
     }
 
     override fun onAnimationPartial(percentComplete: Float, translationY: Float) {
@@ -198,6 +223,19 @@ class FolderController(
         newFolderSuggestionContainer.visibility = if (newFolderRequest) VISIBLE else GONE
         openFolderContainer.visibility  = if (newFolderRequest) GONE else VISIBLE
         appsRecyclerView.adapter = FolderAppRecyclerViewAdapter(gridFolder?.apps ?: listOf())
+        folderIdToWidgetView.entries.forEach {
+            it.value.visibility = GONE
+        }
+        folderIdToWidgetView.entries.forEach {
+            it.value.visibility = GONE
+        }
+        widgetsContainer.visibility = GONE
+        gridFolder?.let {
+            folderIdToWidgetView[it.id]?.let {
+                it.visibility = VISIBLE
+                widgetsContainer.visibility = VISIBLE
+            }
+        }
 
         // Since we need to provide the widget with a known max size, we cap the apps view at 30%
         // of screen height or less
@@ -209,16 +247,6 @@ class FolderController(
             else LayoutParams.WRAP_CONTENT)
 
         ViewUtils.performSyntheticMeasure(rootView)
-    }
-
-    private fun sizeRecyclerView() {
-        if (!newFolderRequest) {
-
-            // TODO: Show desired widget
-        } else {
-
-        }
-
     }
 
     private fun onNewFolderRequested() {
@@ -290,23 +318,158 @@ class FolderController(
             closeFolder()
             true
         }
-        menu.menu.add(context.getString(R.string.add_widget)).setOnMenuItemClickListener {
-            ViewUtils.performSyntheticMeasure(rootView)
-            WidgetAddBottomSheet.show(context, rootView.measuredWidth, 1000, {
-                // todo: lmao
-            })
-            true
+
+        val widgetId = gridFolder?.widgetId
+        if (widgetId?.isValueSet() == true) {
+            val awpi = widgetId.let { WidgetLifecycleUtils.getAppWidgetProviderInfo(context, it) }
+            if (awpi?.supportsResizing() == true) {
+                menu.menu.add(context.getString(R.string.resize_widget))
+                    .setOnMenuItemClickListener {
+                        showWidgetResizeDialog()
+                        true
+                    }
+            }
+            menu.menu.add(context.getString(R.string.remove_widget)).setOnMenuItemClickListener {
+                val folder = gridFolder ?: return@setOnMenuItemClickListener false
+                folderIdToWidgetView[folder.id]?.let {
+                    widgetsContainer.removeView(it)
+                    folderIdToWidgetView.remove(folder.id)
+                }
+                folder.widgetId = ModelUtils.unsetValue
+                folder.setWidgetDimensions(ModelUtils.unsetValue, ModelUtils.unsetValue)
+                DatabaseEditor.get().updateGridFolder(folder)
+                true
+            }
+        } else {
+            menu.menu.add(context.getString(R.string.add_widget)).setOnMenuItemClickListener {
+                ViewUtils.performSyntheticMeasure(rootView)
+                WidgetAddBottomSheet.show(
+                    context,
+                    rootView.measuredWidth,
+                    maxWidgetHeight
+                ) {
+                    startAddWidgetFlow(it)
+                }
+                true
+            }
         }
 
-        // TODO: Widget options
-
         menu.show()
+    }
+
+    private fun startAddWidgetFlow(awpi: AppWidgetProviderInfo) {
+        val appWidgetId = WidgetLifecycleUtils.getAppWidgetHost().allocateAppWidgetId()
+        WidgetLifecycleUtils.startTransaction(appWidgetId, awpi)
+        val didBind = WidgetLifecycleUtils
+            .getAppWidgetManager(context)
+            .bindAppWidgetIdIfAllowed(appWidgetId, awpi.provider)
+        if (!didBind) {
+            host.requestBindWidget(
+                appWidgetId,
+                awpi,
+                WidgetHost.SourceData(WidgetHost.Source.FolderController, null, gridFolder?.id ?: 0))
+        } else {
+            onWidgetBound()
+        }
+    }
+
+    private fun showWidgetResizeDialog() {
+        val folder = gridFolder?: return
+        val widgetId = folder.widgetId
+        val awpi = WidgetLifecycleUtils.getAppWidgetProviderInfo(context, widgetId) ?: return
+        val minWidth = awpi.minLayoutWidth()
+        val minHeight = awpi.minLayoutHeight()
+        val maxWidth = awpi.maxLayoutWidth(folderIconsContainer.width) ?: minWidth
+        val maxHeight = awpi.maxLayoutHeight(maxWidgetHeight) ?: minHeight
+        val widthSpan = maxWidth - minWidth
+        val heightSpan = maxHeight - minHeight
+        val currWidth = folder.width
+        val currHeight = folder.height
+        val startWidthPercent =
+            if (maxWidth == minWidth) 0F else (currWidth - minWidth) / (widthSpan).toFloat()
+        val startHeightPercent =
+            if (maxHeight == minHeight) 0F else (currHeight - minHeight) / (heightSpan).toFloat()
+
+        val layout =
+            LayoutInflater.from(context).inflate(R.layout.dialog_resize_widget, rootView, false)
+        val widthView = ViewCompat.requireViewById<SeekBar>(layout, R.id.width_seekbar)
+        val heightView = ViewCompat.requireViewById<SeekBar>(layout, R.id.height_seekbar)
+        widthView.visibility = if (awpi.supportsHorizontalResize()) VISIBLE else GONE
+        heightView.visibility = if (awpi.supportsHorizontalResize()) VISIBLE else GONE
+        widthView.progress = (startWidthPercent * 100).toInt()
+        heightView.progress = (startHeightPercent * 100).toInt()
+
+        AlertDialog.Builder(context).setView(layout).setPositiveButton(R.string.update_size
+        ) { _, _ ->
+            val widthPercent = widthView.progress / 100F
+            val heightPercent = heightView.progress / 100F
+            val newWidth = (minWidth + (widthSpan * widthPercent)).toInt()
+            val newHeight = (minHeight + (heightSpan * heightPercent)).toInt()
+            folder.setWidgetDimensions(newWidth, newHeight)
+            DatabaseEditor.get().updateGridFolder(folder)
+            widgetsContainer.removeView(folderIdToWidgetView[folder.id])
+            addWidgetToContainer(folder.id,  folder.widgetId, folder.width, folder.height)
+        }.show()
+    }
+
+    fun onWidgetBound() {
+        val transaction = WidgetLifecycleUtils.activeTransaction ?: return
+        if (transaction.apwi.configure == null) {
+            onWidgetConfigureComplete()
+            return
+        }
+        host.requestConfigureWidget(
+            transaction.appWidgetId,
+            transaction.apwi,
+            WidgetHost.SourceData(WidgetHost.Source.FolderController, null, gridFolder?.id ?: 0))
+    }
+
+    fun onWidgetConfigureComplete() {
+        val transaction = WidgetLifecycleUtils.activeTransaction ?: return
+        WidgetLifecycleUtils.endTransaction()
+        val folder = gridFolder ?: return
+        folder.widgetId = transaction.appWidgetId
+
+        // Size the new widget
+        val widgetDimens =
+            transaction.apwi.findIdealSize(folderIconsContainer.width, maxWidgetHeight)
+        val widgetWidth = widgetDimens.first
+        val widgetHeight = widgetDimens.second
+        folder.setWidgetDimensions(widgetWidth, widgetHeight)
+
+        // Update view + DB
+        widgetsContainer.visibility = VISIBLE
+        addWidgetToContainer(folder.id, transaction.appWidgetId, folder.width, folder.height)
+        DatabaseEditor.get().updateGridFolder(folder)
+    }
+
+    private fun addWidgetToContainer(gridFolderId: Int, appWidgetId: Int, widthPx: Int, heightPx: Int): View? {
+        val view =
+            WidgetLifecycleUtils.buildAppWidgetHostView(context, appWidgetId, widthPx, heightPx) ?: return null
+        widgetsContainer.addView(
+            view,
+            FrameLayout.LayoutParams(widthPx, heightPx).also {
+                it.gravity = Gravity.CENTER
+            })
+        folderIdToWidgetView[gridFolderId] = view
+        widgetsContainer.visibility = VISIBLE
+        return view
     }
 
     init {
         rootView.attachHost(this)
 
-        // TODO: Load up all possible widgets, and bind 'em
+        val foldersWithWidgets =
+            host.getGridPages()
+                .flatMap { it.items }
+                .mapNotNull { it.gridFolder }
+                .filter { it.widgetId.isValueSet() }
+        foldersWithWidgets.forEach {
+            val view = addWidgetToContainer(it.id, it.widgetId, it.width, it.height) ?: return@forEach
+            folderIdToWidgetView[it.id] = view
+            // TODO: This doesn't work if you change the density of your phone
+            view.visibility = GONE
+        }
 
         rootView.findViewById<ImageView>(R.id.collapse_folder_button).setOnClickListener {
             closeFolder()

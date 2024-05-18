@@ -38,6 +38,8 @@ public class GridPageLayout extends FrameLayout {
 
     public interface Listener {
 
+        boolean isOutsideLaidOutContents(float rawX, float rawY);
+
         /**
          * @return If we should continue to handle events after the long press.
          */
@@ -113,8 +115,12 @@ public class GridPageLayout extends FrameLayout {
         switch (event.getActionMasked()) {
             case ACTION_DOWN:
                 log("ACTION_DOWN");
-                if (DecorViewDragger.get(getContext()).isDragActive()) {
-                    log("Skipping touch handling because a drag is already active!");
+                if (
+                    DecorViewDragger.get(getContext()).isDragActive() ||
+                    mListener.isOutsideLaidOutContents(event.getRawX(), event.getRawY()) ||
+                    event.getEdgeFlags() != 0
+                ) {
+                    log("Skipping touch handling because drag active or edge flags set");
                     mDetectedState = GestureDetectedState.EVENT_DEAD;
                     return false;
                 }

@@ -83,7 +83,6 @@
         android:orientation="vertical"
         android:visibility="gone">
 
-        <!-- New folder suggestion -->
         <FrameLayout
             android:id="@+id/new_folder_suggestion"
             android:layout_width="match_parent"
@@ -114,6 +113,7 @@
             >
 
             <LinearLayout
+                android:id="@+id/folder_icons_container"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:orientation="horizontal"
@@ -158,9 +158,20 @@
                 </FrameLayout>
             </LinearLayout>
 
-            <!-- TODO: Add widget container -->
+            <FrameLayout
+                android:id="@+id/folder_widgets_holder"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="8dp"
+                android:visibility="gone"
+                >
 
-            <!-- TODO: Add RecyclerView for folder elements -->
+                <!-- Necessary hack alert -->
+                <!-- This view will actually hold ~all~ the widgets at the same time -->
+                <!-- Visibility is just toggled from VISIBLE -> GONE and GONE -> VISIBLE -->
+                <!-- We do this so we don't bind the widget on folder open, which can lead tod delays populating what's inside -->
+            </FrameLayout>
+
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/folder_apps_rv"
                 android:layout_width="match_parent"

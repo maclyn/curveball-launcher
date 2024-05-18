@@ -184,6 +184,12 @@ public class GridViewHolderMap {
 
     @Nullable
     public GridViewHolder getItemAtPositionPx(float x, float y, GridMetrics metrics) {
+        if (y < 0 || y > metrics.getGridHeight()) {
+            return null;
+        }
+        if (x < 0 || x > metrics.getGridWidth()) {
+            return null;
+        }
         final int colIdx = (int) x / metrics.getCellWidthPx();
         final int rowIdx = (int) y / metrics.getCellHeightPx();
         return getItemAtIndex(rowIdx, colIdx);

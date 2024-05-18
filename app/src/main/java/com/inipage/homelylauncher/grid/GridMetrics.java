@@ -82,6 +82,14 @@ public class GridMetrics {
         return (int) Math.ceil((float) minHeight / mCellHeight);
     }
 
+    public int getGridWidth() {
+        return getCellWidthPx() * getColumnCount();
+    }
+
+    public int getGridHeight() {
+        return getCellHeightPx() * getRowCount();
+    }
+
     private float chooseScalar(int width, int height) {
         return height < width ?
                Constants.SQUAT_WIDTH_TO_HEIGHT_SCALAR :

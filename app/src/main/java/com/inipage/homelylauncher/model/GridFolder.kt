@@ -35,12 +35,13 @@ data class GridFolder(
     }
 
     fun setWidgetDimensions(widgetWidth: Int, widgetHeight: Int) {
-
+        width = widgetWidth
+        height = widgetHeight
     }
 
     fun serialize(): ContentValues {
         val cv = ContentValues()
-        if (!id.isValueSet()) {
+        if (id.isValueSet()) {
             cv.put(DatabaseHelper.COLUMN_ID, id)
         }
         cv.put(DatabaseHelper.COLUMN_GRID_ITEM_ID, gridItemId)

@@ -79,6 +79,7 @@ import com.inipage.homelylauncher.views.DraggableLayout;
 import com.inipage.homelylauncher.views.ProvidesOverallDimensions;
 import com.inipage.homelylauncher.views.SurfaceViewWrapper;
 import com.inipage.homelylauncher.widgets.WidgetHost;
+import com.inipage.homelylauncher.widgets.WidgetLifecycleUtils;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -577,6 +578,9 @@ public class HomeActivity extends AppCompatActivity implements
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode != RESULT_OK) {
+            if (requestCode == REQUEST_BIND_APP_WIDGET || requestCode == REQUEST_CONFIGURE_WIDGET) {
+                WidgetLifecycleUtils.endTransaction();
+            }
             return;
         }
         switch (requestCode) {
@@ -586,7 +590,7 @@ public class HomeActivity extends AppCompatActivity implements
                 }
                 switch (mPendingWidgetActionRoutingData.getSource()) {
                     case FolderController:
-                        // TODO
+                        mFolderController.onWidgetBound();
                         break;
                     case GridPageController:
                         mPager.getGridController(
@@ -601,7 +605,7 @@ public class HomeActivity extends AppCompatActivity implements
                 }
                 switch (mPendingWidgetActionRoutingData.getSource()) {
                     case FolderController:
-                        // TODO
+                        mFolderController.onWidgetConfigureComplete();
                         break;
                     case GridPageController:
                         mPager.getGridController(mPendingWidgetActionRoutingData.getPageId())
@@ -727,16 +731,13 @@ public class HomeActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onFolderCompletelyOpen() {
-        // TODO
-    }
+    public void onFolderCompletelyOpen() {}
 
     @Override
     public void onFolderClosed() {
         folderVeil.setVisibility(View.GONE);
         bottomScrim.setBackgroundColor(getColor(R.color.transparent));
     }
-
 
     @Override
     public void requestAppDrawerFocus() {

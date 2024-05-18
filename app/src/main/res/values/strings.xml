@@ -16,8 +16,8 @@
     <string name="new_row">New Row</string>
     <string name="search_hint">Search apps</string>
     <string name="remove_row">Remove Row</string>
-    <string name="resize_widget">Resize Widget</string>
-    <string name="remove_widget">Remove Widget</string>
+    <string name="resize_widget">Resize widget</string>
+    <string name="remove_widget">Remove widget</string>
     <string name="default_widget_name">Widget Name</string>
     <string name="title_activity_icon_chooser">Choose An Icon</string>
     <string name="drop_icon_hint">Drop here!</string>
@@ -266,5 +266,9 @@
     <string name="edit_folder_items">Edit items</string>
     <string name="reorder_folder_items">Reorder items</string>
     <string name="delete_folder">Delete folder</string>
+    <string name="widget_size_settings">Set width and height of the widget as percent of allowed sizes</string>
+    <string name="widget_width">Widget width</string>
+    <string name="widget_height">Widget height</string>
+    <string name="update_size">Update size</string>
 </resources>
 

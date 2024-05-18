@@ -25,10 +25,9 @@ public class DebugLogUtils {
     public static final String TAG_GRID_HANDLE = "tag_grid_handle";
     public static final String TAG_DECOR_DRAGGER = "tag_decor_dragger";
     public static final String TAG_WALLPAPER_OFFSET = "tag_wallpaper_offset";
-    public static final String TAG_BOTTOM_SHEET = "tag_bottom_sheet";
     public static final String TAG_VIRTUAL_TRACKPAD = "tag_virtual_trackpad";
 
-    private static final String NEEDLED = TAG_PAGE_SCROLL;
+    private static final String NEEDLED = TAG_CUSTOM_TOUCHEVENTS;
 
     public static void complain(Context context, String complaint) {
         if (!PrefsHelper.isDevMode() && !BuildConfig.DEBUG) {

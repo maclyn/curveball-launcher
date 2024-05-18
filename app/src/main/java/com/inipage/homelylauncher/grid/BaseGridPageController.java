@@ -99,8 +99,6 @@ public abstract class BaseGridPageController implements BasePageController {
     private AnimatedBackgroundGrid mAnimatedBackgroundGrid;
 
     // Widget addition
-    private int mPendingAppWidgetId;
-    private AppWidgetProviderInfo mPendingAwpi;
     private int mAdditionX;
     private int mAdditionY;
 
@@ -479,15 +477,15 @@ public abstract class BaseGridPageController implements BasePageController {
             mMetrics,
             spaces,
             (targetX, targetY, awpi) -> {
-                mPendingAppWidgetId = AppInfoCache.get().getAppWidgetHost().allocateAppWidgetId();
-                mPendingAwpi = awpi;
+                int newAppWidgetId = WidgetLifecycleUtils.getAppWidgetHost().allocateAppWidgetId();
                 mAdditionX = targetX;
                 mAdditionY = targetY;
                 final boolean bindTest = getAppWidgetManager().bindAppWidgetIdIfAllowed(
-                    mPendingAppWidgetId, awpi.provider);
+                    newAppWidgetId, awpi.provider);
+                WidgetLifecycleUtils.startTransaction(newAppWidgetId, awpi);
                 if (!bindTest) {
                     mHost.requestBindWidget(
-                        mPendingAppWidgetId,
+                        newAppWidgetId,
                         awpi,
                         new WidgetHost.SourceData(
                             WidgetHost.Source.GridPageController, getPageId(), null));
@@ -499,36 +497,44 @@ public abstract class BaseGridPageController implements BasePageController {
     //endregion
 
     public void onBindWidgetSucceeded() {
-        if (mPendingAwpi.configure == null) {
+        @Nullable WidgetLifecycleUtils.WidgetAddTransaction transaction =
+            WidgetLifecycleUtils.INSTANCE.getActiveTransaction();
+        if (transaction == null) {
+            return;
+        }
+        if (transaction.getApwi().configure == null) {
             commitPendingWidgetAddition();
             return;
         }
         mHost.requestConfigureWidget(
-            mPendingAppWidgetId,
-            mPendingAwpi,
+            transaction.getAppWidgetId(),
+            transaction.getApwi(),
             new WidgetHost.SourceData(WidgetHost.Source.GridPageController, getPageId(), null));
     }
 
     public void commitPendingWidgetAddition() {
-        final int appWidgetId = mPendingAppWidgetId;
-        final AppWidgetProviderInfo awpi =
-            getAppWidgetManager().getAppWidgetInfo(appWidgetId);
+        @Nullable WidgetLifecycleUtils.WidgetAddTransaction transaction =
+            WidgetLifecycleUtils.INSTANCE.getActiveTransaction();
+        if (transaction == null) {
+            return;
+        }
+
 
         final int x = mAdditionX;
         final int y = mAdditionY;
-        final int gridWidth = mMetrics.getMinColumnCountForWidget(awpi);
-        final int gridHeight = mMetrics.getMinRowCountForWidget(awpi);
+        final int gridWidth = mMetrics.getMinColumnCountForWidget(transaction.getApwi());
+        final int gridHeight = mMetrics.getMinRowCountForWidget(transaction.getApwi());
         final GridItem widgetItem =
             buildWidgetItem(
                 x,
                 y,
                 gridWidth,
                 gridHeight,
-                mPendingAppWidgetId);
+                transaction.getAppWidgetId());
         mPage.getItems().add(widgetItem);
         addWidgetItem(widgetItem);
-        mPendingAppWidgetId = mAdditionX = mAdditionY = -1;
-        mPendingAwpi = null;
+        mAdditionX = mAdditionY = -1;
+        WidgetLifecycleUtils.endTransaction();
         onGridMakeupChanged();
         commitPage();
     }
@@ -788,6 +794,21 @@ public abstract class BaseGridPageController implements BasePageController {
 
         @Nullable
         private GridViewHolder mActionTargetGridHolder;
+
+        @Override
+        public boolean isOutsideLaidOutContents(float rawX, float rawY) {
+            final int[] out = new int[2];
+            mContainer.getLocationOnScreen(out);
+            int relativeX = (int) rawX - out[0];
+            int relativeY = (int) rawY - out[1];
+            if (relativeX < 0 || relativeX > mMetrics.getGridWidth()) {
+                return true;
+            }
+            if (relativeY < 0 || relativeY > mMetrics.getGridHeight()) {
+                return true;
+            }
+            return false;
+        }
 
         @Override
         public boolean onLongPress(final int rawX, final int rawY) {
