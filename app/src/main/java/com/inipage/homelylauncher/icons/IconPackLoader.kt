@@ -20,6 +20,7 @@ class IconPackLoader(context: Context, private val packageName: String) {
     private val drawableNameToResId = HashMap<String, Int>()
     private val componentToDrawableName = HashMap<APair<String, String>, String>()
 
+    @SuppressLint("UseCompatLoadingForDrawables")
     fun loadDrawableByName(drawableName: String): Drawable? {
         val id = getResIdFromDrawableName(drawableName) ?: return null
         return resources.getDrawable(id)
@@ -69,7 +70,7 @@ class IconPackLoader(context: Context, private val packageName: String) {
             }
             val attrValue = xmlParser.getAttributeValue(null, "drawable")
             if (attrValue != null) {
-                knownDrawables.add(attrValue);
+                knownDrawables.add(attrValue)
             }
             eventType = xmlParser.next()
         }

@@ -5,37 +5,53 @@
     android:background="?selectableItemBackground"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="160dp">
+    android:layout_height="wrap_content">
 
     <ImageView
         android:contentDescription="@string/widget_preview"
         android:id="@+id/widget_preview_image"
         android:layout_gravity="center_horizontal"
-        android:layout_width="120dp"
-        android:layout_height="80dp"
-        android:layout_margin="8dp" />
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="16dp"
+        android:layout_marginHorizontal="32dp"
+        android:scaleType="fitCenter"
+        android:visibility="gone" />
+
+    <FrameLayout
+        android:contentDescription="@string/widget_preview"
+        android:id="@+id/widget_preview_layout"
+        android:layout_gravity="center_horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="16dp"
+        android:layout_marginHorizontal="32dp"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/widget_preview_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:layout_marginHorizontal="16dp"
         android:ellipsize="end"
         android:gravity="center"
         android:singleLine="true"
         android:text="@string/ipsum"
         android:textColor="@color/primary_text_color"
-        android:textSize="14sp" />
+        android:textSize="16sp" />
 
     <TextView
         android:id="@+id/widget_app_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="2dp"
+        android:layout_marginBottom="16dp"
+        android:layout_marginHorizontal="16dp"
         android:singleLine="true"
         android:text="@string/ipsum"
-        android:textSize="12sp"
-        android:layout_marginTop="2dp"
+        android:textSize="14sp"
         android:textColor="@color/secondary_text_color"
+        android:textStyle="bold"
         android:ellipsize="end"
         android:gravity="center" />
 </LinearLayout>

@@ -63,4 +63,6 @@
     <dimen name="fast_scroll_text_size">16sp</dimen>
     <dimen name="bottom_sheet_top_scrim_padding">24dp</dimen>
     <dimen name="app_icon_row_height">56dp</dimen>
+    <dimen name="widget_picker_preview_width">120dp</dimen>
+    <dimen name="widget_picker_preview_height">80dp</dimen>
 </resources>

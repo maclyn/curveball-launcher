@@ -4,24 +4,34 @@ import android.annotation.SuppressLint;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.text.TextUtils;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.inipage.homelylauncher.R;
+import com.inipage.homelylauncher.utils.ViewUtils;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+import kotlin.Pair;
 
 public class WidgetAddAdapter extends RecyclerView.Adapter<WidgetAddAdapter.WidgetAddVH> {
 
@@ -29,9 +39,12 @@ public class WidgetAddAdapter extends RecyclerView.Adapter<WidgetAddAdapter.Widg
     private final List<WidgetProviderWrapper> mObjects;
     private OnWidgetClickListener mListener;
 
-    public WidgetAddAdapter(List<WidgetProviderWrapper> objects, Context context) {
-        this.mObjects = objects;
-        this.mContext = context;
+    public WidgetAddAdapter(
+        Context context,
+        List<WidgetProviderWrapper> objects
+    ) {
+        mObjects = objects;
+        mContext = context;
     }
 
     @NotNull
@@ -42,25 +55,43 @@ public class WidgetAddAdapter extends RecyclerView.Adapter<WidgetAddAdapter.Widg
                 .inflate(R.layout.widget_preview, parent, false));
     }
 
+    @SuppressLint("ResourceType")
     @Override
     public void onBindViewHolder(@NotNull WidgetAddVH holder, int position) {
         final WidgetProviderWrapper providerWrapper = mObjects.get(position);
         if (providerWrapper == null) {
             return;
         }
-
-        holder.widgetPreview.setImageDrawable(null);
-        holder.widgetPreview.setTag(providerWrapper.appWidgetProviderInfo);
-        setImageAsync(providerWrapper.appWidgetProviderInfo, holder.widgetPreview);
+        final AppWidgetProviderInfo awpi = providerWrapper.appWidgetProviderInfo;
         holder.mainLayout.setOnClickListener(view -> {
             if (mListener != null) {
-                mListener.onClick(providerWrapper.appWidgetProviderInfo);
+                mListener.onClick(awpi);
             }
         });
 
+        // Preview image or layout
+        Pair<Integer, Integer> widthAndHeight =
+            WidgetLifecycleUtils.guessDesiredPreviewBounds(mContext, awpi);
+        boolean hasPreviewLayout =
+            WidgetLifecycleUtils.isMaterialYouCompatible() && awpi.previewLayout != 0;
+        View targetView = hasPreviewLayout ? holder.widgetLayoutPreview : holder.widgetPreview;
+        ViewUtils.setWidth(targetView, widthAndHeight.getFirst());
+        ViewUtils.setHeight(targetView, widthAndHeight.getSecond());
+        holder.widgetPreview.setVisibility(hasPreviewLayout ? View.GONE : View.VISIBLE);
+        holder.widgetLayoutPreview.setVisibility(hasPreviewLayout ? View.VISIBLE : View.GONE);
+        if (hasPreviewLayout) {
+            holder.widgetLayoutPreview.removeAllViews();
+            holder.widgetLayoutPreview.setTag(awpi);
+            setLayoutPreviewIntoViewAsync(awpi, holder.widgetLayoutPreview);
+        } else {
+            holder.widgetPreview.setImageDrawable(null);
+            holder.widgetPreview.setTag(awpi);
+            setImageAsync(awpi, holder.widgetPreview);
+        }
+
         final String appName = providerWrapper.appName;
         final String providerName = providerWrapper.title;
-        if (TextUtils.isEmpty(providerName) || providerName.equals(appName)) {
+        if (TextUtils.isEmpty(providerName)) {
             holder.widgetName.setText(appName);
             holder.appName.setVisibility(View.GONE);
         } else {
@@ -107,6 +138,46 @@ public class WidgetAddAdapter extends RecyclerView.Adapter<WidgetAddAdapter.Widg
         }.execute(mContext.getPackageManager());
     }
 
+    @SuppressLint("StaticFieldLeak")
+    private void setLayoutPreviewIntoViewAsync(
+        final AppWidgetProviderInfo awpi,
+        final FrameLayout container)
+    {
+        new AsyncTask<Void, Void, View>() {
+            @SuppressLint("ResourceType")
+            @RequiresApi(api = Build.VERSION_CODES.S)
+            @Override
+            protected View doInBackground(Void... params) {
+                @Nullable Context widgetAppContext = null;
+                try {
+                    widgetAppContext =
+                        mContext.createPackageContext(awpi.provider.getPackageName(), 0);
+                } catch (PackageManager.NameNotFoundException ignored) {
+                    return null;
+                }
+                try {
+                    return LayoutInflater
+                         .from(widgetAppContext)
+                         .inflate(awpi.previewLayout, null, false);
+                } catch (Resources.NotFoundException ignored) {
+                    return null;
+                }
+            }
+
+            @Override
+            protected void onPostExecute(@Nullable View view) {
+                AppWidgetProviderInfo tag = (AppWidgetProviderInfo) container.getTag();
+                if (tag != null && tag.equals(awpi) && view != null) {
+                    FrameLayout.LayoutParams layoutParams =
+                        new FrameLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT);
+                    container.addView(view, layoutParams);
+                }
+            }
+        }.execute();
+    }
+
     public void setOnClickListener(OnWidgetClickListener listener) {
         this.mListener = listener;
     }
@@ -143,6 +214,7 @@ public class WidgetAddAdapter extends RecyclerView.Adapter<WidgetAddAdapter.Widg
         private final TextView widgetName;
         private final TextView appName;
         private final ImageView widgetPreview;
+        private final FrameLayout widgetLayoutPreview;
 
         public WidgetAddVH(View itemView) {
             super(itemView);
@@ -150,6 +222,7 @@ public class WidgetAddAdapter extends RecyclerView.Adapter<WidgetAddAdapter.Widg
             widgetName = mainLayout.findViewById(R.id.widget_preview_text);
             appName = mainLayout.findViewById(R.id.widget_app_name);
             widgetPreview = mainLayout.findViewById(R.id.widget_preview_image);
+            widgetLayoutPreview = mainLayout.findViewById(R.id.widget_preview_layout);
         }
     }
 }

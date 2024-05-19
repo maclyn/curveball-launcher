@@ -99,7 +99,7 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="@color/primary_text_color"
-                android:text="@string/folder_create_new_expando"
+                android:text="@string/create_new_folder"
                 />
         </FrameLayout>
 

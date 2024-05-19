@@ -8,25 +8,24 @@ import android.content.ContextWrapper
 import android.content.res.Configuration
 import android.graphics.Point
 import android.graphics.Rect
-import android.graphics.drawable.Drawable
 import android.util.DisplayMetrics
 import android.view.*
-import androidx.core.content.ContextCompat
-import com.inipage.homelylauncher.R
-import java.io.IOException
+import com.inipage.homelylauncher.views.ProvidesOverallDimensions
 import java.lang.IllegalArgumentException
 import kotlin.math.hypot
+import kotlin.math.max
 import kotlin.math.pow
 import kotlin.math.sqrt
 
 object ViewUtils {
+
     private var IS_SQUARISH_DEVICE: Boolean? = null
 
-    fun createFillerView(context: Context?, newHeight: Int): View {
-        val view = View(context)
-        view.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, newHeight)
-        setHeight(view, newHeight)
-        return view
+    @JvmStatic
+    fun setWidth(child: View, newWidth: Int) {
+        val params = child.layoutParams
+        params.width = newWidth
+        child.layoutParams = params
     }
 
     @JvmStatic
@@ -36,17 +35,13 @@ object ViewUtils {
         child.layoutParams = params
     }
 
-    fun createFillerWidthView(context: Context?, newWidth: Int): View {
-        val view = View(context)
-        view.layoutParams = ViewGroup.LayoutParams(newWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
-        setWidth(view, newWidth)
-        return view
-    }
-
-    fun setWidth(child: View, newWidth: Int) {
+    @JvmStatic
+    fun setDimensions(child: View, width: Int, height: Int) {
         val params = child.layoutParams
-        params.width = newWidth
+        params.width = width
+        params.height = height
         child.layoutParams = params
+        child.invalidate()
     }
 
     @JvmStatic
@@ -146,9 +141,14 @@ object ViewUtils {
     }
 
     @JvmStatic
+    fun performSyntheticMeasure(view: View, context: Context) {
+        val windowBounds = windowBounds(context)
+        performSyntheticMeasure(view, windowBounds.height(), windowBounds.width())
+    }
+
+    @JvmStatic
     fun windowBounds(context: Context?): Rect {
         val activity = requireActivityOf(context)
-            ?: return Rect()
         val decorView = activity.window.decorView
         val out = IntArray(2)
         decorView.getLocationOnScreen(out)
@@ -175,6 +175,31 @@ object ViewUtils {
             ctx = ctx.baseContext
         }
         throw IllegalArgumentException("Context passed that doesn't walk up to Activity!")
+    }
+
+    @JvmStatic
+    fun activityOf(context: Context?): Activity? {
+        var ctx = context
+        while (ctx is ContextWrapper) {
+            if (ctx is Activity) {
+                return ctx
+            }
+            ctx = ctx.baseContext
+        }
+        return null
+    }
+
+    @JvmStatic
+    fun guessUsefulWidthAndHeightOfActivityPx(context: Context): Pair<Int, Int> {
+        val activity = activityOf(context)
+        if (activity !is ProvidesOverallDimensions) {
+            return Pair(
+                (context.resources.displayMetrics.widthPixels * 1.0F).toInt(),
+                (context.resources.displayMetrics.heightPixels * 0.9F).toInt())
+        }
+        val bounds = (activity as ProvidesOverallDimensions).provideOverallBounds()
+        val scrims = (activity as ProvidesOverallDimensions).provideVerticalScrims()
+        return Pair(bounds.width(), max(bounds.height() - scrims.first - scrims.second, 0))
     }
 
     @JvmStatic
@@ -277,13 +302,5 @@ object ViewUtils {
         val displayPixels = Point()
         wm.defaultDisplay.getRealSize(displayPixels)
         return displayPixels
-    }
-
-    fun getDrawableFromAssetPNG(context: Context, assetId: String): Drawable? {
-        return try {
-            Drawable.createFromStream(context.assets.open("$assetId.png"), null)
-        } catch (e: IOException) {
-            ContextCompat.getDrawable(context, R.drawable.ic_info_white_48dp)
-        }
     }
 }

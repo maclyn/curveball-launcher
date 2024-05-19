@@ -260,7 +260,7 @@
     <string name="grant_home_app_button">Select default launcher</string>
     <string name="header_app_count">%d apps</string>
     <string name="item_doesnt_fit_here">This item doesn\'t fit here.</string>
-    <string name="folder_create_new_expando">Create new expando</string>
+    <string name="create_new_folder">Create new folder</string>
     <string name="show_folder_menu_button_content_description">Button to show a folder menu</string>
     <string name="collapse_folder_button_content_description">Button to collapse folder</string>
     <string name="edit_folder_items">Edit items</string>

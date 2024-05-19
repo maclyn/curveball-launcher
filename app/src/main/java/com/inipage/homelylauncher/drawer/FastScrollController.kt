@@ -10,7 +10,6 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
-import androidx.core.view.marginTop
 import com.inipage.homelylauncher.R
 import com.inipage.homelylauncher.caches.FontCacheSync
 import com.inipage.homelylauncher.utils.Constants
@@ -56,12 +55,12 @@ class FastScrollController(private val host: Host) {
 
         host.onFastScrollStateChange(true)
         val context = host.getHostContext()
-        val activity = ViewUtils.requireActivityOf(context) ?: return
+        val activity = ViewUtils.requireActivityOf(context)
         val root = ScrollView(context)
         if (activity is ProvidesOverallDimensions) {
             root.setPadding(
                 0,
-                (activity as ProvidesOverallDimensions).provideScrims().first,
+                (activity as ProvidesOverallDimensions).provideVerticalScrims().first,
                 0,
                 0)
         }

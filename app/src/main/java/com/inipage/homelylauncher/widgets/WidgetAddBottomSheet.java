@@ -3,6 +3,7 @@ package com.inipage.homelylauncher.widgets;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
 import android.util.Pair;
+import android.widget.FrameLayout;
 
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -81,10 +82,9 @@ public class WidgetAddBottomSheet {
                     })
                     .collect(Collectors.toList());
         final RecyclerView recyclerView = new RecyclerView(context);
+        recyclerView.setHasFixedSize(true);
         final WidgetAddAdapter widgetAddAdapter =
-            new WidgetAddAdapter(
-                matchingProviders,
-                context);
+            new WidgetAddAdapter(context, matchingProviders);
         String handle =
             new BottomSheetHelper()
                 .setContentView(recyclerView)
@@ -94,10 +94,9 @@ public class WidgetAddBottomSheet {
             DecorViewManager.get(context).removeView(handle);
             widgetClickListener.onClick(awpi);
         });
+        GridLayoutManager glm = new GridLayoutManager(context, 1, RecyclerView.VERTICAL, false);
+        recyclerView.setLayoutManager(glm);
         recyclerView.setAdapter(widgetAddAdapter);
-        recyclerView.setLayoutManager(
-            new GridLayoutManager(context, 2, RecyclerView.VERTICAL, false));
-
     }
 
     public interface GridWidgetCallback {

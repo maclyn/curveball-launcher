@@ -21,6 +21,7 @@
             />
 
         <TextView
+            android:id="@+id/width_label"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/widget_width"
@@ -37,6 +38,7 @@
             />
 
         <TextView
+            android:id="@+id/height_label"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/widget_height"

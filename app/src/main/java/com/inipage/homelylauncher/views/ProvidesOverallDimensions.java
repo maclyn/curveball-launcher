@@ -5,7 +5,7 @@ import android.util.Pair;
 
 public interface ProvidesOverallDimensions {
 
-    Pair<Integer, Integer> provideScrims();
+    Pair<Integer, Integer> provideVerticalScrims();
 
     Pair<Integer, Integer> provideScrimYPositionsOnScreen();
 

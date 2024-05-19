@@ -9,18 +9,17 @@ import android.appwidget.AppWidgetProviderInfo.RESIZE_HORIZONTAL
 import android.appwidget.AppWidgetProviderInfo.RESIZE_NONE
 import android.appwidget.AppWidgetProviderInfo.RESIZE_VERTICAL
 import android.content.Context
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.util.SizeF
-import androidx.annotation.RequiresApi
 import androidx.core.view.marginBottom
 import androidx.core.view.marginEnd
 import androidx.core.view.marginStart
 import androidx.core.view.marginTop
 import com.inipage.homelylauncher.caches.AppInfoCache
 import com.inipage.homelylauncher.utils.ViewUtils
-import com.inipage.homelylauncher.widgets.WidgetLifecycleUtils.maxLayoutWidth
-import kotlin.math.min
 
 /**
  * Helper functions for handling hosting different widgets.
@@ -70,6 +69,21 @@ object WidgetLifecycleUtils {
         return maybeAddPaddingToContainerDimension(minHeight)
     }
 
+    fun AppWidgetProviderInfo.defaultLayoutWidth(): Int {
+        if (this.supportsHorizontalResize() && minResizeWidth > minWidth) {
+            return maybeAddPaddingToContainerDimension(minResizeWidth)
+        }
+        return maybeAddPaddingToContainerDimension(minWidth)
+    }
+
+    fun AppWidgetProviderInfo.defaultLayoutHeight(): Int {
+        if (this.supportsVerticalResize() && minResizeHeight > minResizeWidth) {
+            return maybeAddPaddingToContainerDimension(minResizeHeight)
+        }
+        return maybeAddPaddingToContainerDimension(minHeight)
+    }
+
+
     fun AppWidgetProviderInfo.maxLayoutWidth(containerWidth: Int): Int? {
         if (this.supportsHorizontalResize() && isMaterialYouCompatible()) {
             val size = if (maxResizeWidth <= 0) containerWidth else maxResizeWidth
@@ -77,17 +91,23 @@ object WidgetLifecycleUtils {
             if (proposedWidth < minLayoutWidth()) {
                 return minLayoutWidth()
             }
+            if (maxResizeWidth > containerWidth) {
+                return containerWidth
+            }
             return proposedWidth
         }
         return null
     }
 
     fun AppWidgetProviderInfo.maxLayoutHeight(containerHeight: Int): Int? {
-        if (this.supportsHorizontalResize() && isMaterialYouCompatible()) {
+        if (this.supportsVerticalResize() && isMaterialYouCompatible()) {
             val size = if (maxResizeHeight <= 0) containerHeight else maxResizeHeight
             val proposedHeight = maybeRemovePaddingFromContainerDimension(size)
             if (proposedHeight < minLayoutHeight()) {
                 return minLayoutHeight()
+            }
+            if (maxResizeHeight > containerHeight) {
+                return containerHeight
             }
             return proposedHeight
         }
@@ -98,11 +118,10 @@ object WidgetLifecycleUtils {
         // Grab this so we can scale proportionally
         val aspectRatio =
             (minWidth.toFloat() / minHeight) // For something like a search bar, 4.0-5.0ish
-        val aspectRatioInv = 1 / aspectRatio
 
         // Horizontal fit
         var hasHorizontalFit = false
-        var hFitWidth = maxLayoutWidth(containerWidth) ?: minLayoutWidth()
+        var hFitWidth = maxLayoutWidth(containerWidth) ?: defaultLayoutWidth()
         if (hFitWidth > containerWidth) {
             hFitWidth = containerWidth
         }
@@ -114,11 +133,11 @@ object WidgetLifecycleUtils {
 
         // Vertical fit
         var hasVerticalFit = false
-        var vFitHeight = maxLayoutHeight(containerHeight) ?: minLayoutHeight()
+        var vFitHeight = maxLayoutHeight(containerHeight) ?: defaultLayoutHeight()
         if (vFitHeight > containerHeight) {
             vFitHeight = containerHeight
         }
-        val vFitWidth = (vFitHeight * aspectRatioInv).toInt()
+        val vFitWidth = (vFitHeight * aspectRatio).toInt()
         val vFitPixelCount = hFitWidth * hFitHeight
         if (vFitWidth <= containerWidth) {
             hasVerticalFit = true
@@ -126,7 +145,9 @@ object WidgetLifecycleUtils {
 
         val vFitBounds = Pair(vFitWidth, vFitHeight)
         val hFitBounds = Pair(hFitWidth, hFitHeight)
-        val fallbackBounds = Pair(minLayoutWidth(), minLayoutHeight())
+        val fallbackBounds = Pair(
+            maxLayoutWidth(containerWidth) ?: minLayoutWidth(),
+            maxLayoutHeight(containerHeight) ?: minLayoutHeight())
         return when {
             hasVerticalFit && hasHorizontalFit ->
                 return if (vFitPixelCount > hFitPixelCount) vFitBounds else hFitBounds
@@ -174,6 +195,58 @@ object WidgetLifecycleUtils {
         } else {
             hostView.updateAppWidgetSize(null, widthDp, heightDp, widthDp, heightDp)
         }
+    }
+
+    @JvmStatic
+    fun guessDesiredPreviewBounds(context: Context, awpi: AppWidgetProviderInfo): Pair<Int, Int> {
+        // Figure out a rough guess for what each grid cell's height and width will be
+        // The actual values are decided by GridMetrics usually
+        val isPortrait =
+            context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+        val widthHeightPairPx = ViewUtils.guessUsefulWidthAndHeightOfActivityPx(context)
+        val portraitActivityWidthPx =
+            if (isPortrait) widthHeightPairPx.first else widthHeightPairPx.second
+        val portraitActivityHeightPx =
+            if (isPortrait) widthHeightPairPx.second else widthHeightPairPx.first
+
+        // Let's guess that we have ~95% of the screen width, and ~80% of the screen height
+        // for grid layout, and a default 5x6 (width x height) grid
+        val gridCellWidth = portraitActivityWidthPx * 0.95F / 5
+        val gridCellHeight = portraitActivityHeightPx * 0.80F / 6
+
+        // Guess from targetCells and screen dimensions
+        if (isMaterialYouCompatible()) {
+            val widthCells = awpi.targetCellWidth
+            val heightCells = awpi.targetCellHeight
+
+            // Some apps transpose target cell width and target cell height
+            // Observed with Google's At a Glance
+            // If we see very different target cell and min values, just ignore target cell values
+            val areTargetCellsLikelyWrong =
+                widthCells < heightCells && awpi.minWidth > awpi.minHeight
+            if (widthCells > 0 && heightCells > 0 && !areTargetCellsLikelyWrong) {
+                val result = Pair(
+                    (gridCellWidth * widthCells).toInt(),
+                    (gridCellHeight * heightCells).toInt())
+                return result
+            }
+        }
+
+        // Guess from minWidth and minHeight
+        val clampToNearest: (value: Int, unit: Float) -> Int = { value, unit ->
+            // Division made easy
+            var count = 1
+            while (unit * count < value) {
+                count++
+            }
+            (unit * count).toInt()
+        }
+        val minWidth = awpi.minWidth
+        val minHeight = awpi.minHeight
+        val result = Pair(
+            clampToNearest(minWidth, gridCellWidth),
+            clampToNearest(minHeight, gridCellHeight))
+        return result
     }
 
     @JvmStatic

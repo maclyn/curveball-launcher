@@ -1,8 +1,10 @@
 package com.inipage.homelylauncher;
 
+import static android.appwidget.AppWidgetProviderInfo.WIDGET_FEATURE_CONFIGURATION_OPTIONAL;
 import static android.view.DragEvent.ACTION_DRAG_ENDED;
 import static android.view.DragEvent.ACTION_DRAG_ENTERED;
 import static android.view.DragEvent.ACTION_DRAG_LOCATION;
+import static com.inipage.homelylauncher.utils.DebugLogUtils.TAG_ICON_CASCADE;
 import static com.inipage.homelylauncher.utils.DebugLogUtils.TAG_PAGE_SCROLL;
 import static com.inipage.homelylauncher.utils.DebugLogUtils.TAG_WALLPAPER_OFFSET;
 
@@ -35,6 +37,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -564,7 +567,7 @@ public class HomeActivity extends AppCompatActivity implements
         int firstPointerId,
         float startRawY
     ) {
-        mFolderController.onOpenMotionEvent(event, action, firstPointerId, startRawY);
+        mFolderController.onOpenMotionEvent(event, action, firstPointerId);
     }
 
     @NonNull
@@ -578,41 +581,34 @@ public class HomeActivity extends AppCompatActivity implements
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode != RESULT_OK) {
-            if (requestCode == REQUEST_BIND_APP_WIDGET || requestCode == REQUEST_CONFIGURE_WIDGET) {
+            if (requestCode == REQUEST_BIND_APP_WIDGET) {
                 WidgetLifecycleUtils.endTransaction();
+            } else if (requestCode == REQUEST_CONFIGURE_WIDGET) {
+                @Nullable WidgetLifecycleUtils.WidgetAddTransaction transaction =
+                    WidgetLifecycleUtils.INSTANCE.getActiveTransaction();
+                if (transaction == null) {
+                    return;
+                }
+                @SuppressLint("InlinedApi")
+                boolean markedAsNonConfigurable = Build.VERSION.SDK_INT <= Build.VERSION_CODES.P ||
+                    (transaction.getApwi().widgetFeatures & WIDGET_FEATURE_CONFIGURATION_OPTIONAL) == 0;
+
+                // Some widgets (cough cough Google Weather) claim to require configuration but don't
+                // export the component to do so. They add fine anyways.
+
+                if (markedAsNonConfigurable) {
+                    DebugLogUtils.needle(TAG_ICON_CASCADE, "Widget configuration non-optional but going ahead anyways");
+                }
+                completeWidgetConfiguration();
             }
             return;
         }
         switch (requestCode) {
             case REQUEST_BIND_APP_WIDGET:
-                if (mPendingWidgetActionRoutingData == null) {
-                    return;
-                }
-                switch (mPendingWidgetActionRoutingData.getSource()) {
-                    case FolderController:
-                        mFolderController.onWidgetBound();
-                        break;
-                    case GridPageController:
-                        mPager.getGridController(
-                            mPendingWidgetActionRoutingData.getPageId()).onBindWidgetSucceeded();
-                        break;
-                }
-                mPendingWidgetActionRoutingData = null;
+                completeWidgetBinding();
                 break;
             case REQUEST_CONFIGURE_WIDGET:
-                if (mPendingWidgetActionRoutingData == null) {
-                    return;
-                }
-                switch (mPendingWidgetActionRoutingData.getSource()) {
-                    case FolderController:
-                        mFolderController.onWidgetConfigureComplete();
-                        break;
-                    case GridPageController:
-                        mPager.getGridController(mPendingWidgetActionRoutingData.getPageId())
-                            .commitPendingWidgetAddition();
-                        break;
-                }
-                mPendingWidgetActionRoutingData = null;
+                completeWidgetConfiguration();
                 break;
             case REQUEST_LOCATION_PERMISSION:
                 mDockController.loadDock();
@@ -697,24 +693,6 @@ public class HomeActivity extends AppCompatActivity implements
         return false;
     }
 
-    private void switchPageLeft() {
-        if (isOnFirstHomeScreen() || isOnAppDrawer()) {
-            return;
-        }
-        mSyntheticScrolling = true;
-        pagerView.setCurrentItem(pagerView.getCurrentItem() - 1, true);
-    }
-
-    private void switchPageRight() {
-        final int currentPage = pagerView.getCurrentItem();
-        if (isOnLastPage()) {
-            mPager.spawnNewPage();
-            updateWallpaperOffsetSteps();
-        } else {
-            mSyntheticScrolling = true;
-            pagerView.setCurrentItem(currentPage + 1, true);
-        }
-    }
 
     @Override
     public void onStartFolderOpen() {
@@ -731,7 +709,9 @@ public class HomeActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onFolderCompletelyOpen() {}
+    public void onFolderCompletelyOpen(float translationAmount) {
+        onFolderPartiallyOpen(1.0F, translationAmount);
+    }
 
     @Override
     public void onFolderClosed() {
@@ -769,7 +749,7 @@ public class HomeActivity extends AppCompatActivity implements
     }
 
     @Override
-    public Pair<Integer, Integer> provideScrims() {
+    public Pair<Integer, Integer> provideVerticalScrims() {
         return new Pair<>(topScrim.getHeight(), bottomScrim.getHeight());
     }
 
@@ -823,6 +803,57 @@ public class HomeActivity extends AppCompatActivity implements
     @Override
     public boolean isFolderOpen() {
         return mFolderController.isFolderOpen();
+    }
+
+    private void switchPageLeft() {
+        if (isOnFirstHomeScreen() || isOnAppDrawer()) {
+            return;
+        }
+        mSyntheticScrolling = true;
+        pagerView.setCurrentItem(pagerView.getCurrentItem() - 1, true);
+    }
+
+    private void switchPageRight() {
+        final int currentPage = pagerView.getCurrentItem();
+        if (isOnLastPage()) {
+            mPager.spawnNewPage();
+            updateWallpaperOffsetSteps();
+        } else {
+            mSyntheticScrolling = true;
+            pagerView.setCurrentItem(currentPage + 1, true);
+        }
+    }
+
+    private void completeWidgetBinding() {
+        if (mPendingWidgetActionRoutingData == null) {
+            return;
+        }
+        switch (mPendingWidgetActionRoutingData.getSource()) {
+            case FolderController:
+                mFolderController.onWidgetBound();
+                break;
+            case GridPageController:
+                mPager.getGridController(
+                    mPendingWidgetActionRoutingData.getPageId()).onBindWidgetSucceeded();
+                break;
+        }
+        mPendingWidgetActionRoutingData = null;
+    }
+
+    private void completeWidgetConfiguration() {
+        if (mPendingWidgetActionRoutingData == null) {
+            return;
+        }
+        switch (mPendingWidgetActionRoutingData.getSource()) {
+            case FolderController:
+                mFolderController.onWidgetConfigureComplete();
+                break;
+            case GridPageController:
+                mPager.getGridController(mPendingWidgetActionRoutingData.getPageId())
+                    .commitPendingWidgetAddition();
+                break;
+        }
+        mPendingWidgetActionRoutingData = null;
     }
 
     private void updateWallpaperOffsetSteps() {

@@ -299,7 +299,7 @@ public class SettingsActivity extends AppCompatActivity implements ProvidesOvera
     }
 
     @Override
-    public Pair<Integer, Integer> provideScrims() {
+    public Pair<Integer, Integer> provideVerticalScrims() {
         View view = getWindow().getDecorView();
         return new Pair<>(view.getRootWindowInsets().getStableInsetTop(), view.getRootWindowInsets().getStableInsetBottom());
     }

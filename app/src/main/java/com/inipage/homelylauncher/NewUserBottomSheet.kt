@@ -36,7 +36,7 @@ class NewUserBottomSheet(val context: Context) {
     }
 
     private fun showPermissionsPrompts() {
-        val activity = ViewUtils.requireActivityOf(context) ?: return
+        val activity = ViewUtils.requireActivityOf(context)
         activity.requestPermissions(
             arrayOf(
                 Manifest.permission.READ_PHONE_STATE,
@@ -45,7 +45,7 @@ class NewUserBottomSheet(val context: Context) {
     }
 
     private fun showChooseDefaultHome() {
-        val activity = ViewUtils.requireActivityOf(context) ?: return
+        val activity = ViewUtils.requireActivityOf(context)
         try {
             activity.startActivity(Intent(Settings.ACTION_HOME_SETTINGS)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
@@ -58,7 +58,7 @@ class NewUserBottomSheet(val context: Context) {
 
     @RequiresApi(Build.VERSION_CODES.Q)
     private fun showAppUsagePrompt() {
-        val activity = ViewUtils.requireActivityOf(context) ?: return
+        val activity = ViewUtils.requireActivityOf(context)
         try {
             activity.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))

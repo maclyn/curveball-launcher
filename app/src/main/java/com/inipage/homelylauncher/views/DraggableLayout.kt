@@ -10,6 +10,7 @@ import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import android.widget.ListView
 import android.widget.ScrollView
 import androidx.core.view.ViewCompat
 import androidx.recyclerview.widget.RecyclerView
@@ -269,7 +270,7 @@ class DraggableLayout : LinearLayout {
         val rawX = ev.rawX
         val rawY = ev.rawY
         var underPointView: View? = null
-        for (childIdx in 0 until childCount) {
+        for (childIdx in 0 until viewGroup.childCount) {
             val child = viewGroup.getChildAt(childIdx) ?: continue
             child.getLocationOnScreen(locationBuffer)
             if (locationBuffer[0] <= rawX && rawX <= locationBuffer[0] + child.width && locationBuffer[0] <= rawY && rawY <= locationBuffer[1] + child.height) {
@@ -280,7 +281,7 @@ class DraggableLayout : LinearLayout {
         if (underPointView == null) {
             return true
         }
-        if (underPointView is RecyclerView || underPointView is ScrollView) {
+        if (underPointView is RecyclerView || underPointView is ScrollView || underPointView is ListView) {
             return !underPointView.canScrollVertically(-1)
         }
         return if (underPointView is ViewGroup) {

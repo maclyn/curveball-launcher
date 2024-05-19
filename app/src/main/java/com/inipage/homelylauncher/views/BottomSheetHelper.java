@@ -93,8 +93,8 @@ public class BottomSheetHelper {
         int topScrimHeight = 0;
         int windowHeight = 0;
         if (activity instanceof ProvidesOverallDimensions) {
-            topScrimHeight = ((ProvidesOverallDimensions) activity).provideScrims().first;
-            bottomScrimHeight = ((ProvidesOverallDimensions) activity).provideScrims().second;
+            topScrimHeight = ((ProvidesOverallDimensions) activity).provideVerticalScrims().first;
+            bottomScrimHeight = ((ProvidesOverallDimensions) activity).provideVerticalScrims().second;
             windowHeight = ((ProvidesOverallDimensions) activity).provideOverallBounds().height();
         }
         ViewUtils.setHeight(rootView.findViewById(R.id.bottom_sheet_bottom_scrim), bottomScrimHeight);
@@ -157,7 +157,9 @@ public class BottomSheetHelper {
         if (mContentView != null) {
             containerView.addView(
                 mContentView,
-                new LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT));
+                new LinearLayout.LayoutParams(
+                    MATCH_PARENT,
+                    mFixedToScreenHeightPercent ? MATCH_PARENT : WRAP_CONTENT));
         }
         // Attach action items
         for (BuilderItem item : mActionItems) {

@@ -4,7 +4,6 @@ import android.app.ActionBar.LayoutParams
 import android.app.AlertDialog
 import android.appwidget.AppWidgetProviderInfo
 import android.content.Context
-import android.content.DialogInterface
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -19,6 +18,7 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.PopupMenu
 import android.widget.SeekBar
+import android.widget.TextView
 import androidx.core.view.ViewCompat
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -33,7 +33,6 @@ import com.inipage.homelylauncher.model.ModelUtils.isValueSet
 import com.inipage.homelylauncher.persistence.DatabaseEditor
 import com.inipage.homelylauncher.utils.ViewUtils
 import com.inipage.homelylauncher.utils.ViewUtils.getRawYForViewAndId
-import com.inipage.homelylauncher.utils.ViewUtils.performSyntheticMeasure
 import com.inipage.homelylauncher.views.DraggableLayout
 import com.inipage.homelylauncher.views.ProvidesOverallDimensions
 import com.inipage.homelylauncher.widgets.WidgetAddBottomSheet
@@ -46,6 +45,7 @@ import com.inipage.homelylauncher.widgets.WidgetLifecycleUtils.minLayoutHeight
 import com.inipage.homelylauncher.widgets.WidgetLifecycleUtils.minLayoutWidth
 import com.inipage.homelylauncher.widgets.WidgetLifecycleUtils.supportsHorizontalResize
 import com.inipage.homelylauncher.widgets.WidgetLifecycleUtils.supportsResizing
+import com.inipage.homelylauncher.widgets.WidgetLifecycleUtils.supportsVerticalResize
 import kotlin.math.min
 
 /**
@@ -59,7 +59,7 @@ class FolderController(
 ) : DraggableLayout.Host {
 
     inner class FolderAnimationTracker(
-        val targetYTranslation: Int,
+        var targetYTranslation: Int,
         private val sourceView: View,
         private val startRawY: Float
     ) {
@@ -88,7 +88,7 @@ class FolderController(
 
         fun onFolderPartiallyOpen(percent: Float, translationAmount: Float)
 
-        fun onFolderCompletelyOpen()
+        fun onFolderCompletelyOpen(translationAmount: Float)
 
         fun onFolderClosed()
 
@@ -144,14 +144,13 @@ class FolderController(
         activeFolderAnimation =
             FolderAnimationTracker(rootView.measuredHeight, sourceView, startRawY)
 
-        onOpenMotionEvent(motionEvent, ACTION_MOVE, firstPointerId, startRawY)
+        onOpenMotionEvent(motionEvent, ACTION_MOVE, firstPointerId)
     }
 
     fun onOpenMotionEvent(
         event: MotionEvent,
         action: Int,
-        firstPointerId: Int,
-        startRawY: Float
+        firstPointerId: Int
     ) {
         val animation = activeFolderAnimation ?: return
         animation.addAction(event, firstPointerId)
@@ -164,7 +163,6 @@ class FolderController(
             ACTION_UP -> {
                 if (animation.percentComplete >= 1.0) {
                     onAnimationInComplete()
-                    host.onFolderCompletelyOpen()
                     return
                 }
                 rootView.runAnimationFromBrainSlug(animation.velocityTracker, firstPointerId)
@@ -207,9 +205,7 @@ class FolderController(
     }
 
     override fun onAnimationInComplete() {
-        host.onFolderPartiallyOpen(
-            1.0F,
-            activeFolderAnimation?.targetYTranslation?.toFloat() ?: 0F)
+        host.onFolderCompletelyOpen(activeFolderAnimation?.targetYTranslation?.toFloat() ?: 0F)
         rootView.translationY = 0.0F
         rootView.alpha = 1.0F
         if (newFolderRequest) {
@@ -285,6 +281,7 @@ class FolderController(
                     folder.setApps(newApps)
                     DatabaseEditor.get().updateGridFolder(folder)
                     bindFolderView(gridFolder)
+                    onFolderContentsHeightUpdated()
                 }
 
                 override fun onChangesDismissed() = Unit
@@ -338,6 +335,7 @@ class FolderController(
                 folder.widgetId = ModelUtils.unsetValue
                 folder.setWidgetDimensions(ModelUtils.unsetValue, ModelUtils.unsetValue)
                 DatabaseEditor.get().updateGridFolder(folder)
+                onFolderContentsHeightUpdated()
                 true
             }
         } else {
@@ -355,22 +353,6 @@ class FolderController(
         }
 
         menu.show()
-    }
-
-    private fun startAddWidgetFlow(awpi: AppWidgetProviderInfo) {
-        val appWidgetId = WidgetLifecycleUtils.getAppWidgetHost().allocateAppWidgetId()
-        WidgetLifecycleUtils.startTransaction(appWidgetId, awpi)
-        val didBind = WidgetLifecycleUtils
-            .getAppWidgetManager(context)
-            .bindAppWidgetIdIfAllowed(appWidgetId, awpi.provider)
-        if (!didBind) {
-            host.requestBindWidget(
-                appWidgetId,
-                awpi,
-                WidgetHost.SourceData(WidgetHost.Source.FolderController, null, gridFolder?.id ?: 0))
-        } else {
-            onWidgetBound()
-        }
     }
 
     private fun showWidgetResizeDialog() {
@@ -393,9 +375,13 @@ class FolderController(
         val layout =
             LayoutInflater.from(context).inflate(R.layout.dialog_resize_widget, rootView, false)
         val widthView = ViewCompat.requireViewById<SeekBar>(layout, R.id.width_seekbar)
+        val widthLabel = ViewCompat.requireViewById<TextView>(layout, R.id.width_label)
         val heightView = ViewCompat.requireViewById<SeekBar>(layout, R.id.height_seekbar)
+        val heightLabel = ViewCompat.requireViewById<TextView>(layout, R.id.height_label)
         widthView.visibility = if (awpi.supportsHorizontalResize()) VISIBLE else GONE
-        heightView.visibility = if (awpi.supportsHorizontalResize()) VISIBLE else GONE
+        heightView.visibility = if (awpi.supportsVerticalResize()) VISIBLE else GONE
+        widthLabel.visibility = if (awpi.supportsHorizontalResize()) VISIBLE else GONE
+        heightLabel.visibility = if (awpi.supportsVerticalResize()) VISIBLE else GONE
         widthView.progress = (startWidthPercent * 100).toInt()
         heightView.progress = (startHeightPercent * 100).toInt()
 
@@ -409,7 +395,24 @@ class FolderController(
             DatabaseEditor.get().updateGridFolder(folder)
             widgetsContainer.removeView(folderIdToWidgetView[folder.id])
             addWidgetToContainer(folder.id,  folder.widgetId, folder.width, folder.height)
+            onFolderContentsHeightUpdated()
         }.show()
+    }
+
+    private fun startAddWidgetFlow(awpi: AppWidgetProviderInfo) {
+        val appWidgetId = WidgetLifecycleUtils.getAppWidgetHost().allocateAppWidgetId()
+        WidgetLifecycleUtils.startTransaction(appWidgetId, awpi)
+        val didBind = WidgetLifecycleUtils
+            .getAppWidgetManager(context)
+            .bindAppWidgetIdIfAllowed(appWidgetId, awpi.provider)
+        if (!didBind) {
+            host.requestBindWidget(
+                appWidgetId,
+                awpi,
+                WidgetHost.SourceData(WidgetHost.Source.FolderController, null, gridFolder?.id ?: 0))
+        } else {
+            onWidgetBound()
+        }
     }
 
     fun onWidgetBound() {
@@ -441,6 +444,7 @@ class FolderController(
         widgetsContainer.visibility = VISIBLE
         addWidgetToContainer(folder.id, transaction.appWidgetId, folder.width, folder.height)
         DatabaseEditor.get().updateGridFolder(folder)
+        onFolderContentsHeightUpdated()
     }
 
     private fun addWidgetToContainer(gridFolderId: Int, appWidgetId: Int, widthPx: Int, heightPx: Int): View? {
@@ -454,6 +458,13 @@ class FolderController(
         folderIdToWidgetView[gridFolderId] = view
         widgetsContainer.visibility = VISIBLE
         return view
+    }
+
+    private fun onFolderContentsHeightUpdated() {
+        ViewUtils.performSyntheticMeasure(rootView)
+        val newHeight = rootView.measuredHeight
+        activeFolderAnimation?.targetYTranslation = newHeight
+        host.onFolderCompletelyOpen(newHeight.toFloat())
     }
 
     init {
